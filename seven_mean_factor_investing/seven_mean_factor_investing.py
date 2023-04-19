@@ -1,4 +1,4 @@
-#pip install yfinance, pandas, quantstats, openpyxl, matplotlib, numpy
+#pip install yfinance, pandas, quantstats, openpyxl, matplotlib, numpy, seaborn
 
 import yfinance as yf
 import pandas as pd
@@ -7,10 +7,15 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 
-tickers = pd.DataFrame()
+qs.extend_pandas()
+
 comp_historica = pd.DataFrame()
+tickers = pd.DataFrame()
+dados_cotacoes = []
+r7 = []
+carteiras = pd.DataFrame()
 retorno_mensal = pd.DataFrame()
-#retorno_modelo = pd.DataFrame()
+retorno_modelo = pd.DataFrame()
 
 comp_historica = pd.read_excel('seven_mean_factor_investing\composicao_ibov.xlsx')
 tickers = pd.read_excel('seven_mean_factor_investing\composicao_ibov.xlsx', sheet_name = 'lista_acoes')
@@ -48,21 +53,15 @@ carteiras.index = retorno_mensal.index
 
 retorno_modelo = (carteiras * retorno_mensal).sum(axis = 1)/8
 
-retorno_modelo.index = pd.to_datetime(retorno_modelo.index)
-retorno_modelo = retorno_modelo.sort_index()
+retorno_modelo_dict = {'Retorno': retorno_modelo}
+retorno_modelo_df = pd.DataFrame(retorno_modelo_dict)
 
-print(retorno_modelo.tail())
+retorno_modelo_df['Ano'] = retorno_modelo_df.index.year
+retorno_modelo_df['Mês'] = retorno_modelo_df.index.month
 
-qs.extend_pandas()
+retorno_modelo_pivot = retorno_modelo_df.pivot(index='Ano', columns='Mês', values='Retorno')
 
-retorno_dict = {'Retorno': retorno_modelo}
-retorno_df = pd.DataFrame(retorno_dict)
+sns.heatmap(retorno_modelo_pivot, cmap='RdYlGn', center=0, annot=True, fmt='.1%', robust=True)
 
-retorno_df['Ano'] = retorno_df.index.year
-retorno_df['Mês'] = retorno_df.index.month
-
-retorno_pivot = retorno_df.pivot(index='Ano', columns='Mês', values='Retorno')
-
-sns.heatmap(retorno_pivot, cmap='RdYlGn', center=0, annot=True, fmt='.01%', robust=True)
-
+plt.title('Mapa de calor - Retornos mensais.')
 plt.show()
