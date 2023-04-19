@@ -3,17 +3,14 @@
 import yfinance as yf
 import pandas as pd
 import quantstats as qs
-
-#qs.extend_pandas()
-
+import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-import monthly_returns_heatmap as mrh
 
 tickers = pd.DataFrame()
 comp_historica = pd.DataFrame()
 retorno_mensal = pd.DataFrame()
-retorno_modelo = pd.DataFrame()
+#retorno_modelo = pd.DataFrame()
 
 comp_historica = pd.read_excel('seven_mean_factor_investing\composicao_ibov.xlsx')
 tickers = pd.read_excel('seven_mean_factor_investing\composicao_ibov.xlsx', sheet_name = 'lista_acoes')
@@ -56,8 +53,16 @@ retorno_modelo = retorno_modelo.sort_index()
 
 print(retorno_modelo.tail())
 
-#qs.plots.monthly_heatmap(retorno_modelo,ylabel=True,savefig=None,figsize=8,show=True)
+qs.extend_pandas()
 
-#retorno_modelo.plot_monthly_heatmap()
+retorno_dict = {'Retorno': retorno_modelo}
+retorno_df = pd.DataFrame(retorno_dict)
 
-help(qs.plots.monthly_heatmap)
+retorno_df['Ano'] = retorno_df.index.year
+retorno_df['Mês'] = retorno_df.index.month
+
+retorno_pivot = retorno_df.pivot(index='Ano', columns='Mês', values='Retorno')
+
+sns.heatmap(retorno_pivot, cmap='RdYlGn', center=0, annot=True, fmt='.01%', robust=True)
+
+plt.show()
