@@ -40,8 +40,11 @@ price_data = price_data.sort_index()
 #calculating monthly returns in percentage
 montlhy_returns = price_data.resample("M").last().pct_change()
 
+
 #MAGIC! - transforming montlhy_returns dataframe to monthly last seven mean return in percentage droping missing data
 sevem_mean_model = (montlhy_returns.rolling(7).mean().dropna(axis = 0, how = "all").drop('2022-12-31'))
+
+print(sevem_mean_model)
 
 #locating companies that are present at ibov each month
 for date in sevem_mean_model.index:
