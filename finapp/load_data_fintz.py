@@ -11,8 +11,7 @@ class dados_fintz:
         load_dotenv()
 
         self.chave_api = os.getenv("API_FINTZ")
-        print(self.chave_api)
-        
+
         self.headers = {'accept': 'application/json',
                         'X-API-Key': self.chave_api}
         os.chdir(caminho_dados)
