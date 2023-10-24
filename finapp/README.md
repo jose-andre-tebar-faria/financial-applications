@@ -1,5 +1,5 @@
 <h1 align="center">
-    <img src=".\files\gear.svg" width="155" />
+    <img src=".\files\images\gear.svg" width="155" />
     <p>🙇🏽‍♂️🙇🏽‍♂️🙇🏽‍♂️ FINAPP 🙇🏽‍♂️🙇🏽‍♂️🙇🏽‍♂️ </p>
 </h1>
 
