@@ -134,7 +134,7 @@ class premio_risco:
         df_premios['id_premio'] = df_premios['nome_premio'].astype(str) + "_" + df_premios['liquidez'].astype(str) + "_" + df_premios['data'].astype(str)
         df_premios.dropna(inplace=True)
         self.df_premios = df_premios
-        print(self.df_premios)
+        #print(self.df_premios)
 
     def colocando_premio_na_base(self):
 
@@ -143,10 +143,10 @@ class premio_risco:
 if __name__ == "__main__":
 
     indicadores_dict = {
-                        'EBIT_EV': 'decrescente'
+                        'ROE': 'decrescente'
                         }
                         
-    premio = premio_risco(indicadores_dict,  liquidez = 1000000, nome_premio = 'VALOR_EBIT_EV', 
+    premio = premio_risco(indicadores_dict,  liquidez = 1000000, nome_premio = 'QUALITY_ROE', 
                           caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database',
                           caminho_salvar_arquivo=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\premios_risco'
                         ) #não pode ter \ no nome!!
@@ -158,13 +158,3 @@ if __name__ == "__main__":
     premio.descobrindo_mes_inicial()
     premio.calculando_premios()
     premio.colocando_premio_na_base()
-
-
-
-
-
-
-
-
-
-

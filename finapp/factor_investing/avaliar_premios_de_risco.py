@@ -199,23 +199,23 @@ class MakeResultsPremium:
 if __name__ == "__main__":
 
     dicionario_fatores = {
-                          #'QUALITY_ROIC': 1000000,
+                          'QUALITY_ROIC': 1000000,
                           'QUALITY_ROE': 1000000,
                           'VALOR_EBIT_EV': 1000000,
-                          #'VALOR_L_P': 1000000,
+                          'VALOR_L_P': 1000000,
                           #'ALAVANCAGEM_EBIT_DL': 1000000,
                           #'ALAVANCAGEM_PL_DB': 1000000,
                           'MOMENTO_R6M': 1000000,
-                          #'MOMENTO_R1M': 1000000,
-                          #'MOMENTO_R12M': 1000000,
-                          #'MOMENTO_MM_7_40': 1000000,
+                          'MOMENTO_R1M': 1000000,
+                          'MOMENTO_R12M': 1000000,
+                          'MOMENTO_MM_7_40': 1000000,
                           'TAMANHO_VALOR_DE_MERCADO': 1000000,
-                          #'RISCO_VOL': 1000000,
+                          'RISCO_VOL': 1000000,
                            }
 
     premios = MakeResultsPremium(data_final_analise="2020-12-31", dicionario_fatores=dicionario_fatores,
                                  caminho_imagens = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\images', 
-                                 nome_arquivo = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\avaliando_alguns_premios.pdf',
+                                 nome_arquivo = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\avaliando_todos_premios.pdf',
                                  caminho_premios_de_risco=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\premios_risco')
 
     

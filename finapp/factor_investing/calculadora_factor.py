@@ -244,7 +244,7 @@ if __name__ == "__main__":
                     #'momento_6_meses': {'caracteristica': 'decrescente'},
                     #'momento_12_meses': {'caracteristica': 'decrescente'},
                     #'mm_7_40': {'caracteristica': 'decrescente'},
-                    'ValorDeMercado': {'caracteristica': 'crescente'},
+                    #'ValorDeMercado': {'caracteristica': 'crescente'},
                     'EBIT_EV': {'caracteristica': 'decrescente'},
                 },
                 'peso': 1
@@ -289,7 +289,7 @@ if __name__ == "__main__":
 
     nome_pdf = nome_pdf + str(balanceamento) + '_' + str(filtro_liquidez) + "M_" + str(numero_ativos) + "A.pdf"
 
-    backtest = backtest_indicators(data_final="2023-07-14", data_inicial= '2011-12-23', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
+    backtest = backtest_indicators(data_final="2021-12-31", data_inicial= '2011-12-23', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
                                                 numero_ativos=numero_ativos, caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database',
                                                 caminho_imagens=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\images', corretagem=0.01,
                                                 nome_arquivo=fr'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\indicators\{nome_pdf}',
