@@ -1,3 +1,8 @@
-# financial-applications
+<h1 align="center">
+    <img src=".\files\protein.svg" width="222" />
+    <p>🙇🏽‍♂️🙇🏽‍♂️🙇🏽‍♂️ FINAPP 🙇🏽‍♂️🙇🏽‍♂️🙇🏽‍♂️ </p>
+</h1>
 
-test-upload-README
+## 🚨 ABOUT
+
+### This **Project** intends to create an application that can optimize a stock wallet for long-term investments.
