@@ -35,7 +35,6 @@ class dados_fintz:
 
         cdi.to_parquet('cdi.parquet', index = False)
 
-
     def ibov(self):
 
         response = requests.get('https://api.fintz.com.br/indices/historico?indice=IBOV&dataInicio=2000-01-01',
@@ -79,7 +78,6 @@ class dados_fintz:
 
         df.to_parquet('cotacoes.parquet', index = False) 
 
-
     def pegando_arquivo_contabil(self, demonstracao = False, indicadores = False, nome_dado = ''):
 
         if demonstracao:
@@ -119,13 +117,10 @@ class dados_fintz:
 
 if __name__ == "__main__":
 
-    lendo_dados = dados_fintz(caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database')
-
-    lendo_dados.pegar_cotacoes()
+    lendo_dados = dados_fintz(caminho_dados=r'.\finapp\files')
 
     lista_demonstracoes = ['Ebit12m', 'DividaBruta', 'DividaLiquida', 'Ebit12m', 'LucroLiquido12m', 'PatrimonioLiquido', 'ReceitaLiquida12m']
     lista_indicadores = ['EBIT_EV', 'L_P', 'ROE', 'ROIC', 'ValorDeMercado']
-
 
     #for demonstracao in lista_demonstracoes:
 
@@ -140,15 +135,5 @@ if __name__ == "__main__":
     #    lendo_dados.pegando_arquivo_contabil(indicadores=True, nome_dado = indicador)
 
     #lendo_dados.cdi()
-    lendo_dados.pegar_cotacoes()
+    #lendo_dados.pegar_cotacoes()
     #lendo_dados.ibov()
-
-
-
-
-
-
-
-
-
-

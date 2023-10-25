@@ -68,7 +68,6 @@ class MakeIndicator():
 
         df_indicadores.to_parquet(f'ebit_dl.parquet', index = False)
 
-
     def pl_divida_bruta(self):
 
         df_pl = pd.read_parquet('PatrimonioLiquido.parquet')
@@ -175,13 +174,10 @@ class MakeIndicator():
         valor.to_parquet(f'mm_{mm_curta}_{mm_longa}.parquet', index = False)
 
 
-        
-
-
 if __name__ == "__main__":
 
 
-    indicador = MakeIndicator(caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database')
+    indicador = MakeIndicator(caminho_dados=r'.\finapp\files')
 
     #indicador.fazer_indicador_momento(meses=12)
     #indicador.fazer_indicador_momento(meses=1)
@@ -191,10 +187,3 @@ if __name__ == "__main__":
     #indicador.beta(1)
     #indicador.volatilidade(1)
     #indicador.pl_divida_bruta()
-
-
-
-
-
-
-

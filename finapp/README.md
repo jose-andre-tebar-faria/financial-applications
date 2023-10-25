@@ -7,7 +7,7 @@
 
 ### This **Project** intends to create an application that can optimize a stock wallet for long-term investments. Where are using here ywo types of analisys, first a Factor Investing modeling considering a 5 Factor Model by Eugene Fama & Kenneth French, and then a technical analisys.
 
-## 🧭 Factor Investing
+# 🧭 Factor Investing
 
 O modelo de 5 fatores, desenvolvido por Eugene Fama e Kenneth French, é uma extensão do modelo de três fatores original (CAPM) que visa explicar os retornos de ações com base em cinco fatores diferentes. Esses cinco fatores são:
 
@@ -60,17 +60,17 @@ O banco de dados usado nessas aplicações estão contidos em arquivos *.parquet
 
     *cotacoes*: cada linha representa a lista preços - incluindo preços ajustados - e quantidades negociadas de cada dia de cada ação.
 
-    ['preco_abertura', 'preco_abertura_ajustado', 
-    'preco_fechamento', 'preco_fechamento_ajustado', 
-    'preco_maximo', 'preco_maximo_ajustado', 
-    'preco_medio', 'preco_medio_ajustado', 
-    'preco_minimo', 'preco_minimo_ajustado',
-    'quantidade_negociada',
-    'quantidade_negocios']
+        ['preco_abertura', 'preco_abertura_ajustado', 
+        'preco_fechamento', 'preco_fechamento_ajustado', 
+        'preco_maximo', 'preco_maximo_ajustado', 
+        'preco_medio', 'preco_medio_ajustado', 
+        'preco_minimo', 'preco_minimo_ajustado',
+        'quantidade_negociada',
+        'quantidade_negocios']
 
-                  data  preco_abertura  preco_fechamento  preco_maximo  preco_medio
-    0       2010-01-04           11.50             11.50         11.50        11.50
-    67071   2010-01-04           38.89             40.12         40.49        39.96
+                  data  preco_abertura  preco_fechamento  preco_maximo  preco_medio ...
+    0       2010-01-04           11.50             11.50         11.50        11.50 ...
+    67071   2010-01-04           38.89             40.12         40.49        39.96 ...
 
     *ibov*: cada linha representa o número de pontos do ibovespa por dia.
                 data  fechamento
@@ -99,24 +99,66 @@ Cada .parquet contido no database se refere ao seguinte indicador.
 
     *EBIT_EV*: 
 
-    *L_P*:
+    *L_P ou P_L*:
+
+    *ValorDeMercado*:
 
     *ROE*: 
 
     *ROIC*: 
-    
-    *ValorDeMercado*:
+
+    *EV*: 
+
+    *LPA*: 
 
     *momento_X_meses*: cada linha representa a média móvel dos últimos X meses dos retornos para cada ação.
 
     *mm_X_Y*: cada linha representa a proporção entre média móvel curta e média móvel longa. (mmCurta/mmLonga)
 
+    *volume_mediano*: cada linha representa a mediana do volume negociado nos últimos 21 períodos para cada ação.
+
+    *vol_X*: volatilidade histórica anualizada dos retornos. cada linha representa a média, nos últimos X períodos, dos desvios padrões dos retornos de cada ação.
+
+    *beta_X*:
+
     *pl_db*:
 
     *Ebit_12m*:
 
-    *beta_X*:
+## 🎪 Fluxo de execução
 
-    *volume_mediano*: cada linha representa a mediana do volume negociado nos últimos 21 períodos para cada ação.
-
-    *vol_X*: volatilidade histórica anualizada dos retornos. cada linha representa a média, nos últimos X períodos, dos desvios padrões dos retornos de cada ação.
+### **1) load_data_fintz.py** - classe usada para criação da base primária de dados
+    - cotacoes()
+    - cdi()
+    - ibov()
+    - *demonstrativos* / pegando_arquivo_contabil(demonstracao=True, nome_dado = 'X')
+        - Ebit12m
+        - DividaBruta
+        - DividaLiquida
+        - Ebit12m
+        - LucroLiquido12m
+        - PatrimonioLiquido
+        - ReceitaLiquida12m
+    - *indicadores* / pegando_arquivo_contabil(indicadores=True, nome_dado = 'X')
+        - EBIT_EV
+        - L_P
+        - ROE
+        - ROIC
+        - ValorDeMercado
+### **2) fazendo_indicador.py** - classe usada para criação de indicadores de análise.
+    - fazer_indicador_momento()*
+        - output: momento_X_meses.parquet
+    - volume_mediano()
+        - output: volume_mediano.parquet
+    - media_movel_proporcao(X,Y)
+        - output: mm_X_Y.parquet
+    - beta(X)*
+        - output: beta_X.parquet
+    - volatilidade(X)
+        - output: vol_(X).parquet
+    - pl_divida_bruta()
+        - output: pl_db.parquet
+    - ebit_divida_liquida()
+        - output: ebit_dl.parquet
+### **3) premios_de_risco.py** - classe usada para cálculo dos prêmios de risco atrelado a cada combinação de fatores
+    - 
