@@ -24,6 +24,8 @@ class MakeIndicator():
         cotacoes = cotacoes.dropna()
         valor = cotacoes[['data', 'ticker', 'valor']]
 
+        print(valor)
+
         valor.to_parquet(f'momento_{meses}_meses.parquet', index = False)
 
     def volume_mediano(self):
@@ -37,8 +39,9 @@ class MakeIndicator():
         cotacoes = cotacoes.dropna()
         valor = cotacoes[['data', 'ticker', 'valor']]
 
-        valor.to_parquet(f'volume_mediano.parquet', index = False)
+        print(valor)
 
+        valor.to_parquet(f'volume_mediano.parquet', index = False)
 
     def ebit_divida_liquida(self):
 
@@ -106,6 +109,8 @@ class MakeIndicator():
         cotacoes['valor'] = cotacoes['valor'] * np.sqrt(252) 
         valor = cotacoes[['data', 'ticker', 'valor']]
 
+        print(valor)
+
         valor.to_parquet(f'vol_{int(252 * anos)}.parquet', index = False)
 
     def beta(self, anos):
@@ -156,7 +161,6 @@ class MakeIndicator():
         betas = pd.concat(lista_df_betas)
         betas.to_parquet(f'beta_{int(252 * anos)}.parquet', index = False)
 
-
     def media_movel_proporcao(self, mm_curta, mm_longa):
 
         cotacoes = pd.read_parquet('cotacoes.parquet')
@@ -179,14 +183,14 @@ if __name__ == "__main__":
 
     indicador = MakeIndicator(caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database')
 
-    indicador.fazer_indicador_momento(meses=12)
-    indicador.fazer_indicador_momento(meses=1)
-    indicador.fazer_indicador_momento(meses=6)
+    #indicador.fazer_indicador_momento(meses=12)
+    #indicador.fazer_indicador_momento(meses=1)
+    #indicador.fazer_indicador_momento(meses=6)
     indicador.volume_mediano()
-    indicador.media_movel_proporcao(7, 40)
-    indicador.beta(1)
-    indicador.volatilidade(1)
-    indicador.pl_divida_bruta()
+    #indicador.media_movel_proporcao(7, 40)
+    #indicador.beta(1)
+    #indicador.volatilidade(1)
+    #indicador.pl_divida_bruta()
 
 
 

@@ -32,6 +32,8 @@ class market_premium():
         df_dados_mercado = df_dados_mercado[['data', 'mkt_premium']]
         df_dados_mercado['data'] = pd.to_datetime(df_dados_mercado['data']).dt.date
 
+        print(df_dados_mercado)
+
         df_dados_mercado.to_parquet(f'{self.caminho_salvar_arquivo}/market_premium.parquet', index = False)
 
 

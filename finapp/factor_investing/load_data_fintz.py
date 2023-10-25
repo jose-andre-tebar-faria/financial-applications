@@ -29,7 +29,9 @@ class dados_fintz:
 
         cdi.columns = ['data', 'retorno']
 
-        cdi['retorno'] = cdi['retorno']/100 
+        cdi['retorno'] = cdi['retorno']/100
+
+        print(cdi)
 
         cdi.to_parquet('cdi.parquet', index = False)
 
@@ -46,6 +48,8 @@ class dados_fintz:
         df.columns = ['indice', 'data', 'fechamento']
 
         df = df.drop('indice', axis = 1)
+
+        print(df)
 
         df.to_parquet('ibov.parquet', index = False)          
 
@@ -70,6 +74,8 @@ class dados_fintz:
         df['preco_fechamento_ajustado'] = df.groupby('ticker')['preco_fechamento_ajustado'].transform('ffill')
 
         df = df.sort_values('data', ascending=True)
+
+        print(df)
 
         df.to_parquet('cotacoes.parquet', index = False) 
 
@@ -134,8 +140,8 @@ if __name__ == "__main__":
     #    lendo_dados.pegando_arquivo_contabil(indicadores=True, nome_dado = indicador)
 
     #lendo_dados.cdi()
-    #lendo_dados.pegar_cotacoes()
-    lendo_dados.ibov()
+    lendo_dados.pegar_cotacoes()
+    #lendo_dados.ibov()
 
 
 

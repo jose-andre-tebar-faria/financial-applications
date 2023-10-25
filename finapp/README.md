@@ -42,7 +42,7 @@ Para cada fator aprensentado acima deve-se modelar o indicador que descreve aque
 - **Valor (Value)**
 
     - **Relação preço/lucro (P/L)**: O P/L é a relação entre o preço atual da ação e o lucro por ação. Ações com P/L baixo são consideradas de valor.
-Relação preço/valor contábil (P/VC): O P/VC compara o preço da ação com o valor contábil por ação da empresa. Um P/VC baixo é indicativo de valor.
+    - **Relação preço/valor contábil (P/VC)**: O P/VC compara o preço da ação com o valor contábil por ação da empresa. Um P/VC baixo é indicativo de valor.
 
 - **Momentum (Momentum)**
 
@@ -54,16 +54,69 @@ Relação preço/valor contábil (P/VC): O P/VC compara o preço da ação com o
     - **Endividamento**: O nível de dívida da empresa, muitas vezes medido pela relação entre dívida e patrimônio líquido ou pela relação entre dívida e EBITDA.
     - **Eficiência operacional**: Isso pode ser avaliado por métricas como o retorno sobre o patrimônio líquido (ROE) e o retorno sobre o ativo (ROA).
 
-## 🗺 Relacionamento de entidades
+## 🗺 [Entidades](https://github.com/jose-andre-tebar-faria/financial-applications/tree/master/finapp/files)
 
-    market_premium
+O banco de dados usado nessas aplicações estão contidos em arquivos *.parquet* e serão discriminados a seguir.
 
+    *cotacoes*: cada linha representa a lista preços - incluindo preços ajustados - e quantidades negociadas de cada dia de cada ação.
 
-    Beta: 
-    EBIT_EV: 
-    Momentos:
-    L_P:
-    ROE:
-    ROI: 
-    VOL:
-    ValorDeMercado:
+    ['preco_abertura', 'preco_abertura_ajustado', 
+    'preco_fechamento', 'preco_fechamento_ajustado', 
+    'preco_maximo', 'preco_maximo_ajustado', 
+    'preco_medio', 'preco_medio_ajustado', 
+    'preco_minimo', 'preco_minimo_ajustado',
+    'quantidade_negociada',
+    'quantidade_negocios']
+
+                  data  preco_abertura  preco_fechamento  preco_maximo  preco_medio
+    0       2010-01-04           11.50             11.50         11.50        11.50
+    67071   2010-01-04           38.89             40.12         40.49        39.96
+
+    *ibov*: cada linha representa o número de pontos do ibovespa por dia.
+                data  fechamento
+    0     2000-01-03  16930.42
+    1     2000-01-04  15851.00
+
+    *cdi*: representa em cada linha a porcentagem de retorno da renda fixa no brasil.
+                data  retorno
+    0     2000-01-03  0.000683
+    1     2000-01-04  0.000682
+
+    *market_premium*: cada linha representa a proporção entre os retornos do mercado (ibov) e a renda fixa (cdi) por dia.
+                data  mkt_premium
+    1    2000-02-29   -0.464910
+    2    2000-03-31   -0.331790
+
+Todo arquivo contendo um indicador deve seguir o seguinte padrão de dados indicado abaixo.
+
+    ['data', 'ticker', 'valor'] 
+
+- **data**: *reprensenta uma data no formato YYYY-MM-DD.*
+- **ticker**: *representa o código de negociação da ação no formato 4 letras 1 número (ex: PETR3).*
+- **valor**: *número inteiro reprensentando o tamanho daquele indicador naquele dia praquela ação.*
+
+Cada .parquet contido no database se refere ao seguinte indicador.
+
+    *EBIT_EV*: 
+
+    *L_P*:
+
+    *ROE*: 
+
+    *ROIC*: 
+    
+    *ValorDeMercado*:
+
+    *momento_X_meses*: cada linha representa a média móvel dos últimos X meses dos retornos para cada ação.
+
+    *mm_X_Y*: cada linha representa a proporção entre média móvel curta e média móvel longa. (mmCurta/mmLonga)
+
+    *pl_db*:
+
+    *Ebit_12m*:
+
+    *beta_X*:
+
+    *volume_mediano*: cada linha representa a mediana do volume negociado nos últimos 21 períodos para cada ação.
+
+    *vol_X*: volatilidade histórica anualizada dos retornos. cada linha representa a média, nos últimos X períodos, dos desvios padrões dos retornos de cada ação.
