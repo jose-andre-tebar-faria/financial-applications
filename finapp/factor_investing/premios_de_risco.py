@@ -44,7 +44,6 @@ class premio_risco:
         self.cotacoes = pd.merge(self.cotacoes, dados_volume, how = 'inner', on = 'id_dado')
         self.cotacoes = self.cotacoes[self.cotacoes['volumeMediano'] > self.liquidez]
 
-
     def pegando_indicadores(self):
 
         self.df_indicadores = []
@@ -134,11 +133,18 @@ class premio_risco:
         df_premios['id_premio'] = df_premios['nome_premio'].astype(str) + "_" + df_premios['liquidez'].astype(str) + "_" + df_premios['data'].astype(str)
         df_premios.dropna(inplace=True)
         self.df_premios = df_premios
-        #print(self.df_premios)
+        
+        print(self.df_premios)
 
     def colocando_premio_na_base(self):
+        
+        # configurando diretório de depósito dos arquivos
+        self.diretorio_atual = os.getcwd()
+        self.ponto_de_partida = os.path.dirname(os.path.abspath(__file__))
+        self.ponto_de_partida = os.path.abspath(os.path.join(self.diretorio_atual, os.pardir))
+        self.caminho_relativo = os.path.join(self.ponto_de_partida, "files", "premios_risco")
 
-        self.df_premios.to_parquet(f'{self.caminho_salvar_arquivo}/{self.nome_premio}_{self.liquidez}.parquet', index = False) 
+        self.df_premios.to_parquet(f'{self.caminho_relativo}/{self.nome_premio}_{self.liquidez}.parquet', index = False)
 
 if __name__ == "__main__":
 
@@ -147,8 +153,8 @@ if __name__ == "__main__":
                         }
                         
     premio = premio_risco(indicadores_dict,  liquidez = 1000000, nome_premio = 'QUALITY_ROE', 
-                          caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database',
-                          caminho_salvar_arquivo=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\premios_risco'
+                          caminho_dados=r'./finapp/files',
+                          caminho_salvar_arquivo=r'./finapp/files/premios_risco'
                         ) #não pode ter \ no nome!!
 
     premio.pegando_dados_cotacoes()

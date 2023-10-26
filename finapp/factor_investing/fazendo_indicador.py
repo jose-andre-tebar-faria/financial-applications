@@ -177,13 +177,13 @@ class MakeIndicator():
 if __name__ == "__main__":
 
 
-    indicador = MakeIndicator(caminho_dados=r'.\finapp\files')
+    indicador = MakeIndicator(caminho_dados=r'./finapp/files')
 
     #indicador.fazer_indicador_momento(meses=12)
     #indicador.fazer_indicador_momento(meses=1)
     #indicador.fazer_indicador_momento(meses=6)
-    indicador.volume_mediano()
+    #indicador.volume_mediano()
     #indicador.media_movel_proporcao(7, 40)
-    #indicador.beta(1)
+    indicador.beta(1)
     #indicador.volatilidade(1)
     #indicador.pl_divida_bruta()

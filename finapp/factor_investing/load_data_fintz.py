@@ -117,7 +117,7 @@ class dados_fintz:
 
 if __name__ == "__main__":
 
-    lendo_dados = dados_fintz(caminho_dados=r'.\finapp\files')
+    lendo_dados = dados_fintz(caminho_dados=r'./finapp/files')
 
     lista_demonstracoes = ['Ebit12m', 'DividaBruta', 'DividaLiquida', 'Ebit12m', 'LucroLiquido12m', 'PatrimonioLiquido', 'ReceitaLiquida12m']
     lista_indicadores = ['EBIT_EV', 'L_P', 'ROE', 'ROIC', 'ValorDeMercado']
@@ -134,6 +134,6 @@ if __name__ == "__main__":
 
     #    lendo_dados.pegando_arquivo_contabil(indicadores=True, nome_dado = indicador)
 
-    #lendo_dados.cdi()
+    lendo_dados.cdi()
     #lendo_dados.pegar_cotacoes()
     #lendo_dados.ibov()

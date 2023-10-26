@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 
 class market_premium():
 
@@ -34,13 +35,19 @@ class market_premium():
 
         print(df_dados_mercado)
 
+        # configurando diretório de depósito dos arquivos
+        diretorio_atual = os.getcwd()
+        self.ponto_de_partida = os.path.dirname(os.path.abspath(__file__))
+        self.ponto_de_partida = os.path.abspath(os.path.join(diretorio_atual, os.pardir))
+        self.caminho_relativo = os.path.join(self.ponto_de_partida, "files", "premios_risco")
+
         df_dados_mercado.to_parquet(f'{self.caminho_salvar_arquivo}/market_premium.parquet', index = False)
 
 
 if __name__ == "__main__":
 
-    beta = market_premium(caminho_salvar_arquivo=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\premios_risco',
-                          caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database')
+    beta = market_premium(caminho_salvar_arquivo=r'./finapp/files/premios_risco',
+                          caminho_dados=r'./finapp/files')
 
     beta.calculando_premio() 
 

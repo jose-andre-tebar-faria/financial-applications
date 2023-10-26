@@ -1,6 +1,6 @@
 <h1 align="center">
     <img src=".\files\images\gear.svg" width="155" />
-    <p>🙇🏽‍♂️🙇🏽‍♂️🙇🏽‍♂️ FINAPP 🙇🏽‍♂️🙇🏽‍♂️🙇🏽‍♂️ </p>
+    <p>FINAPP</p>
 </h1>
 
 ## 🚨 ABOUT
@@ -77,12 +77,12 @@ O banco de dados usado nessas aplicações estão contidos em arquivos *.parquet
     0     2000-01-03  16930.42
     1     2000-01-04  15851.00
 
-    *cdi*: representa em cada linha a porcentagem de retorno da renda fixa no brasil.
+    *cdi*: representa em cada linha a porcentagem de retorno da renda fixa no Brasil.
                 data  retorno
     0     2000-01-03  0.000683
     1     2000-01-04  0.000682
 
-    *market_premium*: cada linha representa a proporção entre os retornos do mercado (ibov) e a renda fixa (cdi) por dia.
+    *market_premium*: cada linha representa a proporção entre os retornos do mercado (ibov) e a renda fixa (cdi) por mês - último dia.
                 data  mkt_premium
     1    2000-02-29   -0.464910
     2    2000-03-31   -0.331790
@@ -146,19 +146,32 @@ Cada .parquet contido no database se refere ao seguinte indicador.
         - ROIC
         - ValorDeMercado
 ### **2) fazendo_indicador.py** - classe usada para criação de indicadores de análise.
-    - fazer_indicador_momento()*
+    - fazer_indicador_momento()
         - output: momento_X_meses.parquet
     - volume_mediano()
         - output: volume_mediano.parquet
     - media_movel_proporcao(X,Y)
         - output: mm_X_Y.parquet
-    - beta(X)*
+    - beta(X)
         - output: beta_X.parquet
     - volatilidade(X)
-        - output: vol_(X).parquet
+        - output: vol_X.parquet
     - pl_divida_bruta()
         - output: pl_db.parquet
     - ebit_divida_liquida()
         - output: ebit_dl.parquet
-### **3) premios_de_risco.py** - classe usada para cálculo dos prêmios de risco atrelado a cada combinação de fatores
-    - 
+### **3-a) premios_de_risco.py** - classe usada para cálculo dos prêmios de risco atrelado a cada combinação de fatores
+    - pegando_dados_cotacoes()
+    - pegando_datas_possiveis()
+    - filtrando_volume()
+    - pegando_indicadores()
+    - descobrindo_mes_inicial()
+    - calculando_premios()
+    - colocando_premio_na_base()
+### **3-b) fator_mercado.py** - classe usada para cálculo do prêmio de risco do mercado
+    - calculando_premio()
+        - output: market_premium.parquet
+### **4) avaliar_premios_de_risco.py** - classe
+    - puxando_dados()
+    - retorno_quartis()
+    - fazer_pdf()
