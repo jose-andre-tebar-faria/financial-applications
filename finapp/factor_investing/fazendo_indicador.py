@@ -184,6 +184,6 @@ if __name__ == "__main__":
     #indicador.fazer_indicador_momento(meses=6)
     #indicador.volume_mediano()
     #indicador.media_movel_proporcao(7, 40)
-    indicador.beta(1)
+    #indicador.beta(1)
     #indicador.volatilidade(1)
     #indicador.pl_divida_bruta()

@@ -49,7 +49,7 @@ if __name__ == "__main__":
     beta = market_premium(caminho_salvar_arquivo=r'./finapp/files/premios_risco',
                           caminho_dados=r'./finapp/files')
 
-    beta.calculando_premio() 
+    #beta.calculando_premio() 
 
 
     
