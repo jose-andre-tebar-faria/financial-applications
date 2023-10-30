@@ -189,7 +189,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
         - ROIC
         - ValorDeMercado
 ### **2) fazendo_indicador.py** - classe usada para criação de indicadores de análise.
-    - fazer_indicador_momento()
+    - fazer_indicador_momento(meses=X)
         - output: momento_X_meses.parquet
     - volume_mediano()
         - output: volume_mediano.parquet

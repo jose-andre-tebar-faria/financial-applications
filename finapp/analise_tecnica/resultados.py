@@ -11,6 +11,7 @@ import warnings
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 from report_pdf import MakePDF
+import os
 
 
 #depois colocar uma opção de otimização, que otimiza baseado em algum(s) parâmetros e exibe uma tabela no 
@@ -274,6 +275,10 @@ class MakeReportResult():
         plt.legend()
         plt.title("Retorno acumulado")
         ax.grid(False)
+
+        # Obtém o diretório atual
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para salvar figuras:", diretorio_atual)
 
         if self.caminho_imagens == None:        
 

@@ -1,11 +1,11 @@
 from fpdf import FPDF
-
+import os
 
 class PDF(FPDF):
 
     
     def header(self):
-     
+
         self.image('./logo.png', 10, 8, 40)
         self.set_font('Arial', 'B', 20)
         self.ln(15)
@@ -65,6 +65,11 @@ class MakePDF():
         self.nome_arquivo = nome_arquivo
         self.caminho_imagens = caminho_imagens
         
+        # Atualiza para path das imagens
+        os.chdir(self.caminho_imagens)
+        diretorio_atual = os.getcwd()
+        print("Diretório atual criação PDF:", diretorio_atual)
+
         self.pdf = PDF("P", "mm", "Letter")
         self.pdf.set_auto_page_break(auto = True, margin = 15)
         self.pdf.alias_nb_pages()
@@ -84,6 +89,20 @@ class MakePDF():
 
             self.tabela_in_sample_out_sample()
             self.grafico_parametros()
+
+        # Retorna para caminho ./financial-applications
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para output PDF:", diretorio_atual)
 
         self.pdf.output(f"{self.nome_arquivo}")
 

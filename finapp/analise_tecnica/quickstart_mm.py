@@ -2,6 +2,7 @@ from estrategia import BigStrategy
 from indicadores import MakeIndicator
 from data_feed import ReadData
 from otimizacao_movel import WalkForwardAnalysis
+import os
 
 
 class MM_estrategia(BigStrategy):
@@ -48,7 +49,7 @@ if __name__ == "__main__":
 
     dados = ReadData(
 
-        caminho_parquet = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\cotacoes.parquet',
+        caminho_parquet = r'./finapp/files/cotacoes.parquet',
         tem_multiplas_empresas=True,
         empresa_escolhida=acao,
         nome_coluna_empresas = 'ticker',
@@ -70,14 +71,18 @@ if __name__ == "__main__":
 
     start_estrategia.corretagem = 0.0005
     
-    start_estrategia.add_caminhos(caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database',
-                                  caminho_imagens=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\images')
+    
+    diretorio_atual = os.getcwd()
+    print("Diretório atual _main_:", diretorio_atual)
+    
+    start_estrategia.add_caminhos(caminho_dados=r'./finapp/files',
+                                  caminho_imagens=r'./finapp/files/images')
 
     start_estrategia.add_data(dados)
     start_estrategia.add_cdi()
     start_estrategia.run_strategy()
 
-    start_estrategia.make_report(nome_arquivo = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\analise_tecnica\mm_teste.pdf')
+    start_estrategia.make_report(nome_arquivo = r'./finapp/files/PDFs/analise_tecnica/mm_teste.pdf')
 
     print(start_estrategia.df_trades)
 

@@ -21,6 +21,10 @@ class WalkForwardAnalysis():
         self.otimizacao.estrategia.caminho_imagens = caminho_imagens
         self.otimizacao.estrategia.caminho_benchmarks = caminho_dados_benchmarks
 
+        # Obtém o diretório atual
+        diretorio_atual = os.getcwd()
+        print("Diretório atual WalkForwardAnalysis:", diretorio_atual)
+
         os.chdir(caminho_imagens)
 
         self.otimizacao.estrategia.add_cdi()

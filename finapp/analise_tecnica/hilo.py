@@ -43,11 +43,11 @@ class hilo_estrategia(BigStrategy):
 
 if __name__ == '__main__':
 
-    acao = "CSNA3"
+    acao = "PETR4"
 
     dados = ReadData(
 
-        caminho_parquet = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\cotacoes.parquet',
+        caminho_parquet = r'./finapp/files/cotacoes.parquet',
         tem_multiplas_empresas=True,
         empresa_escolhida=acao,
         nome_coluna_empresas = 'ticker',
@@ -68,14 +68,10 @@ if __name__ == '__main__':
     #mostrar na aula o exemplo da gol pra investigar mais a fundo no trading view
     #mostrar que empresas de beta baixo nao funciona
     
-
     walk = WalkForwardAnalysis(estrategia = hilo_estrategia(), class_dados = dados,
                                parametro1= range(15, 50, 3), anos_otimizacao=2, anos_teste=1, 
-                               nome_arquivo = rf"C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\analise_tecnica\backtest_2pra1_{acao}_HILO.pdf",
-                               caminho_dados_benchmarks =r'C:\Users\J.A.T.F\Desktop\codigo_py\Database',
-                               caminho_imagens= r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\images')
-
-    
-    
+                               nome_arquivo = rf"./finapp/files/PDFs/analise_tecnica/backtest_2pra1_{acao}_HILO.pdf",
+                               caminho_dados_benchmarks =r'./finapp/files',
+                               caminho_imagens= r'./finapp/files/images')
 
     walk.run_walk()

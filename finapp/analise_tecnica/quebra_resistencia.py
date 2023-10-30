@@ -72,11 +72,11 @@ class quebra_resistencia_estrategia(BigStrategy):
 
 if __name__ == '__main__':
 
-    acao = "PETR4"
+    acao = "WEGE3"
 
     dados = ReadData(
 
-        caminho_parquet = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\cotacoes.parquet',
+        caminho_parquet = r'./finapp/files/cotacoes.parquet',
         tem_multiplas_empresas=True,
         empresa_escolhida=acao,
         nome_coluna_empresas = 'ticker',
@@ -94,13 +94,12 @@ if __name__ == '__main__':
         volume = 9
     )
     
-
     walk = WalkForwardAnalysis(estrategia = quebra_resistencia_estrategia(), class_dados = dados,
                                parametro1= range(6, 20, 3), parametro2 = range(4, 33, 4),
                                anos_otimizacao=3, anos_teste=1, 
-                               nome_arquivo = rf"C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\analise_tecnica\backtest_2pra1_{acao}_RESISTENCIA_S_VOLUME.pdf",
-                               caminho_dados_benchmarks =r'C:\Users\J.A.T.F\Desktop\codigo_py\Database',
-                               caminho_imagens= r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\images',
+                               nome_arquivo = rf"./finapp/files/PDFs/analise_tecnica/backtest_2pra1_{acao}_RESISTENCIA_COM_VOLUME.pdf",
+                               caminho_dados_benchmarks =r'./finapp/files',
+                               caminho_imagens= r'./finapp/files/images',
                                corretagem=0.00005)
     
     walk.run_walk()

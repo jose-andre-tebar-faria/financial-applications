@@ -42,6 +42,21 @@ class BigStrategy():
 
     def add_cdi(self):
 
+        # Retorna para caminho ./financial-applications
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+
+        # Obtém o diretório atual
+        diretorio_atual = os.getcwd()
+        print("Diretório atual add_cdi:", diretorio_atual)
+
         if self.caminho_benchmarks == None:
 
             self.dados_cdi = pd.read_parquet('./cdi.parquet')

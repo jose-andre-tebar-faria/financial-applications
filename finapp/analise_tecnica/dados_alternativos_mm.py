@@ -44,7 +44,7 @@ class MM_estrategia(BigStrategy):
             
 if __name__ == "__main__":
 
-    acao = "CSNA3"
+    acao = "WEGE3"
 
     import yfinance as yf
 
@@ -61,13 +61,13 @@ if __name__ == "__main__":
     dados_yf = dados_yf.drop(['Close', 'fator_ajuste'], axis = 1)
     dados_yf = dados_yf.reset_index()
 
-    dados_yf.to_parquet(fr'C:\Users\J.A.T.F\Desktop\codigo_py\Database\cotacoes_{acao}.parquet')
+    dados_yf.to_parquet(fr'./finapp/files/cotacoes_{acao}.parquet')
 
     dados = ReadData(
 
-        caminho_parquet = fr'C:\Users\J.A.T.F\Desktop\codigo_py\Database\cotacoes_{acao}.parquet',
+        caminho_parquet = fr'./finapp/files/cotacoes_{acao}.parquet',
         data_inicial = "2000-01-01", 
-        data_final = "2023-04-28", 
+        data_final = "2021-10-28", 
         
         formato_data = ('%Y-%m-%d'), 
 
@@ -82,8 +82,8 @@ if __name__ == "__main__":
 
     walk = WalkForwardAnalysis(estrategia = MM_estrategia(), class_dados = dados,
                                parametro1= range(7, 29, 7), parametro2= range(30, 46, 5), anos_otimizacao=2, anos_teste=1, 
-                               nome_arquivo = rf"C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\analise_tecnica\backtest_2pra1_{acao}_MM.pdf",
-                               caminho_dados_benchmarks =r'C:\Users\J.A.T.F\Desktop\codigo_py\Database',
-                               caminho_imagens= r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\images')
+                               nome_arquivo = rf"./finapp/files/PDFs/analise_tecnica/backtest_2pra1_{acao}_MM(dados_altern).pdf",
+                               caminho_dados_benchmarks =r'./finapp/files',
+                               caminho_imagens= r'./finapp/files/images')
 
     walk.run_walk()

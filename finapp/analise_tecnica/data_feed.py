@@ -58,7 +58,7 @@ if __name__ == "__main__":
 
     dados_petr = ReadData(
 
-        caminho_parquet = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\cotacoes.parquet',
+        caminho_parquet = r'./finapp/files/cotacoes.parquet',
         tem_multiplas_empresas=True,
         empresa_escolhida='WEGE3',
         nome_coluna_empresas = 'ticker',
