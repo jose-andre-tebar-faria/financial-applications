@@ -94,6 +94,9 @@ class dados_fintz:
 
             link_download = (response.json())['link']
             urllib.request.urlretrieve(link_download, f"{nome_dado}.parquet")
+            indicator = pd.read_parquet(f"{nome_dado}.parquet")
+            print(indicator[indicator['ticker'] == 'WEGE3'])
+            #print(indicator)
 
         elif indicadores:
 
@@ -109,6 +112,9 @@ class dados_fintz:
 
             link_download = (response.json())['link']
             urllib.request.urlretrieve(link_download, f"{nome_dado}.parquet")
+            indicator = pd.read_parquet(f"{nome_dado}.parquet")
+            print(indicator[indicator['ticker'] == 'WEGE3'])
+            #print(indicator)
 
         else:
 
@@ -119,8 +125,8 @@ if __name__ == "__main__":
 
     lendo_dados = dados_fintz(caminho_dados=r'./finapp/files')
 
-    lista_demonstracoes = ['Ebit12m', 'DividaBruta', 'DividaLiquida', 'Ebit12m', 'LucroLiquido12m', 'PatrimonioLiquido', 'ReceitaLiquida12m']
-    lista_indicadores = ['EBIT_EV', 'L_P', 'ROE', 'ROIC', 'ValorDeMercado']
+    lista_demonstracoes = ['Ebit12m', 'DividaBruta', 'DividaLiquida', 'Ebit', 'LucroLiquido12m', 'PatrimonioLiquido', 'ReceitaLiquida12m']
+    lista_indicadores = ['EV', 'LPA', 'P_L']#, 'EBIT_EV', 'L_P', 'ROE', 'ROIC', 'ValorDeMercado']
 
     #for demonstracao in lista_demonstracoes:
 
@@ -128,12 +134,12 @@ if __name__ == "__main__":
 
     #    lendo_dados.pegando_arquivo_contabil(demonstracao=True, nome_dado = demonstracao)
 
-    #for indicador in lista_indicadores:
+    for indicador in lista_indicadores:
 
-    #    print(indicador)
+        print(indicador)
 
-    #    lendo_dados.pegando_arquivo_contabil(indicadores=True, nome_dado = indicador)
+        lendo_dados.pegando_arquivo_contabil(indicadores=True, nome_dado = indicador)
 
     #lendo_dados.cdi()
-    lendo_dados.pegar_cotacoes()
+    #lendo_dados.pegar_cotacoes()
     #lendo_dados.ibov()

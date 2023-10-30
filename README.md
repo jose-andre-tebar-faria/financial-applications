@@ -130,7 +130,7 @@ O banco de dados usado nessas aplicações estão contidos em arquivos *.parquet
     1    2000-02-29   -0.464910
     2    2000-03-31   -0.331790
 
-Todo arquivo contendo um indicador deve seguir o seguinte padrão de dados indicado abaixo.
+Todo arquivo contendo um indicador deve seguir minimamente o seguinte padrão de dados indicado abaixo.
 
     ['data', 'ticker', 'valor'] 
 
@@ -139,34 +139,141 @@ Todo arquivo contendo um indicador deve seguir o seguinte padrão de dados indic
 - **valor**: *número inteiro reprensentando o tamanho daquele indicador naquele dia praquela ação.*
 
 Cada .parquet contido no database se refere ao seguinte indicador.
+    
+    *
+    **
+    *** DEMONSTRATIVOS ***
+    **
+    *
+.
 
-    *EBIT_EV*: 
+    - Ebit:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   Ebit                2023-10-29  1.581169e+09
+    1   WEGE3  84.429.695/0001-11   Ebit                2023-10-30  1.581169e+09
+.
 
-    *L_P ou P_L*:
+    - Ebit_12m:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   Ebit12m             2023-10-29  6.206246e+09
+    1   WEGE3  84.429.695/0001-11   Ebit12m             2023-10-30  6.206246e+09
+.
 
-    *ValorDeMercado*:
+    - DividaBruta:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   DividaBruta         2023-10-29  2.848572e+09
+    1   WEGE3  84.429.695/0001-11   DividaBruta         2023-10-30  2.848572e+09
+.
 
-    *ROE*: 
+    - DividaLiquida:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   DividaLiquida       2023-10-29 -2.874738e+09
+    1   WEGE3  84.429.695/0001-11   DividaLiquida       2023-10-30 -2.874738e+09
+.
 
-    *ROIC*: 
+    - LucroLiquido12m:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   LucroLiquido12m     2023-10-29  5.298686e+09
+    1   WEGE3  84.429.695/0001-11   LucroLiquido12m     2023-10-30  5.298686e+09
+.
 
-    *EV*: 
+    - PatrimonioLiquido:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   PatrimonioLiquido   2023-10-29  1.659979e+10
+    1   WEGE3  84.429.695/0001-11   PatrimonioLiquido   2023-10-30  1.659979e+10
+.
 
-    *LPA*: 
+    - ReceitaLiquida12m:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   ReceitaLiquida12m   2023-10-29  3.192195e+10
+    1   WEGE3  84.429.695/0001-11   ReceitaLiquida12m   2023-10-30  3.192195e+10
+.
 
-    *momento_X_meses*: cada linha representa a média móvel dos últimos X meses dos retornos para cada ação.
+    *
+    **
+    *** INDICADORES ***
+    **
+    *
+.
 
-    *mm_X_Y*: cada linha representa a proporção entre média móvel curta e média móvel longa. (mmCurta/mmLonga)
+    - EV: O EV (Enterprise Value ou Valor da Firma), indica quanto custaria para comprar todos os ativos da companhia, descontando o caixa. 
 
-    *volume_mediano*: cada linha representa a mediana do volume negociado nos últimos 21 períodos para cada ação.
+        ticker cnpj                 indicador       data        valor
+    0   WEGE3  84.429.695/0001-11   EV              2023-10-29  1.298864e+11
+    1   WEGE3  84.429.695/0001-11   EV              2023-10-30  1.298864e+11
+.
 
-    *vol_X*: volatilidade histórica anualizada dos retornos. cada linha representa a média, nos últimos X períodos, dos desvios padrões dos retornos de cada ação.
+    - EBIT_EV: Este indicador mostra quanto tempo levaria para o valor calculado no EBIT pagar o investimento feito para compra-la.
 
-    *beta_X*:
+    fórmula = (EV / EBIT)
 
-    *pl_db*:
+        ticker cnpj                 indicador       data        valor
+    0   WEGE3  84.429.695/0001-11   EBIT_EV         2023-10-29  0.04778
+    1   WEGE3  84.429.695/0001-11   EBIT_EV         2023-10-30  0.04778
+.
 
-    *Ebit_12m*:
+    - L_P:
+        ticker cnpj                 indicador       data        valor
+    0   WEGE3  84.429.695/0001-11   L_P             2023-10-29  0.03902
+    1   WEGE3  84.429.695/0001-11   L_P             2023-10-30  0.03902
+.
+
+    - P_L: Dá uma ideia do quanto o mercado está disposto a pagar pelos lucros da empresa.
+
+    fórmula: (Preço atual / Lucro por ação [LPA])
+
+        ticker cnpj                 indicador       data        valor
+    0   WEGE3  84.429.695/0001-11   P_L             2023-10-29  25.62993
+    1   WEGE3  84.429.695/0001-11   P_L             2023-10-30  25.62993
+.
+
+    - ROE: Mede a capacidade de agregar valor de uma empresa a partir de seus próprios recursos e do dinheiro de investidores. valor em porcentagem ?
+
+    fórmula = (Lucro líquido / Patrimônio líquido)
+
+        ticker cnpj                 indicador       data        valor
+    0   WEGE3  84.429.695/0001-11   ROE             2023-10-29  0.31920
+    1   WEGE3  84.429.695/0001-11   ROE             2023-10-30  0.31920
+.
+
+    - ROIC: Mede a rentabilidade de dinheiro o que uma empresa é capaz de gerar em razão de todo o capital investido, incluindo os aportes por meio de dívidas. em porcentagem ?
+
+    fórmula = (EBIT - Impostos) / (Patrimônio líquido + Endividamento)
+
+        ticker cnpj                 item            data        valor
+    0   WEGE3  84.429.695/0001-11   ROIC            2023-10-29  0.26556
+    1   WEGE3  84.429.695/0001-11   ROIC            2023-10-30  0.26556
+.
+
+    - LPA:
+        ticker cnpj                 item            data        valor
+    0   WEGE3  84.429.695/0001-11   LPA             2023-10-29  1.23410
+    1   WEGE3  84.429.695/0001-11   LPA             2023-10-30  1.23410
+.
+
+    - ValorDeMercado:
+        ticker cnpj                 item            data        valor
+    0   WEGE3  84.429.695/0001-11   ValorDeMercado  2023-10-29  1.327612e+11
+    1   WEGE3  84.429.695/0001-11   ValorDeMercado  2023-10-30  1.327612e+11
+.
+
+    *
+    **
+    *** INDICADORES CALCULADOS ***
+    **
+    *
+
+    - momento_X_meses: cada linha representa a média móvel dos últimos X meses dos retornos para cada ação.
+
+    - mm_X_Y: cada linha representa a proporção entre média móvel curta e média móvel longa. (mmCurta/mmLonga)
+
+    - volume_mediano: cada linha representa a mediana do volume negociado nos últimos 21 períodos para cada ação.
+
+    - vol_X: volatilidade histórica anualizada dos retornos. cada linha representa a média, nos últimos X períodos, dos desvios padrões dos retornos de cada ação.
+
+    - beta_X:
+
+    - pl_db:
 
 ## 🎪 Fluxo de execução
 
@@ -178,15 +285,18 @@ Cada .parquet contido no database se refere ao seguinte indicador.
         - Ebit12m
         - DividaBruta
         - DividaLiquida
-        - Ebit12m
+        - Ebit
         - LucroLiquido12m
         - PatrimonioLiquido
         - ReceitaLiquida12m
     - *indicadores* / pegando_arquivo_contabil(indicadores=True, nome_dado = 'X')
+        - EV
         - EBIT_EV
         - L_P
+        - P_L
         - ROE
         - ROIC
+        - LPA
         - ValorDeMercado
 ### **2) fazendo_indicador.py** - classe usada para criação de indicadores de análise.
     - fazer_indicador_momento(meses=X)
