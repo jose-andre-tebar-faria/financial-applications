@@ -135,5 +135,5 @@ if __name__ == "__main__":
     #    lendo_dados.pegando_arquivo_contabil(indicadores=True, nome_dado = indicador)
 
     #lendo_dados.cdi()
-    #lendo_dados.pegar_cotacoes()
+    lendo_dados.pegar_cotacoes()
     #lendo_dados.ibov()
