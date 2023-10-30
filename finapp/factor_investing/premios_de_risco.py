@@ -149,10 +149,10 @@ class premio_risco:
 if __name__ == "__main__":
 
     indicadores_dict = {
-                        'ROE': 'decrescente'
+                        'ValorDeMercado': 'decrescente'
                         }
                         
-    premio = premio_risco(indicadores_dict,  liquidez = 1000000, nome_premio = 'QUALITY_ROE', 
+    premio = premio_risco(indicadores_dict,  liquidez = 1000000, nome_premio = 'TAMANHO_VALOR_DE_MERCADO', 
                           caminho_dados=r'./finapp/files',
                           caminho_salvar_arquivo=r'./finapp/files/premios_risco'
                         ) #não pode ter \ no nome!!
@@ -163,4 +163,4 @@ if __name__ == "__main__":
     premio.pegando_indicadores()
     premio.descobrindo_mes_inicial()
     premio.calculando_premios()
-    #premio.colocando_premio_na_base()
+    premio.colocando_premio_na_base()

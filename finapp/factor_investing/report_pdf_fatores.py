@@ -48,8 +48,8 @@ class MakePDF():
 
     def primeira_pagina(self):
 
-        self.pdf.image(f"{self.caminho_imagens}/comparando_1Q.png", w = 180, h = 90, x = 13, y = 60)
-        self.pdf.image(f"{self.caminho_imagens}/comparando_premios.png", w = 180, h = 90, x = 13, y = 160)
+        self.pdf.image('comparando_1Q.png', w = 180, h = 90, x = 13, y = 60)
+        self.pdf.image('comparando_premios.png', w = 180, h = 90, x = 13, y = 160)
 
     def segunda_pagina(self):
 
@@ -162,7 +162,7 @@ class MakePDF():
     def pagina_fator(self, nome_fator, liquidez):
 
         self.pdf.add_page()
-        self.pdf.image(f"{self.caminho_imagens}/barras_quartis_{nome_fator}_{liquidez}.png", w = 95, h = 80, x = 10, y = 60)
-        self.pdf.image(f"{self.caminho_imagens}/linha_quartis_{nome_fator}_{liquidez}.png", w = 95, h = 80, x = 110, y = 60)
-        self.pdf.image(f"{self.caminho_imagens}/movel_12m_premio_de_risco_{nome_fator}_{liquidez}.png", w = 95, h = 80, x = 10, y = 160)
-        self.pdf.image(f"{self.caminho_imagens}/premio_de_risco_{nome_fator}_{liquidez}.png", w = 95, h = 80, x = 110, y = 160)
+        self.pdf.image(f"barras_quartis_{nome_fator}_{liquidez}.png", w = 95, h = 80, x = 10, y = 60)
+        self.pdf.image(f"linha_quartis_{nome_fator}_{liquidez}.png", w = 95, h = 80, x = 110, y = 60)
+        self.pdf.image(f"movel_12m_premio_de_risco_{nome_fator}_{liquidez}.png", w = 95, h = 80, x = 10, y = 160)
+        self.pdf.image(f"premio_de_risco_{nome_fator}_{liquidez}.png", w = 95, h = 80, x = 110, y = 160)

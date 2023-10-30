@@ -49,10 +49,16 @@ class backtest_indicators():
         self.impacto_mercado = impacto_mercado
         self.dinheiro_inicial = 10000
 
-        os.chdir(caminho_dados)
-
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para _init_:", diretorio_atual)
 
     def pegando_dados(self):
+        
+        os.chdir(self.caminho_dados)
+
+        # Obtém o diretório atual
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para puxar_dados:", diretorio_atual)
 
         cotacoes = pd.read_parquet('cotacoes.parquet')
         cotacoes['data'] = pd.to_datetime(cotacoes['data']).dt.date
@@ -98,6 +104,17 @@ class backtest_indicators():
             df_dados = pd.merge(df_dados, df,  how='inner', left_on=['data', 'ticker'], right_on=['data', 'ticker'])
 
         self.df_dados = df_dados.dropna()
+
+        # Retorna para caminho ./financial-applications
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+                
+        diretorio_atual = os.getcwd()
+        print("Diretório atual depois de puxar_dados:", diretorio_atual)
 
 
     def filtrando_datas(self):
@@ -228,6 +245,9 @@ class backtest_indicators():
 
         self.carteira_por_periodo = self.carteira_por_periodo.set_index('data')
 
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para PDF:", diretorio_atual)
+
         MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, 
                          caminho_imagens=self.caminho_imagens, caminho_benchmarks= self.caminho_dados,
                               nome_arquivo=self.nome_arquivo)
@@ -235,16 +255,17 @@ class backtest_indicators():
 
 if __name__ == "__main__":
 
-
+    diretorio_atual = os.getcwd()
+    print("Diretório atual para _main_:", diretorio_atual)
     
     dicionario_carteira = {
         'carteira1': {
                 'indicadores': {
                     #'momento_1_meses': {'caracteristica': 'decrescente'},
-                    #'momento_6_meses': {'caracteristica': 'decrescente'},
+                    'momento_6_meses': {'caracteristica': 'decrescente'},
                     #'momento_12_meses': {'caracteristica': 'decrescente'},
                     #'mm_7_40': {'caracteristica': 'decrescente'},
-                    #'ValorDeMercado': {'caracteristica': 'crescente'},
+                    'ValorDeMercado': {'caracteristica': 'crescente'},
                     'EBIT_EV': {'caracteristica': 'decrescente'},
                 },
                 'peso': 1
@@ -290,9 +311,9 @@ if __name__ == "__main__":
     nome_pdf = nome_pdf + str(balanceamento) + '_' + str(filtro_liquidez) + "M_" + str(numero_ativos) + "A.pdf"
 
     backtest = backtest_indicators(data_final="2021-12-31", data_inicial= '2011-12-23', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
-                                                numero_ativos=numero_ativos, caminho_dados=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database',
-                                                caminho_imagens=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\images', corretagem=0.01,
-                                                nome_arquivo=fr'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\indicators\{nome_pdf}',
+                                                numero_ativos=numero_ativos, caminho_dados=r'.\finapp\files',
+                                                caminho_imagens=r'.\finapp\files\images', corretagem=0.01,
+                                                nome_arquivo=fr'.\finapp\files\PDFs\indicators\{nome_pdf}',
                                             **dicionario_carteira)
     
 

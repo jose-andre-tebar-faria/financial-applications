@@ -23,10 +23,12 @@ class MakeReportResult():
         self.carteiras = df_carteiras
         self.caminho_imagens = caminho_imagens
 
-        if caminho_imagens != '.':
+        #if caminho_imagens != '.':
             
-            os.chdir(caminho_imagens)
+        #    os.chdir(caminho_imagens)
 
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para MakeReport:", diretorio_atual)
 
         self.ibov = pd.read_parquet(f'{caminho_benchmarks}/ibov.parquet')
         self.cdi = pd.read_parquet(f'{caminho_benchmarks}/cdi.parquet')
@@ -51,6 +53,9 @@ class MakeReportResult():
         plt.style.use('cyberpunk')
 
         self.make_report()
+        
+        diretorio_atual = os.getcwd()
+        print("Diretório atual depois MakeReport:", diretorio_atual)
 
     def make_report(self):
 
@@ -67,6 +72,8 @@ class MakeReportResult():
         self.grafico_retorno_ano_a_ano()
         self.fazer_grafico_janelas_moveis()
 
+
+        os.chdir(self.caminho_imagens)
 
         MakePDF(self.dd_all, self.dia_inicial, self.dia_final, self.dias_totais_backtest, 
             self.retorno_acum_modelo, self.retorno_acum_cdi, self.retorno_acum_ibov, self.turn_over_medio,
@@ -302,6 +309,9 @@ class MakeReportResult():
         plt.legend()
         plt.title("Retorno acumulado")
         ax.grid(False)
+        
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para salvar figuras:", diretorio_atual)
 
         if self.caminho_imagens == None:        
 
@@ -487,14 +497,14 @@ class MakeReportResult():
 if __name__ == "__main__":
 
 
-    trades = pd.read_csv('/home/brenno/Documentos/codigos_curso/trades.csv')
-    carteiras = pd.read_csv('/home/brenno/Documentos/codigos_curso/carteiras.csv', index_col='data')
+    trades = pd.read_csv('./trades.csv')
+    carteiras = pd.read_csv('./carteiras.csv', index_col='data')
 
     carteiras.index = pd.to_datetime(carteiras.index)
 
-    report = MakeReportResult(df_trades=trades, df_carteiras=carteiras, caminho_imagens='/home/brenno/Documentos/dados/galaxia_11_factor/graficos/',
-                              nome_arquivo='/home/brenno/Documentos/dados/galaxia_11_factor/pdfs/backtest.pdf',
-                              caminho_benchmarks='/home/brenno/Documentos/dados/base_dados_br_parquets')
+    report = MakeReportResult(df_trades=trades, df_carteiras=carteiras, caminho_imagens='./images',
+                              nome_arquivo='./PDFs/backtest.pdf',
+                              caminho_benchmarks='/files')
 
     # report.periodo_backtest()
     # report.retorno_risco()

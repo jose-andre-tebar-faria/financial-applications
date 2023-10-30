@@ -31,7 +31,10 @@ class MakeResultsPremium:
         self.data_final_analise = (datetime.datetime.strptime(data_final_analise, '%Y-%m-%d')).date()
         self.caminho_imagens = caminho_imagens
         self.nome_arquivo = nome_arquivo
-        os.chdir(caminho_imagens)
+        diretorio_atual = os.getcwd()
+        print("Diretório atual _init_:", diretorio_atual)
+
+        #os.chdir(caminho_imagens)
 
     def puxando_dados(self):
 
@@ -70,85 +73,100 @@ class MakeResultsPremium:
 
         for i, nome_premio in enumerate(self.lista_nome_fatores):
 
+            #print("lista_nome_fatores: ", self.lista_nome_fatores)
+            #print("nome_premio; ", nome_premio)
+            #print("i: ", i)
+            #print("premio_de_risco: ", self.premios_de_risco)
+
             fator = self.premios_de_risco[(self.premios_de_risco['nome_premio'] == nome_premio) &
                                             (self.premios_de_risco['liquidez'] == self.liquidez[i])]
 
-            acum_primeiro_quartil = (fator['primeiro_quartil'].cumprod() - 1).iloc[-1]
-            acum_segundo_quartil = (fator['segundo_quartil'].cumprod() - 1).iloc[-1]
-            acum_terceiro_quartil = (fator['terceiro_quartil'].cumprod() - 1).iloc[-1]
-            acum_quarto_quartil = (fator['quarto_quartil'].cumprod() - 1).iloc[-1]
-            
-            fig, ax = plt.subplots(figsize = (4.75, 4))
+            tamanho_fator = len(fator['primeiro_quartil'])
+            #print("tamanho_fator: ", tamanho_fator)
+        
+            if tamanho_fator != 0:
 
-            ax.bar(0, acum_primeiro_quartil)
-            ax.bar(1, acum_segundo_quartil)
-            ax.bar(2, acum_terceiro_quartil)
-            ax.bar(3, acum_quarto_quartil)
+                acum_primeiro_quartil = (fator['primeiro_quartil'].cumprod() - 1).iloc[-1]
+                acum_segundo_quartil = (fator['segundo_quartil'].cumprod() - 1).iloc[-1]
+                acum_terceiro_quartil = (fator['terceiro_quartil'].cumprod() - 1).iloc[-1]
+                acum_quarto_quartil = (fator['quarto_quartil'].cumprod() - 1).iloc[-1]
+                
+                fig, ax = plt.subplots(figsize = (4.75, 4))
 
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
+                ax.bar(0, acum_primeiro_quartil)
+                ax.bar(1, acum_segundo_quartil)
+                ax.bar(2, acum_terceiro_quartil)
+                ax.bar(3, acum_quarto_quartil)
 
-            plt.xticks([0, 1, 2, 3], ['1º Quartil', '2º Quartil', '3º Quartil', '4º Quartil'])
+                ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
 
-            plt.title(nome_premio)
+                plt.xticks([0, 1, 2, 3], ['1º Quartil', '2º Quartil', '3º Quartil', '4º Quartil'])
 
-            plt.savefig(f'{self.caminho_imagens}/barras_quartis_{nome_premio}_{self.liquidez[i]}')
+                plt.title(nome_premio)
+                        
+                diretorio_atual = os.getcwd()
+                print("Diretório atual:", diretorio_atual)
 
-            plt.close()
+                plt.savefig(f'{self.caminho_imagens}/barras_quartis_{nome_premio}_{self.liquidez[i]}')
 
-            fig, ax = plt.subplots(figsize = (4.75, 4))
+                plt.close()
 
-            ax.plot(fator['data'].values, (fator['primeiro_quartil'].cumprod() - 1), label = '1º Quartil')
-            ax.plot(fator['data'].values, (fator['segundo_quartil'].cumprod() - 1), label = '2º Quartil')
-            ax.plot(fator['data'].values, (fator['terceiro_quartil'].cumprod() - 1), label = '3º Quartil')
-            ax.plot(fator['data'].values, (fator['quarto_quartil'].cumprod() - 1), label = '4º Quartil')
-            ax.plot(fator['data'].values, (fator['universo'].cumprod() - 1), label = 'Universo')
+                fig, ax = plt.subplots(figsize = (4.75, 4))
 
-            plt.legend()
+                print(fator['primeiro_quartil'].iloc[-1])
 
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
+                ax.plot(fator['data'].values, (fator['primeiro_quartil'].cumprod() - 1), label = '1º Quartil')
+                ax.plot(fator['data'].values, (fator['segundo_quartil'].cumprod() - 1), label = '2º Quartil')
+                ax.plot(fator['data'].values, (fator['terceiro_quartil'].cumprod() - 1), label = '3º Quartil')
+                ax.plot(fator['data'].values, (fator['quarto_quartil'].cumprod() - 1), label = '4º Quartil')
+                ax.plot(fator['data'].values, (fator['universo'].cumprod() - 1), label = 'Universo')
 
-            plt.title(nome_premio)
+                plt.legend()
 
-            plt.savefig(f'{self.caminho_imagens}/linha_quartis_{nome_premio}_{self.liquidez[i]}')
+                ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
 
-            plt.close()
+                plt.title(nome_premio)
 
-            #graifco de prêmio do fator
+                plt.savefig(f'{self.caminho_imagens}/linha_quartis_{nome_premio}_{self.liquidez[i]}')
 
-            fig, ax = plt.subplots(figsize = (4.75, 4))
+                plt.close()
 
-            ax.plot(fator['data'].values, (fator['premio_fator'].cumprod() - 1))
+                #graifco de prêmio do fator
 
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
+                fig, ax = plt.subplots(figsize = (4.75, 4))
 
-            plt.title(nome_premio + " 1º Quartil minus 4º quartil")
+                ax.plot(fator['data'].values, (fator['premio_fator'].cumprod() - 1))
 
-            plt.savefig(f'{self.caminho_imagens}/premio_de_risco_{nome_premio}_{self.liquidez[i]}')
+                ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
 
-            plt.close()
+                plt.title(nome_premio + " 1º Quartil minus 4º quartil")
 
-            #janela movel
+                plt.savefig(f'{self.caminho_imagens}/premio_de_risco_{nome_premio}_{self.liquidez[i]}')
 
-            serie_movel = pd.Series(data = fator['premio_fator'].rolling(12).apply(np.prod, raw = True) - 1)
+                plt.close()
 
-            serie_movel.index = fator['data'].values
+                #janela movel
 
-            serie_movel = serie_movel.dropna()
+                serie_movel = pd.Series(data = fator['premio_fator'].rolling(12).apply(np.prod, raw = True) - 1)
 
-            fig, ax = plt.subplots(figsize = (4.75, 4))
+                serie_movel.index = fator['data'].values
 
-            ax.plot(serie_movel.index, serie_movel.values)
+                serie_movel = serie_movel.dropna()
 
-            ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
+                fig, ax = plt.subplots(figsize = (4.75, 4))
 
-            plt.title(nome_premio + " Janela móvel 12M")
+                ax.plot(serie_movel.index, serie_movel.values)
 
-            plt.savefig(f'{self.caminho_imagens}/movel_12m_premio_de_risco_{nome_premio}_{self.liquidez[i]}')
+                ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
 
-            plt.close()
+                plt.title(nome_premio + " Janela móvel 12M")
 
-            df_primeiro_quartis.loc[:, f"{nome_premio}"] = (fator['primeiro_quartil'].cumprod() - 1).values
-            df_premios_de_risco.loc[:, f"{nome_premio}"] = (fator['premio_fator'].cumprod() - 1).values
+                plt.savefig(f'{self.caminho_imagens}/movel_12m_premio_de_risco_{nome_premio}_{self.liquidez[i]}')
+
+                plt.close()
+
+                df_primeiro_quartis.loc[:, f"{nome_premio}"] = (fator['primeiro_quartil'].cumprod() - 1).values
+                df_premios_de_risco.loc[:, f"{nome_premio}"] = (fator['premio_fator'].cumprod() - 1).values
 
         matplotlib.rcParams.update({'font.size': 11})
 
@@ -189,6 +207,14 @@ class MakeResultsPremium:
     
     def fazer_pdf(self):
 
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual:", diretorio_atual)
+
+        os.chdir(self.caminho_imagens)
+        
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para PDF:", diretorio_atual)
+
         MakePDF(fatores = self.lista_nome_fatores, liquidez = self.liquidez, matriz_correl = self.matriz_correl,
                 caminho_imagens=self.caminho_imagens, nome_arquivo=self.nome_arquivo)
            
@@ -214,11 +240,13 @@ if __name__ == "__main__":
                            }
 
     premios = MakeResultsPremium(data_final_analise="2020-12-31", dicionario_fatores=dicionario_fatores,
-                                 caminho_imagens = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\images', 
-                                 nome_arquivo = r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\PDFs\avaliando_todos_premios.pdf',
-                                 caminho_premios_de_risco=r'C:\Users\J.A.T.F\Desktop\codigo_py\Database\premios_risco')
+                                 caminho_imagens = r'.\finapp\files\images', 
+                                 nome_arquivo = r'..\\PDFs\avaliando_todos_premios.pdf',
+                                 caminho_premios_de_risco=r'.\finapp\files\premios_risco')
 
-    
+    diretorio_atual = os.getcwd()
+    print("Diretório atual antes puxar_dados:", diretorio_atual)
+
     premios.puxando_dados()
     premios.retorno_quartis()
     premios.fazer_pdf()

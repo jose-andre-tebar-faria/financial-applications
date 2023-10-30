@@ -1,11 +1,15 @@
 from fpdf import FPDF
+import os
 
 
 class PDF(FPDF):
 
     
     def header(self):
-     
+        
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para header PDF:", diretorio_atual)
+
         self.image('./logo.png', 10, 8, 40)
         self.set_font('Arial', 'B', 20)
         self.ln(15)
@@ -83,6 +87,20 @@ class MakePDF():
         self.grafico_underwater()
         self.retorno_ano_a_ano_mes_a_mes()
         self.grafico_janelas_moveis()
+
+        # Retorna para caminho ./financial-applications
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+        diretorio_atual = os.getcwd()
+        diretorio_pai = os.path.dirname(diretorio_atual)
+        os.chdir(diretorio_pai)
+
+        diretorio_atual = os.getcwd()
+        print("Diretório atual para output PDF:", diretorio_atual)
 
         self.pdf.output(f"{self.nome_arquivo}")
 
