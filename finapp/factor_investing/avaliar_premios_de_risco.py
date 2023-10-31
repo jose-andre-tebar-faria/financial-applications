@@ -31,8 +31,9 @@ class MakeResultsPremium:
         self.data_final_analise = (datetime.datetime.strptime(data_final_analise, '%Y-%m-%d')).date()
         self.caminho_imagens = caminho_imagens
         self.nome_arquivo = nome_arquivo
-        diretorio_atual = os.getcwd()
-        print("Diretório atual _init_:", diretorio_atual)
+
+        # diretorio_atual = os.getcwd()
+        #print("Diretório atual _init_:", diretorio_atual)
 
         #os.chdir(caminho_imagens)
 
@@ -104,8 +105,8 @@ class MakeResultsPremium:
 
                 plt.title(nome_premio)
                         
-                diretorio_atual = os.getcwd()
-                print("Diretório atual:", diretorio_atual)
+                #diretorio_atual = os.getcwd()
+                #print("Diretório atual:", diretorio_atual)
 
                 plt.savefig(f'{self.caminho_imagens}/barras_quartis_{nome_premio}_{self.liquidez[i]}')
 
@@ -113,7 +114,7 @@ class MakeResultsPremium:
 
                 fig, ax = plt.subplots(figsize = (4.75, 4))
 
-                print(fator['primeiro_quartil'].iloc[-1])
+                #print(fator['primeiro_quartil'].iloc[-1])
 
                 ax.plot(fator['data'].values, (fator['primeiro_quartil'].cumprod() - 1), label = '1º Quartil')
                 ax.plot(fator['data'].values, (fator['segundo_quartil'].cumprod() - 1), label = '2º Quartil')
@@ -204,7 +205,6 @@ class MakeResultsPremium:
 
         self.matriz_correl = df_premios_de_risco.corr()
 
-    
     def fazer_pdf(self):
 
         #diretorio_atual = os.getcwd()
@@ -212,40 +212,36 @@ class MakeResultsPremium:
 
         os.chdir(self.caminho_imagens)
         
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para PDF:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para PDF:", diretorio_atual)
 
         MakePDF(fatores = self.lista_nome_fatores, liquidez = self.liquidez, matriz_correl = self.matriz_correl,
                 caminho_imagens=self.caminho_imagens, nome_arquivo=self.nome_arquivo)
            
-
-        
-
-
 if __name__ == "__main__":
 
     dicionario_fatores = {
-                          'QUALITY_ROIC': 1000000,
-                          'QUALITY_ROE': 1000000,
-                          'VALOR_EBIT_EV': 1000000,
-                          'VALOR_L_P': 1000000,
-                          #'ALAVANCAGEM_EBIT_DL': 1000000,
+                          #'QUALITY_ROIC': 1000000,
+                          #'QUALITY_ROE': 1000000,
+                          #'VALOR_EBIT_EV': 1000000,
+                          #'VALOR_L_P': 1000000,
+                          'ALAVANCAGEM_EBIT_DL': 1000000,
                           #'ALAVANCAGEM_PL_DB': 1000000,
-                          'MOMENTO_R6M': 1000000,
-                          'MOMENTO_R1M': 1000000,
-                          'MOMENTO_R12M': 1000000,
-                          'MOMENTO_MM_7_40': 1000000,
+                          #'MOMENTO_R6M': 1000000,
+                          #'MOMENTO_R1M': 1000000,
+                          #'MOMENTO_R12M': 1000000,
+                          #'MOMENTO_MM_7_40': 1000000,
                           'TAMANHO_VALOR_DE_MERCADO': 1000000,
-                          'RISCO_VOL': 1000000,
+                          #'RISCO_VOL': 1000000,
                            }
 
     premios = MakeResultsPremium(data_final_analise="2020-12-31", dicionario_fatores=dicionario_fatores,
                                  caminho_imagens = r'.\finapp\files\images', 
-                                 nome_arquivo = r'..\\PDFs\avaliando_todos_premios.pdf',
+                                 nome_arquivo = r'..\\PDFs\avaliando_ALAVANCAGEM_EBIT_DL-TAMANHO_VALOR_DE_MERCADO.pdf',
                                  caminho_premios_de_risco=r'.\finapp\files\premios_risco')
 
-    diretorio_atual = os.getcwd()
-    print("Diretório atual antes puxar_dados:", diretorio_atual)
+    #diretorio_atual = os.getcwd()
+    #print("Diretório atual antes puxar_dados:", diretorio_atual)
 
     premios.puxando_dados()
     premios.retorno_quartis()

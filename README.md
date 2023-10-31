@@ -101,7 +101,7 @@ Para cada fator aprensentado acima deve-se modelar o indicador que descreve aque
 
 O banco de dados usado nessas aplicações estão contidos em arquivos *.parquet* e serão discriminados a seguir.
 
-    *cotacoes*: cada linha representa a lista preços - incluindo preços ajustados - e quantidades negociadas de cada dia de cada ação.
+    - cotacoes.parquet: cada linha representa a lista preços - incluindo preços ajustados - e quantidades negociadas de cada dia de cada ação.
 
         ['preco_abertura', 'preco_abertura_ajustado', 
         'preco_fechamento', 'preco_fechamento_ajustado', 
@@ -111,24 +111,24 @@ O banco de dados usado nessas aplicações estão contidos em arquivos *.parquet
         'quantidade_negociada',
         'quantidade_negocios']
 
-                  data  preco_abertura  preco_fechamento  preco_maximo  preco_medio ...
-    0       2010-01-04           11.50             11.50         11.50        11.50 ...
-    67071   2010-01-04           38.89             40.12         40.49        39.96 ...
+        data            preco_abertura  preco_fechamento  preco_maximo  preco_medio ...
+    0   2010-01-04      11.50           11.50             11.50         11.50       ...
+    1   2010-01-04      38.89           40.12             40.49         39.96       ...
 
-    *ibov*: cada linha representa o número de pontos do ibovespa por dia.
-                data  fechamento
-    0     2000-01-03  16930.42
-    1     2000-01-04  15851.00
+    - ibov.parquet: cada linha representa o número de pontos do ibovespa por dia.
+        data        fechamento
+    0   2000-01-03  16930.42
+    1   2000-01-04  15851.00
 
-    *cdi*: representa em cada linha a porcentagem de retorno da renda fixa no Brasil.
-                data  retorno
-    0     2000-01-03  0.000683
-    1     2000-01-04  0.000682
+    - cdi.parquet: representa em cada linha a porcentagem de retorno da renda fixa no Brasil.
+        data        retorno
+    0   2000-01-03  0.000683
+    1   2000-01-04  0.000682
 
-    *market_premium*: cada linha representa a proporção entre os retornos do mercado (ibov) e a renda fixa (cdi) por mês - último dia.
-                data  mkt_premium
-    1    2000-02-29   -0.464910
-    2    2000-03-31   -0.331790
+    - market_premium.parquet: cada linha representa a proporção entre os retornos do mercado (ibov) e a renda fixa (cdi) por mês - último dia.
+        data        mkt_premium
+    0   2000-02-29  -0.464910
+    1   2000-03-31  -0.331790
 
 Todo arquivo contendo um indicador deve seguir minimamente o seguinte padrão de dados indicado abaixo.
 
@@ -147,77 +147,77 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     *
 .
 
-    - Ebit:
+    - Ebit.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   Ebit                2023-10-29  1.581169e+09
     1   WEGE3  84.429.695/0001-11   Ebit                2023-10-30  1.581169e+09
 .
 
-    - Ebit_12m:
+    - Ebit_12m.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   Ebit12m             2023-10-29  6.206246e+09
     1   WEGE3  84.429.695/0001-11   Ebit12m             2023-10-30  6.206246e+09
 .
 
-    - DividaBruta:
+    - DividaBruta.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   DividaBruta         2023-10-29  2.848572e+09
     1   WEGE3  84.429.695/0001-11   DividaBruta         2023-10-30  2.848572e+09
 .
 
-    - DividaLiquida:
+    - DividaLiquida.parquet:
         ticker cnpj                 item                data        valor
-    0   WEGE3  84.429.695/0001-11   DividaLiquida       2023-10-29 -2.874738e+09
-    1   WEGE3  84.429.695/0001-11   DividaLiquida       2023-10-30 -2.874738e+09
+    0   WEGE3  84.429.695/0001-11   DividaLiquida       2023-10-29  -2.874738e+09
+    1   WEGE3  84.429.695/0001-11   DividaLiquida       2023-10-30  -2.874738e+09
 .
 
-    - LucroLiquido12m:
+    - LucroLiquido12m.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   LucroLiquido12m     2023-10-29  5.298686e+09
     1   WEGE3  84.429.695/0001-11   LucroLiquido12m     2023-10-30  5.298686e+09
 .
 
-    - PatrimonioLiquido:
+    - PatrimonioLiquido.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   PatrimonioLiquido   2023-10-29  1.659979e+10
     1   WEGE3  84.429.695/0001-11   PatrimonioLiquido   2023-10-30  1.659979e+10
 .
 
-    - ReceitaLiquida12m:
+    - ReceitaLiquida12m.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   ReceitaLiquida12m   2023-10-29  3.192195e+10
     1   WEGE3  84.429.695/0001-11   ReceitaLiquida12m   2023-10-30  3.192195e+10
 .
 
-    - Impostos:
+    - Impostos.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   Impostos            2023-10-29 -268697000.0
     1   WEGE3  84.429.695/0001-11   Impostos            2023-10-30 -268697000.0
 .
 
-    - Impostos12m:
+    - Impostos12m.parquet:
         ticker cnpj                 item                data        valor
-    0   WEGE3  84.429.695/0001-11   Impostos12m         2023-10-29 -1.041531e+09
-    1   WEGE3  84.429.695/0001-11   Impostos12m         2023-10-30 -1.041531e+09
+    0   WEGE3  84.429.695/0001-11   Impostos12m         2023-10-29  -1.041531e+09
+    1   WEGE3  84.429.695/0001-11   Impostos12m         2023-10-30  -1.041531e+09
 .
 
-    - AcoesEmCirculacao:
+    - AcoesEmCirculacao.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   AcoesEmCirculacao   2023-10-29  4.195234e+09
     1   WEGE3  84.429.695/0001-11   AcoesEmCirculacao   2023-10-30  4.195234e+09
 .
 
-    - TotalAcoes:
+    - TotalAcoes.parquet:
         ticker cnpj                 item                data        valor
     0   WEGE3  84.429.695/0001-11   TotalAcoes          2023-10-29  4.197318e+09
     1   WEGE3  84.429.695/0001-11   TotalAcoes          2023-10-30  4.197318e+09
 .
 
-    LucroLiquido
-    ReceitaLiquida
-    Disponibilidades
-    LucroLiquidoSociosControladora
-    LucroLiquidoSociosControladora12m
+    LucroLiquido.parquet
+    ReceitaLiquida.parquet
+    Disponibilidades.parquet
+    LucroLiquidoSociosControladora.parquet
+    LucroLiquidoSociosControladora12m.parquet
 .
 
     *
@@ -227,14 +227,14 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     *
 .
 
-    - EV: O EV (Enterprise Value ou Valor da Firma), indica quanto custaria para comprar todos os ativos da companhia, descontando o caixa. 
+    - EV.parquet: O EV (Enterprise Value ou Valor da Firma), indica quanto custaria para comprar todos os ativos da companhia, descontando o caixa. 
 
         ticker cnpj                 indicador       data        valor
     0   WEGE3  84.429.695/0001-11   EV              2023-10-29  1.298864e+11
     1   WEGE3  84.429.695/0001-11   EV              2023-10-30  1.298864e+11
 .
 
-    - EBIT_EV: Este indicador mostra quanto tempo levaria para o valor calculado no EBIT pagar o investimento feito para compra-la.
+    - EBIT_EV.parquet: Este indicador mostra quanto tempo levaria para o valor calculado no EBIT pagar o investimento feito para compra-la.
 
     fórmula = (EV / Ebit)
 
@@ -243,7 +243,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   WEGE3  84.429.695/0001-11   EBIT_EV         2023-10-30  0.04778
 .
 
-    - P_L: Dá uma ideia do quanto o mercado está disposto a pagar pelos lucros da empresa.
+    - P_L.parquet: Dá uma ideia do quanto o mercado está disposto a pagar pelos lucros da empresa.
 
     fórmula: (Preço atual / Lucro por ação [LPA])
 
@@ -252,14 +252,14 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   WEGE3  84.429.695/0001-11   P_L             2023-10-30  25.62993
 .
  
-    - L_P: P_L invertido para ajudar nos cálculos.
+    - L_P.parquet: P_L invertido para ajudar nos cálculos. Esse é o indicador usado pela aplicação.
     
         ticker cnpj                 indicador       data        valor
     0   WEGE3  84.429.695/0001-11   L_P             2023-10-29  0.03902
     1   WEGE3  84.429.695/0001-11   L_P             2023-10-30  0.03902
 .
 
-    - ROE: Mede a capacidade de agregar valor de uma empresa a partir de seus próprios recursos e do dinheiro de investidores. valor em porcentagem ?
+    - ROE.parquet: Mede a capacidade de agregar valor de uma empresa a partir de seus próprios recursos e do dinheiro de investidores. valor em porcentagem ?
 
     fórmula = (Lucro líquido / Patrimônio líquido)
 
@@ -268,7 +268,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   WEGE3  84.429.695/0001-11   ROE             2023-10-30  0.31920
 .
 
-    - ROIC: Mede a rentabilidade de dinheiro o que uma empresa é capaz de gerar em razão de todo o capital investido, incluindo os aportes por meio de dívidas. em porcentagem ?
+    - ROIC.parquet: Mede a rentabilidade de dinheiro o que uma empresa é capaz de gerar em razão de todo o capital investido, incluindo os aportes por meio de dívidas. em porcentagem ?
 
     fórmula = (Ebit - Impostos) / (Patrimônio líquido + Endividamento)
 
@@ -277,7 +277,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   WEGE3  84.429.695/0001-11   ROIC            2023-10-30  0.26556
 .
 
-    - LPA: Lucro por Ação.
+    - LPA.parquet: Lucro por Ação.
 
     fórmula: (LucroLiquido / TotalAcoes)
 
@@ -286,7 +286,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   WEGE3  84.429.695/0001-11   LPA             2023-10-30  1.23410
 .
 
-    - ValorDeMercado: Usado para se referir ao preço que o mercado está pagando por uma empresa.
+    - ValorDeMercado.parquet: Usado para se referir ao preço que o mercado está pagando por uma empresa.
 
     fórmula: (TotalAcoes * PreçoAtual)
 
@@ -302,14 +302,14 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     *
 .
 
-    - momento_X_meses: cada linha representa a média móvel dos últimos X meses dos retornos para cada ação. ex = 1 mês
+    - momento_X_meses.parquet: cada linha representa a média móvel dos últimos X meses dos retornos para cada ação. ex = 1 mês
 
         data        ticker      valor
     0   2023-10-26  WEGE3       -0.096042
     1   2023-10-27  WEGE3       -0.123337
 .
 
-    - mm_X_Y: cada linha representa a proporção entre média móvel curta e média móvel longa. ex = 7 && 40 meses
+    - mm_X_Y.parquet: cada linha representa a proporção entre média móvel curta e média móvel longa. ex = 7 && 40 meses
 
     fórmula: (médiaCurta / médiaLonga)
 
@@ -318,21 +318,21 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   2023-10-27  WEGE3       0.945331
 .
 
-    - volume_mediano: cada linha representa a mediana do volume negociado nos últimos 21 períodos para cada ação.
+    - volume_mediano.parquet: cada linha representa a mediana do volume negociado nos últimos 21 períodos para cada ação.
 
         data        ticker      valor
     0   2023-10-26  WEGE3       205862261.0
     1   2023-10-27  WEGE3       205862261.0
 .
 
-    - vol_X: volatilidade histórica anualizada dos retornos. cada linha representa a média, nos últimos X períodos, dos desvios padrões dos retornos de cada ação.
+    - vol_X.parquet: volatilidade histórica anualizada dos retornos. cada linha representa a média, nos últimos X períodos, dos desvios padrões dos retornos de cada ação.
     
         data        ticker      valor
     0   2023-10-26  WEGE3       0.284484
     1   2023-10-27  WEGE3       0.286116
 .
 
-    - beta_X: 
+    - beta_X.parquet: 
 
         data        ticker      valor
     0   2023-10-26  WEGE3       0.527416
@@ -340,7 +340,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
 
 .
 
-    - pl_db: Proporção direta entre o Patrimônio Líquido e a Dívida Bruta de uma companhia.
+    - pl_db.parquet: Proporção direta entre o Patrimônio Líquido e a Dívida Bruta de uma companhia.
 
     fórmula = (PatrimonioLiquido / DividaBruta)
 
@@ -349,7 +349,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   2023-10-30  WEGE3       5.827407
 .
 
-    - ebit_dl: Proporção direta entre o EBIT e a Dívida Líquida da companhia. Quanto mais negativo, melhor.
+    - ebit_dl.parquet: Proporção direta entre o EBIT e a Dívida Líquida da companhia. Quanto mais negativo, melhor.
 
     fórmula = (Ebit / DividaLiquida)
 
@@ -411,4 +411,30 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     - puxando_dados()
     - retorno_quartis()
     - fazer_pdf()
-    - test
+### **5) modelo_regressão.py** - classe
+    -  OLS Regression Result
+        ideal que:
+            R-squared           mais próximo de 1
+            F-statistic         maior possível
+            P-Valor (P>|t|)     quanto maior, mais irrelevante na modelagem
+                queremos o ALPHA maior possível 'const'
+    
+                                OLS Regression Results Example
+        ==============================================================================
+        Dep. Variable:                   U_RF   R-squared:                       0.952
+        Model:                            OLS   Adj. R-squared:                  0.950
+        Method:                 Least Squares   F-statistic:                     495.6
+        Date:                Tue, 31 Oct 2023   Prob (F-statistic):           2.05e-65
+        Time:                        01:15:13   Log-Likelihood:                 294.70
+        No. Observations:                 106   AIC:                            -579.4
+        Df Residuals:                     101   BIC:                            -566.1
+        Df Model:                           4
+        Covariance Type:            nonrobust
+        ============================================================================================
+                                    coef    std err          t      P>|t|      [0.025      0.975]
+        --------------------------------------------------------------------------------------------
+        const                        0.0011      0.002      0.677      0.500      -0.002       0.004
+        MOMENTO_R6M                  0.0589      0.028      2.086      0.039       0.003       0.115
+        ALAVANCAGEM_EBIT_DL          0.1023      0.038      2.671      0.009       0.026       0.178
+        TAMANHO_VALOR_DE_MERCADO     0.4513      0.034     13.420      0.000       0.385       0.518
+        mkt_premium                  0.8485      0.029     29.262      0.000       0.791       0.906

@@ -7,8 +7,8 @@ class PDF(FPDF):
     
     def header(self):
         
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para header PDF:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para header PDF:", diretorio_atual)
 
         self.image('./logo.png', 10, 8, 40)
         self.set_font('Arial', 'B', 20)
@@ -99,8 +99,8 @@ class MakePDF():
         diretorio_pai = os.path.dirname(diretorio_atual)
         os.chdir(diretorio_pai)
 
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para output PDF:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para output PDF:", diretorio_atual)
 
         self.pdf.output(f"{self.nome_arquivo}")
 

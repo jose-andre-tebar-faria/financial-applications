@@ -49,16 +49,16 @@ class backtest_indicators():
         self.impacto_mercado = impacto_mercado
         self.dinheiro_inicial = 10000
 
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para _init_:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para _init_:", diretorio_atual)
 
     def pegando_dados(self):
         
         os.chdir(self.caminho_dados)
 
         # Obtém o diretório atual
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para puxar_dados:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para puxar_dados:", diretorio_atual)
 
         cotacoes = pd.read_parquet('cotacoes.parquet')
         cotacoes['data'] = pd.to_datetime(cotacoes['data']).dt.date
@@ -113,9 +113,8 @@ class backtest_indicators():
         diretorio_pai = os.path.dirname(diretorio_atual)
         os.chdir(diretorio_pai)
                 
-        diretorio_atual = os.getcwd()
-        print("Diretório atual depois de puxar_dados:", diretorio_atual)
-
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual depois de puxar_dados:", diretorio_atual)
 
     def filtrando_datas(self):
 
@@ -238,15 +237,17 @@ class backtest_indicators():
         df_retornos = df_retornos.assign(retorno = df_retornos['dinheiro'].pct_change())
         df_retornos = df_retornos.drop(0, axis = 0)
 
-        self.df_retornos = df_retornos
+        #df = pd.DataFrame(carteiras)
+        print(carteiras)
 
+        self.df_retornos = df_retornos
 
     def make_report(self):
 
         self.carteira_por_periodo = self.carteira_por_periodo.set_index('data')
 
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para PDF:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para PDF:", diretorio_atual)
 
         MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, 
                          caminho_imagens=self.caminho_imagens, caminho_benchmarks= self.caminho_dados,
@@ -255,8 +256,8 @@ class backtest_indicators():
 
 if __name__ == "__main__":
 
-    diretorio_atual = os.getcwd()
-    print("Diretório atual para _main_:", diretorio_atual)
+    #diretorio_atual = os.getcwd()
+    #print("Diretório atual para _main_:", diretorio_atual)
     
     dicionario_carteira = {
         'carteira1': {
@@ -267,6 +268,7 @@ if __name__ == "__main__":
                     #'mm_7_40': {'caracteristica': 'decrescente'},
                     'ValorDeMercado': {'caracteristica': 'crescente'},
                     'EBIT_EV': {'caracteristica': 'decrescente'},
+                    #'ebit_dl': {'caracteristica': 'decrescente'}
                 },
                 'peso': 1
 
@@ -321,4 +323,4 @@ if __name__ == "__main__":
     backtest.filtrando_datas()
     backtest.criando_carteiras()
     backtest.calculando_retorno_diario()
-    backtest.make_report()
+    #backtest.make_report()

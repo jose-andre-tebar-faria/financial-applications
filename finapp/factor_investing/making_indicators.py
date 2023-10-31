@@ -62,8 +62,8 @@ class MakeIndicator():
         output_df = pd.DataFrame()
         output_df = pd.merge(df_ebit, df_divida_liquida, how = 'inner', on = 'id_dado')
         output_df['ebit_DL'] = pd.NA
-        #output_df.loc[output_df['divida'] <= 0, 'ebit_DL'] = 999
-        #output_df.loc[output_df['ebit'] <= 0, 'ebit_DL'] = -999
+        output_df.loc[output_df['divida'] <= 0, 'ebit_DL'] = 999
+        output_df.loc[output_df['ebit'] <= 0, 'ebit_DL'] = -999
         output_df.loc[output_df['ebit_DL'].isna(), 'ebit_DL'] = (output_df[output_df['ebit_DL'].isna()]['ebit']/
                                                                 output_df[output_df['ebit_DL'].isna()]['divida'])
         output_df = output_df[['data', 'ticker', 'ebit_DL']]
@@ -195,11 +195,11 @@ if __name__ == "__main__":
     indicator = MakeIndicator(data_path=r'./finapp/files')
 
     #indicator.making_momentum(months=12)
-    indicator.making_momentum(months=1)
+    #indicator.making_momentum(months=1)
     #indicator.making_momentum(months=6)
     #indicator.median_volume()
     #indicator.ratio_moving_mean(7, 40)
     #indicator.beta(1)
     #indicator.volatility(1)
     #indicator.pl_divida_bruta()
-    #indicator.ebit_divida_liquida()
+    indicator.ebit_divida_liquida()
