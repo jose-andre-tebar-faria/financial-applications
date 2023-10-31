@@ -189,6 +189,37 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   WEGE3  84.429.695/0001-11   ReceitaLiquida12m   2023-10-30  3.192195e+10
 .
 
+    - Impostos:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   Impostos            2023-10-29 -268697000.0
+    1   WEGE3  84.429.695/0001-11   Impostos            2023-10-30 -268697000.0
+.
+
+    - Impostos12m:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   Impostos12m         2023-10-29 -1.041531e+09
+    1   WEGE3  84.429.695/0001-11   Impostos12m         2023-10-30 -1.041531e+09
+.
+
+    - AcoesEmCirculacao:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   AcoesEmCirculacao   2023-10-29  4.195234e+09
+    1   WEGE3  84.429.695/0001-11   AcoesEmCirculacao   2023-10-30  4.195234e+09
+.
+
+    - TotalAcoes:
+        ticker cnpj                 item                data        valor
+    0   WEGE3  84.429.695/0001-11   TotalAcoes          2023-10-29  4.197318e+09
+    1   WEGE3  84.429.695/0001-11   TotalAcoes          2023-10-30  4.197318e+09
+.
+
+    LucroLiquido
+    ReceitaLiquida
+    Disponibilidades
+    LucroLiquidoSociosControladora
+    LucroLiquidoSociosControladora12m
+.
+
     *
     **
     *** INDICADORES ***
@@ -205,17 +236,11 @@ Cada .parquet contido no database se refere ao seguinte indicador.
 
     - EBIT_EV: Este indicador mostra quanto tempo levaria para o valor calculado no EBIT pagar o investimento feito para compra-la.
 
-    fórmula = (EV / EBIT)
+    fórmula = (EV / Ebit)
 
         ticker cnpj                 indicador       data        valor
     0   WEGE3  84.429.695/0001-11   EBIT_EV         2023-10-29  0.04778
     1   WEGE3  84.429.695/0001-11   EBIT_EV         2023-10-30  0.04778
-.
-
-    - L_P:
-        ticker cnpj                 indicador       data        valor
-    0   WEGE3  84.429.695/0001-11   L_P             2023-10-29  0.03902
-    1   WEGE3  84.429.695/0001-11   L_P             2023-10-30  0.03902
 .
 
     - P_L: Dá uma ideia do quanto o mercado está disposto a pagar pelos lucros da empresa.
@@ -225,6 +250,13 @@ Cada .parquet contido no database se refere ao seguinte indicador.
         ticker cnpj                 indicador       data        valor
     0   WEGE3  84.429.695/0001-11   P_L             2023-10-29  25.62993
     1   WEGE3  84.429.695/0001-11   P_L             2023-10-30  25.62993
+.
+ 
+    - L_P: P_L invertido para ajudar nos cálculos.
+    
+        ticker cnpj                 indicador       data        valor
+    0   WEGE3  84.429.695/0001-11   L_P             2023-10-29  0.03902
+    1   WEGE3  84.429.695/0001-11   L_P             2023-10-30  0.03902
 .
 
     - ROE: Mede a capacidade de agregar valor de uma empresa a partir de seus próprios recursos e do dinheiro de investidores. valor em porcentagem ?
@@ -238,20 +270,26 @@ Cada .parquet contido no database se refere ao seguinte indicador.
 
     - ROIC: Mede a rentabilidade de dinheiro o que uma empresa é capaz de gerar em razão de todo o capital investido, incluindo os aportes por meio de dívidas. em porcentagem ?
 
-    fórmula = (EBIT - Impostos) / (Patrimônio líquido + Endividamento)
+    fórmula = (Ebit - Impostos) / (Patrimônio líquido + Endividamento)
 
         ticker cnpj                 item            data        valor
     0   WEGE3  84.429.695/0001-11   ROIC            2023-10-29  0.26556
     1   WEGE3  84.429.695/0001-11   ROIC            2023-10-30  0.26556
 .
 
-    - LPA:
+    - LPA: Lucro por Ação.
+
+    fórmula: (LucroLiquido / TotalAcoes)
+
         ticker cnpj                 item            data        valor
     0   WEGE3  84.429.695/0001-11   LPA             2023-10-29  1.23410
     1   WEGE3  84.429.695/0001-11   LPA             2023-10-30  1.23410
 .
 
-    - ValorDeMercado:
+    - ValorDeMercado: Usado para se referir ao preço que o mercado está pagando por uma empresa.
+
+    fórmula: (TotalAcoes * PreçoAtual)
+
         ticker cnpj                 item            data        valor
     0   WEGE3  84.429.695/0001-11   ValorDeMercado  2023-10-29  1.327612e+11
     1   WEGE3  84.429.695/0001-11   ValorDeMercado  2023-10-30  1.327612e+11
@@ -262,22 +300,67 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     *** INDICADORES CALCULADOS ***
     **
     *
+.
 
-    - momento_X_meses: cada linha representa a média móvel dos últimos X meses dos retornos para cada ação.
+    - momento_X_meses: cada linha representa a média móvel dos últimos X meses dos retornos para cada ação. ex = 1 mês
 
-    - mm_X_Y: cada linha representa a proporção entre média móvel curta e média móvel longa. (mmCurta/mmLonga)
+        data        ticker      valor
+    0   2023-10-26  WEGE3       -0.096042
+    1   2023-10-27  WEGE3       -0.123337
+.
+
+    - mm_X_Y: cada linha representa a proporção entre média móvel curta e média móvel longa. ex = 7 && 40 meses
+
+    fórmula: (médiaCurta / médiaLonga)
+
+        data        ticker      valor
+    0   2023-10-26  WEGE3       0.952888
+    1   2023-10-27  WEGE3       0.945331
+.
 
     - volume_mediano: cada linha representa a mediana do volume negociado nos últimos 21 períodos para cada ação.
 
+        data        ticker      valor
+    0   2023-10-26  WEGE3       205862261.0
+    1   2023-10-27  WEGE3       205862261.0
+.
+
     - vol_X: volatilidade histórica anualizada dos retornos. cada linha representa a média, nos últimos X períodos, dos desvios padrões dos retornos de cada ação.
+    
+        data        ticker      valor
+    0   2023-10-26  WEGE3       0.284484
+    1   2023-10-27  WEGE3       0.286116
+.
 
-    - beta_X:
+    - beta_X: 
 
-    - pl_db:
+        data        ticker      valor
+    0   2023-10-26  WEGE3       0.527416
+    1   2023-10-27  WEGE3       0.539298
+
+.
+
+    - pl_db: Proporção direta entre o Patrimônio Líquido e a Dívida Bruta de uma companhia.
+
+    fórmula = (PatrimonioLiquido / DividaBruta)
+
+        data        ticker      valor
+    0   2023-10-29  WEGE3       5.827407
+    1   2023-10-30  WEGE3       5.827407
+.
+
+    - ebit_dl: Proporção direta entre o EBIT e a Dívida Líquida da companhia. Quanto mais negativo, melhor.
+
+    fórmula = (Ebit / DividaLiquida)
+
+        data        ticker      valor
+    0   2011-10-26  WEGE3       3.195411
+    1   2011-10-27  WEGE3       3.195411
+
 
 ## 🎪 Fluxo de execução
 
-### **1) load_data_fintz.py** - classe usada para criação da base primária de dados
+### **1) load_data_fintz.py** - classe usada para criação e/ou atualização da base primária de dados
     - cotacoes()
     - cdi()
     - ibov()
@@ -298,7 +381,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
         - ROIC
         - LPA
         - ValorDeMercado
-### **2) fazendo_indicador.py** - classe usada para criação de indicadores de análise.
+### **2) fazendo_indicador.py** - classe usada para criação e/ou atualização de indicadores de análise.
     - fazer_indicador_momento(meses=X)
         - output: momento_X_meses.parquet
     - volume_mediano()
