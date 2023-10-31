@@ -312,7 +312,7 @@ if __name__ == "__main__":
 
     nome_pdf = nome_pdf + str(balanceamento) + '_' + str(filtro_liquidez) + "M_" + str(numero_ativos) + "A.pdf"
 
-    backtest = backtest_indicators(data_final="2021-12-31", data_inicial= '2011-12-23', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
+    backtest = backtest_indicators(data_final="2023-09-30", data_inicial= '2011-12-23', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
                                                 numero_ativos=numero_ativos, caminho_dados=r'.\finapp\files',
                                                 caminho_imagens=r'.\finapp\files\images', corretagem=0.01,
                                                 nome_arquivo=fr'.\finapp\files\PDFs\indicators\{nome_pdf}',

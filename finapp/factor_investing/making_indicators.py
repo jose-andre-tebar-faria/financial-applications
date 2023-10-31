@@ -202,4 +202,4 @@ if __name__ == "__main__":
     #indicator.beta(1)
     #indicator.volatility(1)
     #indicator.pl_divida_bruta()
-    indicator.ebit_divida_liquida()
+    #indicator.ebit_divida_liquida()

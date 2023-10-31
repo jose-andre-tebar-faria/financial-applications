@@ -180,4 +180,4 @@ if __name__ == "__main__":
     premio.pegando_indicadores()
     premio.descobrindo_mes_inicial()
     premio.calculando_premios()
-    premio.colocando_premio_na_base()
+    #premio.colocando_premio_na_base()

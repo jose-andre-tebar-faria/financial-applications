@@ -359,6 +359,20 @@ Cada .parquet contido no database se refere ao seguinte indicador.
 
 
 ## 🎪 Fluxo de execução
+    1) classe 'load_data_fintz.py' realiza atualização da base de dados
+    2) classe 'making_indicators.py' cria indicadores e salva na base de dados
+    4) classe 'premios_risco.py' cria o DataFrame dos retornos para o indicador selecionado. 
+    5) rank companies monthly
+    6) create montlhy_wallet
+
+    ### BACK TESTING
+    7) create monthly returns dataframe
+    8) create returns heatmap plot for sns
+    9) create acum returns heatmap plot for sns
+    10) create ibov acum returns heatmap plot for sns 
+    11) compare model & ibov monthly returns
+    12) create compare ibov returns heatmap plot for sns
+    13) configure heatmaps
 
 ### **1) load_data_fintz.py** - classe usada para criação e/ou atualização da base primária de dados
     - cotacoes()
@@ -403,6 +417,11 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     - pegando_indicadores()
     - descobrindo_mes_inicial()
     - calculando_premios()
+        - output:
+                ['df_premios', 'data', 'primeiro_quartil', 'segundo_quartil',
+                'terceiro_quartil, 'quarto_quartil', 'universo', 'nome_premio',
+                'liquidez', 'id_premio']
+
     - colocando_premio_na_base()
 ### **3-b) fator_mercado.py** - classe usada para cálculo do prêmio de risco do mercado
     - calculando_premio()
