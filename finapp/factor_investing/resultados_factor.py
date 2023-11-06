@@ -27,8 +27,8 @@ class MakeReportResult():
             
         #    os.chdir(caminho_imagens)
 
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para MakeReport:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para MakeReport:", diretorio_atual)
 
         self.ibov = pd.read_parquet(f'{caminho_benchmarks}/ibov.parquet')
         self.cdi = pd.read_parquet(f'{caminho_benchmarks}/cdi.parquet')
@@ -54,8 +54,8 @@ class MakeReportResult():
 
         self.make_report()
         
-        diretorio_atual = os.getcwd()
-        print("Diretório atual depois MakeReport:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual depois MakeReport:", diretorio_atual)
 
     def make_report(self):
 
@@ -72,7 +72,6 @@ class MakeReportResult():
         self.grafico_retorno_ano_a_ano()
         self.fazer_grafico_janelas_moveis()
 
-
         os.chdir(self.caminho_imagens)
 
         MakePDF(self.dd_all, self.dia_inicial, self.dia_final, self.dias_totais_backtest, 
@@ -84,8 +83,6 @@ class MakeReportResult():
             self.crise_2008, self.precatorios, self.retorno_21_min, self.retorno_63_min, self.retorno_126_min, 
             self.retorno_252_min, self.retorno_504_min, self.retorno_756_min, nome_arquivo = self.nome_arquivo,
             caminho_imagens = self.caminho_imagens)
-
-        
 
     def periodo_backtest(self):
 
@@ -130,7 +127,6 @@ class MakeReportResult():
         turnover_df = (saiu.sum(axis=1) + entrou.sum(axis=1)) / (total_anterior + total_atual)
 
         self.turn_over_medio = turnover_df.mean()
-        
 
     def drawdown(self):
 
@@ -179,8 +175,6 @@ class MakeReportResult():
 
         return df
 
-
-
     def estatisticas_de_trade(self):
 
         self.numero_trades = self.df_trades['numero_trade'].max()
@@ -217,12 +211,8 @@ class MakeReportResult():
         retorno_ibov_por_trade = df_trades_ibov.groupby('numero_trade')['retorno_acum_ibov'].last() 
         retorno_por_trade = df_trades_ibov.groupby('numero_trade')['retorno_por_trade'].last()
 
-
         superou_trades = retorno_por_trade > retorno_ibov_por_trade
         self.percentual_cart_supera_ibov = superou_trades.mean()
-
-
-
 
     def eventos_de_estresse(self):
 
@@ -291,7 +281,6 @@ class MakeReportResult():
 
             self.precatorios = "-"
 
-
     def grafico_retorno_acum(self):
 
         fig, ax = plt.subplots(figsize = (7, 4))
@@ -310,8 +299,8 @@ class MakeReportResult():
         plt.title("Retorno acumulado")
         ax.grid(False)
         
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para salvar figuras:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para salvar figuras:", diretorio_atual)
 
         if self.caminho_imagens == None:        
 
@@ -422,7 +411,6 @@ class MakeReportResult():
             plt.savefig(f'{self.caminho_imagens}/grafico_ano.png', dpi = 300)
 
         plt.close()
-        
 
     def transformando_em_anual(self, df, nome):
         
@@ -491,8 +479,6 @@ class MakeReportResult():
             plt.savefig(f'{self.caminho_imagens}/janela_movel_{periodo}_{coluna}.png', dpi = 300)
 
         plt.close()
-
-
 
 if __name__ == "__main__":
 

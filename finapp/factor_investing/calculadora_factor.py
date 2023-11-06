@@ -11,8 +11,6 @@ class backtest_indicators():
                 corretagem = 0, impacto_mercado = 0, data_inicial = None, nome_arquivo = 'backtest.pdf', 
                 caminho_imagens = None, caminho_dados = None, **kargs):
         
-        
-
         self.nome_arquivo = nome_arquivo
         self.caminho_imagens = caminho_imagens
         self.caminho_dados = caminho_dados
@@ -28,7 +26,6 @@ class backtest_indicators():
                                                 nome_indicador: {'caracteristica': ordem_indicador}},                                    
                                             'peso': 1
                                         }}
-        
         
         self.balanceamento = balanceamento
         self.liquidez = filtro_liquidez
@@ -49,16 +46,16 @@ class backtest_indicators():
         self.impacto_mercado = impacto_mercado
         self.dinheiro_inicial = 10000
 
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para _init_:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para _init_:", diretorio_atual)
 
     def pegando_dados(self):
         
         os.chdir(self.caminho_dados)
 
         # Obtém o diretório atual
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para puxar_dados:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para puxar_dados:", diretorio_atual)
 
         cotacoes = pd.read_parquet('cotacoes.parquet')
         cotacoes['data'] = pd.to_datetime(cotacoes['data']).dt.date
@@ -113,9 +110,8 @@ class backtest_indicators():
         diretorio_pai = os.path.dirname(diretorio_atual)
         os.chdir(diretorio_pai)
                 
-        diretorio_atual = os.getcwd()
-        print("Diretório atual depois de puxar_dados:", diretorio_atual)
-
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual depois de puxar_dados:", diretorio_atual)
 
     def filtrando_datas(self):
 
@@ -147,7 +143,6 @@ class backtest_indicators():
         df_dados = df_dados.assign(TICKER_PREFIX = df_dados['ticker'].str[:4])
         df_dados = df_dados.loc[df_dados.groupby(['data', 'TICKER_PREFIX'])['volume'].idxmax()]
         df_dados = df_dados.drop('TICKER_PREFIX', axis = 1)
-
 
         lista_df_carteiras = []
 
@@ -238,15 +233,17 @@ class backtest_indicators():
         df_retornos = df_retornos.assign(retorno = df_retornos['dinheiro'].pct_change())
         df_retornos = df_retornos.drop(0, axis = 0)
 
-        self.df_retornos = df_retornos
+        #df = pd.DataFrame(carteiras)
+        print(carteiras)
 
+        self.df_retornos = df_retornos
 
     def make_report(self):
 
         self.carteira_por_periodo = self.carteira_por_periodo.set_index('data')
 
-        diretorio_atual = os.getcwd()
-        print("Diretório atual para PDF:", diretorio_atual)
+        #diretorio_atual = os.getcwd()
+        #print("Diretório atual para PDF:", diretorio_atual)
 
         MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, 
                          caminho_imagens=self.caminho_imagens, caminho_benchmarks= self.caminho_dados,
@@ -255,8 +252,8 @@ class backtest_indicators():
 
 if __name__ == "__main__":
 
-    diretorio_atual = os.getcwd()
-    print("Diretório atual para _main_:", diretorio_atual)
+    #diretorio_atual = os.getcwd()
+    #print("Diretório atual para _main_:", diretorio_atual)
     
     dicionario_carteira = {
         'carteira1': {
@@ -265,15 +262,15 @@ if __name__ == "__main__":
                     'momento_6_meses': {'caracteristica': 'decrescente'},
                     #'momento_12_meses': {'caracteristica': 'decrescente'},
                     #'mm_7_40': {'caracteristica': 'decrescente'},
-                    'ValorDeMercado': {'caracteristica': 'crescente'},
+                    #'ValorDeMercado': {'caracteristica': 'crescente'},
                     'EBIT_EV': {'caracteristica': 'decrescente'},
+                    #'ebit_dl': {'caracteristica': 'decrescente'}
                 },
                 'peso': 1
 
         },
         }
     
-
     nome_pdf = ''
 
     for nome_carteira, carteira in dicionario_carteira.items():
@@ -286,7 +283,7 @@ if __name__ == "__main__":
 
                 nome_pdf = nome_pdf + indicador + "_"
 
-    balanceamento = 21
+    balanceamento = 10
     filtro_liquidez = 1
     numero_ativos = 10
 
@@ -310,7 +307,7 @@ if __name__ == "__main__":
 
     nome_pdf = nome_pdf + str(balanceamento) + '_' + str(filtro_liquidez) + "M_" + str(numero_ativos) + "A.pdf"
 
-    backtest = backtest_indicators(data_final="2021-12-31", data_inicial= '2011-12-23', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
+    backtest = backtest_indicators(data_final="2021-12-31", data_inicial= '2011-12-30', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
                                                 numero_ativos=numero_ativos, caminho_dados=r'.\finapp\files',
                                                 caminho_imagens=r'.\finapp\files\images', corretagem=0.01,
                                                 nome_arquivo=fr'.\finapp\files\PDFs\indicators\{nome_pdf}',

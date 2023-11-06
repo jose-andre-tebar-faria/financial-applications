@@ -54,6 +54,8 @@ class linear_regression():
 
         self.df_premios = df_premios
         self.universo = universo
+        print('df_premios',df_premios)
+        print('universo 01',universo)
 
 
     def calculando_universo(self):
@@ -77,6 +79,7 @@ class linear_regression():
         universo['U_RF'] = (1 + universo['universo_medio'])/ (1 + universo['rf']) - 1
         universo = universo.set_index('data')
         self.universo = universo
+        print('universo 02', self.universo)
 
     def regressao(self):
 
@@ -93,15 +96,17 @@ class linear_regression():
 if __name__ == "__main__":
 
     dicionario_fatores = {
-                          'MOMENTO_MM_7_40': 1000000,
+                          #'QUALITY_ROIC': 1000000,
                           'TAMANHO_VALOR_DE_MERCADO': 1000000,
-                          'VALOR_EBIT_EV': 1000000,
+                          #'VALOR_EBIT_EV': 1000000,
                           #'ALAVANCAGEM_EBIT_DL': 1000000,
+                          #'MOMENTO_MM_7_40': 1000000,
+                          'MOMENTO_R6M': 1000000
                            }
 
-    fazendo_modelo = linear_regression(data_final_analise= "2020-12-31", dicionario_fatores = dicionario_fatores, 
-                                       caminho_premios_de_risco=R'C:\Users\J.A.T.F\Desktop\codigo_py\Database\premios_risco',
-                                       caminho_cdi = R'C:\Users\J.A.T.F\Desktop\codigo_py\Database')
+    fazendo_modelo = linear_regression(data_final_analise= "2021-12-31", dicionario_fatores = dicionario_fatores, 
+                                       caminho_premios_de_risco=R'.\finapp\files\premios_risco',
+                                       caminho_cdi = R'.\finapp\files')
 
     fazendo_modelo.puxando_dados_premios()
     fazendo_modelo.calculando_universo()

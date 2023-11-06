@@ -1,2 +1,5 @@
 finapp/.env
 finapp/files/
+finapp/factor_investing/__pycache__/
+finapp/analise_tecnica/__pycache__/
+finapp/__pycache__/ 

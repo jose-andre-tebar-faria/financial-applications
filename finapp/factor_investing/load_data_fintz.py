@@ -4,24 +4,24 @@ import os
 import urllib.request
 from dotenv import load_dotenv
 
-class dados_fintz:
+class fintz_data:
 
-    def __init__(self, caminho_dados):
+    def __init__(self, data_path):
 
         load_dotenv()
 
-        self.chave_api = os.getenv("API_FINTZ")
+        self.api_key = os.getenv("API_FINTZ")
 
         self.headers = {'accept': 'application/json',
-                        'X-API-Key': self.chave_api}
-        os.chdir(caminho_dados)
+                        'X-API-Key': self.api_key}
+        os.chdir(data_path)
 
     def cdi(self):
 
         response = requests.get('https://api.fintz.com.br/taxas/historico?codigo=12&dataInicio=2000-01-01&ordem=ASC',
                                 headers=self.headers)
 
-        print(response)
+        #print(response)
 
         cdi = pd.DataFrame(response.json())
 
@@ -31,7 +31,7 @@ class dados_fintz:
 
         cdi['retorno'] = cdi['retorno']/100
 
-        print(cdi)
+        #print(cdi[cdi['ticker'] == 'WEGE3'])
 
         cdi.to_parquet('cdi.parquet', index = False)
 
@@ -48,25 +48,25 @@ class dados_fintz:
 
         df = df.drop('indice', axis = 1)
 
-        print(df)
+        #print(df[df['ticker'] == 'WEGE3'])
 
         df.to_parquet('ibov.parquet', index = False)          
 
-    def pegar_cotacoes(self):
+    def getting_quotations(self):
         
         
         response = requests.get(f'https://api.fintz.com.br/bolsa/b3/avista/cotacoes/historico/arquivos?classe=ACOES&preencher=true', 
                                 headers=self.headers)
 
-        link_download = (response.json())['link']
+        download_link = (response.json())['link']
 
-        urllib.request.urlretrieve(link_download, f"cotacoes.parquet")
+        urllib.request.urlretrieve(download_link, f"cotacoes.parquet")
 
         df = pd.read_parquet('cotacoes.parquet')
 
-        colunas_pra_ajustar = ['preco_abertura', 'preco_maximo', 'preco_medio', 'preco_minimo']
+        columns_to_adjust = ['preco_abertura', 'preco_maximo', 'preco_medio', 'preco_minimo']
 
-        for coluna in colunas_pra_ajustar:
+        for coluna in columns_to_adjust:
 
             df[f'{coluna}_ajustado'] = df[coluna] * df['fator_ajuste']
 
@@ -74,17 +74,17 @@ class dados_fintz:
 
         df = df.sort_values('data', ascending=True)
 
-        print(df)
+        #print(df[df['ticker'] == 'WEGE3'])
 
         df.to_parquet('cotacoes.parquet', index = False) 
 
-    def pegando_arquivo_contabil(self, demonstracao = False, indicadores = False, nome_dado = ''):
+    def getting_accounting_files(self, demonstration = False, indicators = False, data_name = ''):
 
-        if demonstracao:
+        if demonstration:
 
             try:
 
-                response = requests.get(f'https://api.fintz.com.br/bolsa/b3/tm/demonstracoes/arquivos?item={nome_dado}',  
+                response = requests.get(f'https://api.fintz.com.br/bolsa/b3/tm/demonstracoes/arquivos?item={data_name}',  
                                         headers=self.headers)
             
             except:
@@ -92,14 +92,17 @@ class dados_fintz:
                 print("Demonstração não encontrada!")
                 exit()
 
-            link_download = (response.json())['link']
-            urllib.request.urlretrieve(link_download, f"{nome_dado}.parquet")
+            download_link = (response.json())['link']
+            urllib.request.urlretrieve(download_link, f"{data_name}.parquet")
+            #indicator = pd.read_parquet(f"{data_name}.parquet")
+            #print(indicator[indicator['ticker'] == 'WEGE3'])
+            #print(indicator)
 
-        elif indicadores:
+        elif indicators:
 
             try:
 
-                response = requests.get(f'https://api.fintz.com.br/bolsa/b3/tm/indicadores/arquivos?indicador={nome_dado}',  
+                response = requests.get(f'https://api.fintz.com.br/bolsa/b3/tm/indicadores/arquivos?indicador={data_name}',  
                                         headers=self.headers)
             
             except:
@@ -107,8 +110,11 @@ class dados_fintz:
                 print("Indicador não encontrado!")
                 exit()
 
-            link_download = (response.json())['link']
-            urllib.request.urlretrieve(link_download, f"{nome_dado}.parquet")
+            download_link = (response.json())['link']
+            urllib.request.urlretrieve(download_link, f"{data_name}.parquet")
+            #indicator = pd.read_parquet(f"{data_name}.parquet")
+            #print(indicator[indicator['ticker'] == 'WEGE3'])
+            #print(indicator)
 
         else:
 
@@ -117,23 +123,34 @@ class dados_fintz:
 
 if __name__ == "__main__":
 
-    lendo_dados = dados_fintz(caminho_dados=r'./finapp/files')
+    reading_data = fintz_data(data_path=r'./finapp/files')
 
-    lista_demonstracoes = ['Ebit12m', 'DividaBruta', 'DividaLiquida', 'Ebit12m', 'LucroLiquido12m', 'PatrimonioLiquido', 'ReceitaLiquida12m']
-    lista_indicadores = ['EBIT_EV', 'L_P', 'ROE', 'ROIC', 'ValorDeMercado']
+    demonstration_list = [
+                         #'AcoesEmCirculacao', 'TotalAcoes',
+                         #'PatrimonioLiquido',
+                         #'LucroLiquido12m', 'LucroLiquido',
+                         #'ReceitaLiquida', 'ReceitaLiquida12m', 
+                         #'DividaBruta', 'DividaLiquida',
+                         #'Disponibilidades', 
+                         #'Ebit', 'Ebit12m',
+                         #'Impostos', 'Impostos12m',
+                         #'LucroLiquidoSociosControladora',
+                         'LucroLiquidoSociosControladora12m']
 
-    #for demonstracao in lista_demonstracoes:
+    indicators_list = ['L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado']
 
-    #    print(demonstracao)
+    #for demonstration in demonstration_list:
 
-    #    lendo_dados.pegando_arquivo_contabil(demonstracao=True, nome_dado = demonstracao)
+    #    print(demonstration)
 
-    #for indicador in lista_indicadores:
+    #    reading_data.getting_accounting_files(demonstration=True, data_name = demonstration)
 
-    #    print(indicador)
+    for indicador in indicators_list:
 
-    #    lendo_dados.pegando_arquivo_contabil(indicadores=True, nome_dado = indicador)
+        print(indicador)
 
-    #lendo_dados.cdi()
-    lendo_dados.pegar_cotacoes()
-    #lendo_dados.ibov()
+        reading_data.getting_accounting_files(indicators=True, data_name = indicador)
+
+    #reading_data.cdi()
+    #reading_data.getting_quotations()
+    #reading_data.ibov()

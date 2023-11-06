@@ -95,6 +95,8 @@ class premio_risco:
 
                 df_premios.loc[data, 'universo'] = np.mean(np.array(lista_retornos))
 
+            #print("df_premios", df_premios)
+
             #pegando as novas carteiras
             df_info_pontuais['ranking_final'] = 0
 
@@ -127,6 +129,8 @@ class premio_risco:
             lista_dfs[2] = df_info_pontuais.iloc[(empresas_por_quartil * 2): (empresas_por_quartil * 3)]
             lista_dfs[3] = df_info_pontuais.iloc[(empresas_por_quartil * 3): ((empresas_por_quartil * 4) + sobra_empresas)]
     
+        print("primeiro_quartil",lista_dfs[0])
+
         df_premios['nome_premio'] = self.nome_premio
         df_premios['liquidez'] = self.liquidez
         df_premios.reset_index(names='data', inplace=True)
@@ -134,7 +138,7 @@ class premio_risco:
         df_premios.dropna(inplace=True)
         self.df_premios = df_premios
         
-        print(self.df_premios)
+        print("df_premios", self.df_premios)
 
     def colocando_premio_na_base(self):
         
@@ -149,10 +153,28 @@ class premio_risco:
 if __name__ == "__main__":
 
     indicadores_dict = {
-                        'ValorDeMercado': 'decrescente'
+                        #'ValorDeMercado': 'crescente'
+                        #'ROIC': 'decrescente'
+                        #'ROE': 'decrescente'
+                        #'EBIT_EV': 'decrescente'
+                        #'L_P': 'decrescente'
+                        #'vol_252': 'crescente'
+                        #'ebit_dl': 'decrescente'
+                        #'pl_db': 'decrescente'
+                        #'mm_7_40': 'descrescente'
+                        #'momento_1_meses': 'decrescente'
+                        #'momento_6_meses': 'decrescente'
+                        'momento_12_meses': 'decrescente'
                         }
                         
-    premio = premio_risco(indicadores_dict,  liquidez = 1000000, nome_premio = 'TAMANHO_VALOR_DE_MERCADO', 
+    #nome_premio= 'TAMANHO_VALOR_DE_MERCADO', 
+                # 'QUALITY_ROIC_ROE',
+                # 'VALOR_EBIT_EV', 'VALOR_L_P, 
+                # 'RISCO_VOL', 
+                # 'ALAVANCAGEM_EBIT_DL', 'ALAVANCAGEM_PL_DB',
+                # 'MOMENTO_MM_7_40', 'MOMENTO_R6M'
+
+    premio = premio_risco(indicadores_dict,  liquidez = 1000000, nome_premio = 'MOMENTO_R12M',
                           caminho_dados=r'./finapp/files',
                           caminho_salvar_arquivo=r'./finapp/files/premios_risco'
                         ) #não pode ter \ no nome!!
