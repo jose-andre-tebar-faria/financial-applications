@@ -126,24 +126,24 @@ if __name__ == "__main__":
     reading_data = fintz_data(data_path=r'./finapp/files')
 
     demonstration_list = [
-                         #'AcoesEmCirculacao', 'TotalAcoes',
-                         #'PatrimonioLiquido',
-                         #'LucroLiquido12m', 'LucroLiquido',
-                         #'ReceitaLiquida', 'ReceitaLiquida12m', 
-                         #'DividaBruta', 'DividaLiquida',
-                         #'Disponibilidades', 
-                         #'Ebit', 'Ebit12m',
-                         #'Impostos', 'Impostos12m',
-                         #'LucroLiquidoSociosControladora',
+                         'AcoesEmCirculacao', 'TotalAcoes',
+                         'PatrimonioLiquido',
+                         'LucroLiquido12m', 'LucroLiquido',
+                         'ReceitaLiquida', 'ReceitaLiquida12m', 
+                         'DividaBruta', 'DividaLiquida',
+                         'Disponibilidades', 
+                         'Ebit', 'Ebit12m',
+                         'Impostos', 'Impostos12m',
+                         'LucroLiquidoSociosControladora',
                          'LucroLiquidoSociosControladora12m']
 
     indicators_list = ['L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado']
 
-    #for demonstration in demonstration_list:
+    for demonstration in demonstration_list:
 
-    #    print(demonstration)
+        print(demonstration)
 
-    #    reading_data.getting_accounting_files(demonstration=True, data_name = demonstration)
+        reading_data.getting_accounting_files(demonstration=True, data_name = demonstration)
 
     for indicador in indicators_list:
 
@@ -151,6 +151,6 @@ if __name__ == "__main__":
 
         reading_data.getting_accounting_files(indicators=True, data_name = indicador)
 
-    #reading_data.cdi()
-    #reading_data.getting_quotations()
-    #reading_data.ibov()
+    reading_data.cdi()
+    reading_data.getting_quotations()
+    reading_data.ibov()

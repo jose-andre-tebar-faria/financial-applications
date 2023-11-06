@@ -168,7 +168,7 @@ if __name__ == "__main__":
                         }
                         
     #nome_premio= 'TAMANHO_VALOR_DE_MERCADO', 
-                # 'QUALITY_ROIC_ROE',
+                # 'QUALITY_ROIC', QUALITY_ROE,
                 # 'VALOR_EBIT_EV', 'VALOR_L_P, 
                 # 'RISCO_VOL', 
                 # 'ALAVANCAGEM_EBIT_DL', 'ALAVANCAGEM_PL_DB',

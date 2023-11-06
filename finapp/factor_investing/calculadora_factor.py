@@ -262,7 +262,7 @@ if __name__ == "__main__":
                     'momento_6_meses': {'caracteristica': 'decrescente'},
                     #'momento_12_meses': {'caracteristica': 'decrescente'},
                     #'mm_7_40': {'caracteristica': 'decrescente'},
-                    #'ValorDeMercado': {'caracteristica': 'crescente'},
+                    'ValorDeMercado': {'caracteristica': 'crescente'},
                     'EBIT_EV': {'caracteristica': 'decrescente'},
                     #'ebit_dl': {'caracteristica': 'decrescente'}
                 },
@@ -285,7 +285,7 @@ if __name__ == "__main__":
 
     balanceamento = 10
     filtro_liquidez = 1
-    numero_ativos = 10
+    numero_ativos = 8
 
     '''
 

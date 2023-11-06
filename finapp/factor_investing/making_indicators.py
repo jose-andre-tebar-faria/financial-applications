@@ -191,15 +191,14 @@ class MakeIndicator():
 
 if __name__ == "__main__":
 
-
     indicator = MakeIndicator(data_path=r'./finapp/files')
 
-    #indicator.making_momentum(months=12)
-    #indicator.making_momentum(months=1)
-    #indicator.making_momentum(months=6)
-    #indicator.median_volume()
-    #indicator.ratio_moving_mean(7, 40)
-    #indicator.beta(1)
+    indicator.making_momentum(months=12)
+    indicator.making_momentum(months=1)
+    indicator.making_momentum(months=6)
+    indicator.median_volume()
+    indicator.ratio_moving_mean(7, 40)
+    indicator.beta(1)
     indicator.volatility(1)
     indicator.pl_divida_bruta()
     indicator.ebit_divida_liquida()
