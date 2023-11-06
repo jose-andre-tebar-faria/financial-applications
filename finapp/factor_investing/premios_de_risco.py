@@ -158,7 +158,7 @@ if __name__ == "__main__":
                         #'ROE': 'decrescente'
                         #'EBIT_EV': 'decrescente'
                         #'L_P': 'decrescente'
-                        #'vol_252': crescente,
+                        #'vol_252': 'crescente'
                         #'ebit_dl': 'decrescente'
                         #'pl_db': 'decrescente'
                         #'mm_7_40': 'descrescente'
@@ -167,7 +167,12 @@ if __name__ == "__main__":
                         'momento_12_meses': 'decrescente'
                         }
                         
-    #nome_premio = 'TAMANHO_VALOR_DE_MERCADO', 'QUALITY_ROIC_ROE', 'VALOR_EBIT_EV', 'VALOR_L_P, 'RISCO_VOL', 'ALAVANCAGEM_EBIT_DL', 'ALAVANCAGEM_PL_DB','MOMENTO_R6M',
+    #nome_premio= 'TAMANHO_VALOR_DE_MERCADO', 
+                # 'QUALITY_ROIC_ROE',
+                # 'VALOR_EBIT_EV', 'VALOR_L_P, 
+                # 'RISCO_VOL', 
+                # 'ALAVANCAGEM_EBIT_DL', 'ALAVANCAGEM_PL_DB',
+                # 'MOMENTO_MM_7_40', 'MOMENTO_R6M'
 
     premio = premio_risco(indicadores_dict,  liquidez = 1000000, nome_premio = 'MOMENTO_R12M',
                           caminho_dados=r'./finapp/files',
@@ -180,4 +185,4 @@ if __name__ == "__main__":
     premio.pegando_indicadores()
     premio.descobrindo_mes_inicial()
     premio.calculando_premios()
-    #premio.colocando_premio_na_base()
+    premio.colocando_premio_na_base()

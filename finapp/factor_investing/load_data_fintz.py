@@ -125,19 +125,19 @@ if __name__ == "__main__":
 
     reading_data = fintz_data(data_path=r'./finapp/files')
 
-    demonstration_list = ['AcoesEmCirculacao', 'TotalAcoes']
-                        # 'AcoesEmCirculacao', 'TotalAcoes'
-                        # 'PatrimonioLiquido',
-                        # 'LucroLiquido12m', 'LucroLiquido',
-                        # 'ReceitaLiquida', 'ReceitaLiquida12m', 
-                        # 'DividaBruta', 'DividaLiquida',
-                        # 'Disponibilidades', 
-                        # 'Ebit', 'Ebit12m',
-                        # 'Impostos', 'Impostos12m',
-                        # 'LucroLiquidoSociosControladora',
-                        # 'LucroLiquidoSociosControladora12mEbit12m'
+    demonstration_list = [
+                         #'AcoesEmCirculacao', 'TotalAcoes',
+                         #'PatrimonioLiquido',
+                         #'LucroLiquido12m', 'LucroLiquido',
+                         #'ReceitaLiquida', 'ReceitaLiquida12m', 
+                         #'DividaBruta', 'DividaLiquida',
+                         #'Disponibilidades', 
+                         #'Ebit', 'Ebit12m',
+                         #'Impostos', 'Impostos12m',
+                         #'LucroLiquidoSociosControladora',
+                         'LucroLiquidoSociosControladora12m']
 
-    indicators_list = ['L_P', 'ROE', 'ROIC'] #'EV', 'LPA', 'P_L', 'EBIT_EV', 'L_P', 'ROE', 'ROIC', 'ValorDeMercado']
+    indicators_list = ['L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado']
 
     #for demonstration in demonstration_list:
 
@@ -145,11 +145,11 @@ if __name__ == "__main__":
 
     #    reading_data.getting_accounting_files(demonstration=True, data_name = demonstration)
 
-    #for indicador in indicators_list:
+    for indicador in indicators_list:
 
-    #    print(indicador)
+        print(indicador)
 
-    #    reading_data.getting_accounting_files(indicators=True, data_name = indicador)
+        reading_data.getting_accounting_files(indicators=True, data_name = indicador)
 
     #reading_data.cdi()
     #reading_data.getting_quotations()

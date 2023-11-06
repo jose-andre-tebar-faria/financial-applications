@@ -11,8 +11,6 @@ class backtest_indicators():
                 corretagem = 0, impacto_mercado = 0, data_inicial = None, nome_arquivo = 'backtest.pdf', 
                 caminho_imagens = None, caminho_dados = None, **kargs):
         
-        
-
         self.nome_arquivo = nome_arquivo
         self.caminho_imagens = caminho_imagens
         self.caminho_dados = caminho_dados
@@ -28,7 +26,6 @@ class backtest_indicators():
                                                 nome_indicador: {'caracteristica': ordem_indicador}},                                    
                                             'peso': 1
                                         }}
-        
         
         self.balanceamento = balanceamento
         self.liquidez = filtro_liquidez
@@ -146,7 +143,6 @@ class backtest_indicators():
         df_dados = df_dados.assign(TICKER_PREFIX = df_dados['ticker'].str[:4])
         df_dados = df_dados.loc[df_dados.groupby(['data', 'TICKER_PREFIX'])['volume'].idxmax()]
         df_dados = df_dados.drop('TICKER_PREFIX', axis = 1)
-
 
         lista_df_carteiras = []
 
@@ -266,7 +262,7 @@ if __name__ == "__main__":
                     'momento_6_meses': {'caracteristica': 'decrescente'},
                     #'momento_12_meses': {'caracteristica': 'decrescente'},
                     #'mm_7_40': {'caracteristica': 'decrescente'},
-                    'ValorDeMercado': {'caracteristica': 'crescente'},
+                    #'ValorDeMercado': {'caracteristica': 'crescente'},
                     'EBIT_EV': {'caracteristica': 'decrescente'},
                     #'ebit_dl': {'caracteristica': 'decrescente'}
                 },
@@ -275,7 +271,6 @@ if __name__ == "__main__":
         },
         }
     
-
     nome_pdf = ''
 
     for nome_carteira, carteira in dicionario_carteira.items():
@@ -288,7 +283,7 @@ if __name__ == "__main__":
 
                 nome_pdf = nome_pdf + indicador + "_"
 
-    balanceamento = 21
+    balanceamento = 10
     filtro_liquidez = 1
     numero_ativos = 10
 
@@ -312,7 +307,7 @@ if __name__ == "__main__":
 
     nome_pdf = nome_pdf + str(balanceamento) + '_' + str(filtro_liquidez) + "M_" + str(numero_ativos) + "A.pdf"
 
-    backtest = backtest_indicators(data_final="2023-09-30", data_inicial= '2011-12-23', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
+    backtest = backtest_indicators(data_final="2021-12-31", data_inicial= '2011-12-30', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
                                                 numero_ativos=numero_ativos, caminho_dados=r'.\finapp\files',
                                                 caminho_imagens=r'.\finapp\files\images', corretagem=0.01,
                                                 nome_arquivo=fr'.\finapp\files\PDFs\indicators\{nome_pdf}',
@@ -323,4 +318,4 @@ if __name__ == "__main__":
     backtest.filtrando_datas()
     backtest.criando_carteiras()
     backtest.calculando_retorno_diario()
-    #backtest.make_report()
+    backtest.make_report()

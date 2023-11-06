@@ -223,11 +223,11 @@ if __name__ == "__main__":
     dicionario_fatores = {
                           #'QUALITY_ROIC': 1000000,
                           #'QUALITY_ROE': 1000000,
-                          #'VALOR_EBIT_EV': 1000000,
+                          'VALOR_EBIT_EV': 1000000,
                           #'VALOR_L_P': 1000000,
-                          'ALAVANCAGEM_EBIT_DL': 1000000,
+                          #'ALAVANCAGEM_EBIT_DL': 1000000,
                           #'ALAVANCAGEM_PL_DB': 1000000,
-                          #'MOMENTO_R6M': 1000000,
+                          'MOMENTO_R6M': 1000000,
                           #'MOMENTO_R1M': 1000000,
                           #'MOMENTO_R12M': 1000000,
                           #'MOMENTO_MM_7_40': 1000000,
@@ -235,9 +235,9 @@ if __name__ == "__main__":
                           #'RISCO_VOL': 1000000,
                            }
 
-    premios = MakeResultsPremium(data_final_analise="2020-12-31", dicionario_fatores=dicionario_fatores,
+    premios = MakeResultsPremium(data_final_analise="2021-12-31", dicionario_fatores=dicionario_fatores,
                                  caminho_imagens = r'.\finapp\files\images', 
-                                 nome_arquivo = r'..\\PDFs\avaliando_ALAVANCAGEM_EBIT_DL-TAMANHO_VALOR_DE_MERCADO.pdf',
+                                 nome_arquivo = r'..\\PDFs\avaliando-VALOR_EBIT_EV-MOMENTO_R6M-TAMANHO_VALOR_DE_MERCADO.pdf',
                                  caminho_premios_de_risco=r'.\finapp\files\premios_risco')
 
     #diretorio_atual = os.getcwd()

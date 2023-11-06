@@ -25,7 +25,7 @@ class MakeIndicator():
         quotations = quotations.dropna()
         output_df = quotations[['data', 'ticker', 'valor']]
 
-        print(output_df[output_df['ticker'] == 'WEGE3'])
+        #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet(f'momento_{months}_meses.parquet', index = False)
 
@@ -41,7 +41,7 @@ class MakeIndicator():
         quotations = quotations.dropna()
         output_df = quotations[['data', 'ticker', 'valor']]
 
-        print(output_df[output_df['ticker'] == 'WEGE3'])
+        #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet(f'volume_mediano.parquet', index = False)
 
@@ -69,7 +69,7 @@ class MakeIndicator():
         output_df = output_df[['data', 'ticker', 'ebit_DL']]
         output_df.columns = ['data', 'ticker', 'valor'] 
 
-        print(output_df[output_df['ticker'] == 'WEGE3'])
+        #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet(f'ebit_dl.parquet', index = False)
 
@@ -99,7 +99,7 @@ class MakeIndicator():
         output_df = output_df[['data', 'ticker', 'PL_DB']]
         output_df.columns = ['data', 'ticker', 'valor'] 
 
-        print(output_df[output_df['ticker'] == 'WEGE3'])
+        #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet('pl_db.parquet', index = False)
 
@@ -117,7 +117,7 @@ class MakeIndicator():
         quotations['valor'] = quotations['valor'] * np.sqrt(252) 
         output_df = quotations[['data', 'ticker', 'valor']]
 
-        print(output_df[output_df['ticker'] == 'WEGE3'])
+        #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet(f'vol_{int(252 * years)}.parquet', index = False)
 
@@ -168,7 +168,7 @@ class MakeIndicator():
 
         betas = pd.concat(lista_df_betas)
         
-        print(betas[betas['ticker'] == 'WEGE3'])
+        #print(betas[betas['ticker'] == 'WEGE3'])
 
         betas.to_parquet(f'beta_{int(252 * years)}.parquet', index = False)
 
@@ -184,7 +184,7 @@ class MakeIndicator():
         output_df = quotations[['data', 'ticker', 'valor']]
         output_df = output_df.dropna()
 
-        print(output_df[output_df['ticker'] == 'WEGE3'])
+        #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet(f'mm_{mm_curta}_{mm_longa}.parquet', index = False)
 
@@ -200,6 +200,6 @@ if __name__ == "__main__":
     #indicator.median_volume()
     #indicator.ratio_moving_mean(7, 40)
     #indicator.beta(1)
-    #indicator.volatility(1)
-    #indicator.pl_divida_bruta()
-    #indicator.ebit_divida_liquida()
+    indicator.volatility(1)
+    indicator.pl_divida_bruta()
+    indicator.ebit_divida_liquida()
