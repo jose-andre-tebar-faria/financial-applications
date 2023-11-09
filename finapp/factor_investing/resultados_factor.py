@@ -12,26 +12,31 @@ from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter(action="ignore", category=SettingWithCopyWarning)
 from report_pdf_carteiras import MakePDF
 import os
-
+from dotenv import load_dotenv
 
 class MakeReportResult():
 
-    def __init__(self, df_trades, df_carteiras, nome_arquivo = 'backtest.pdf',  caminho_imagens = '.', caminho_benchmarks = '.'):
+    def __init__(self, df_trades, df_carteiras, nome_arquivo = 'backtest.pdf'):
 
-        
+        load_dotenv()
+
         self.df_trades = df_trades
         self.carteiras = df_carteiras
-        self.caminho_imagens = caminho_imagens
 
-        #if caminho_imagens != '.':
-            
-        #    os.chdir(caminho_imagens)
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.databse_folder = os.getenv("DATABASE_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
 
         #diretorio_atual = os.getcwd()
         #print("Diretório atual para MakeReport:", diretorio_atual)
 
-        self.ibov = pd.read_parquet(f'{caminho_benchmarks}/ibov.parquet')
-        self.cdi = pd.read_parquet(f'{caminho_benchmarks}/cdi.parquet')
+        self.ibov = pd.read_parquet(f'{self.full_desired_path}/ibov.parquet')
+        self.cdi = pd.read_parquet(f'{self.full_desired_path}/cdi.parquet')
         self.cdi['cota'] = (1 + self.cdi['retorno']).cumprod() - 1
         self.ibov['retorno'] = self.ibov['fechamento'].pct_change()
 
@@ -59,6 +64,15 @@ class MakeReportResult():
 
     def make_report(self):
 
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.databse_folder = os.getenv("IMAGES_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
+
         self.periodo_backtest()
         self.retorno_risco()
         self.turnover_carteira()
@@ -72,8 +86,6 @@ class MakeReportResult():
         self.grafico_retorno_ano_a_ano()
         self.fazer_grafico_janelas_moveis()
 
-        os.chdir(self.caminho_imagens)
-
         MakePDF(self.dd_all, self.dia_inicial, self.dia_final, self.dias_totais_backtest, 
             self.retorno_acum_modelo, self.retorno_acum_cdi, self.retorno_acum_ibov, self.turn_over_medio,
             self.retorno_aa_modelo, self.vol_ultimo_ano, self.sharpe, self.var_diario, 
@@ -82,7 +94,7 @@ class MakeReportResult():
             self.maior_sequencia_derrotas, self.joesley_day, self.mar20, self.boasorteday, self.greve_caminhao, 
             self.crise_2008, self.precatorios, self.retorno_21_min, self.retorno_63_min, self.retorno_126_min, 
             self.retorno_252_min, self.retorno_504_min, self.retorno_756_min, nome_arquivo = self.nome_arquivo,
-            caminho_imagens = self.caminho_imagens)
+            )
 
     def periodo_backtest(self):
 
@@ -302,13 +314,7 @@ class MakeReportResult():
         #diretorio_atual = os.getcwd()
         #print("Diretório atual para salvar figuras:", diretorio_atual)
 
-        if self.caminho_imagens == None:        
-
-            plt.savefig('./rent_acum.png', dpi = 300)
-
-        else:
-
-            plt.savefig(f'{self.caminho_imagens}/rent_acum.png', dpi = 300)
+        plt.savefig(f'{self.full_desired_path}/rent_acum.png', dpi = 300)
 
         plt.close()
 
@@ -339,13 +345,7 @@ class MakeReportResult():
         for t in ax.texts: 
              t.set_text(t.get_text() + "%")
 
-        if self.caminho_imagens == None:        
-
-            plt.savefig('./grafico_mes.png', dpi = 300)
-
-        else:
-
-            plt.savefig(f'{self.caminho_imagens}/grafico_mes.png', dpi = 300)
+        plt.savefig(f'{self.full_desired_path}/grafico_mes.png', dpi = 300)
 
         plt.close()
 
@@ -368,13 +368,7 @@ class MakeReportResult():
         plt.title("Underwater")
         ax.grid(False)
 
-        if self.caminho_imagens == None:        
-
-            plt.savefig('./grafico_underwater.png', dpi = 300)
-
-        else:
-
-            plt.savefig(f'{self.caminho_imagens}/grafico_underwater.png', dpi = 300)
+        plt.savefig(f'{self.full_desired_path}/grafico_underwater.png', dpi = 300)
 
         plt.close()
         
@@ -402,13 +396,7 @@ class MakeReportResult():
         for t in ax.texts: 
              t.set_text(t.get_text() + "%")
 
-        if self.caminho_imagens == None:        
-
-            plt.savefig('./grafico_ano.png', dpi = 300)
-
-        else:
-
-            plt.savefig(f'{self.caminho_imagens}/grafico_ano.png', dpi = 300)
+        plt.savefig(f'{self.full_desired_path}/grafico_ano.png', dpi = 300)
 
         plt.close()
 
@@ -436,7 +424,6 @@ class MakeReportResult():
         self.grafico_retorno_movel(self.retorno_756, "36M", 'retorno_movel')
         self.grafico_retorno_movel(self.retorno_756, "36M", 'alfa')
         
-    
     def grafico_retorno_movel(self, df, periodo, coluna):
 
         plt.style.use('cyberpunk')
@@ -470,13 +457,7 @@ class MakeReportResult():
 
         plt.axhline(y=0, color = 'w')
 
-        if self.caminho_imagens == None:        
-
-            plt.savefig(f'./janela_movel_{periodo}_{coluna}.png', dpi = 300)
-
-        else:
-
-            plt.savefig(f'{self.caminho_imagens}/janela_movel_{periodo}_{coluna}.png', dpi = 300)
+        plt.savefig(f'{self.full_desired_path}/janela_movel_{periodo}_{coluna}.png', dpi = 300)
 
         plt.close()
 
@@ -488,9 +469,7 @@ if __name__ == "__main__":
 
     carteiras.index = pd.to_datetime(carteiras.index)
 
-    report = MakeReportResult(df_trades=trades, df_carteiras=carteiras, caminho_imagens='./images',
-                              nome_arquivo='./PDFs/backtest.pdf',
-                              caminho_benchmarks='/files')
+    report = MakeReportResult(df_trades=trades, df_carteiras=carteiras, nome_arquivo='./PDFs/backtest.pdf')
 
     # report.periodo_backtest()
     # report.retorno_risco()

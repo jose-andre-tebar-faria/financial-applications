@@ -8,43 +8,48 @@ import os
 import matplotlib
 matplotlib.rcParams.update({'font.size': 9})
 import datetime
+from dotenv import load_dotenv
 
 plt.style.use("cyberpunk")
 
 class MakeResultsPremium:
 
-    def __init__(self, dicionario_fatores, data_final_analise, caminho_imagens, nome_arquivo = 'premios_de_risco.pdf', 
-                 caminho_premios_de_risco = '.'):
-        
-        
-        self.dicionario_fatores = dicionario_fatores
+    def __init__(self, factors_dict, final_analysis_date, file_name = 'premios_de_risco.pdf'):
+                
+        print("Inicializing MakeResultPremium!")
+
+        load_dotenv()
+
+        self.factors_dict = factors_dict
         self.lista_nome_fatores = []
         self.liquidez = []
-        self.caminho_premios_de_risco = caminho_premios_de_risco
 
-        for key, item in dicionario_fatores.items():
-            
+        for key, item in factors_dict.items():
             self.lista_nome_fatores.append(key)
             self.liquidez.append(item)
             
+        self.final_analysis_date = (datetime.datetime.strptime(final_analysis_date, '%Y-%m-%d')).date()
+        self.file_name = file_name
 
-        self.data_final_analise = (datetime.datetime.strptime(data_final_analise, '%Y-%m-%d')).date()
-        self.caminho_imagens = caminho_imagens
-        self.nome_arquivo = nome_arquivo
+        print("OK.")
 
-        # diretorio_atual = os.getcwd()
-        #print("Diretório atual _init_:", diretorio_atual)
-
-        #os.chdir(caminho_imagens)
-
-    def puxando_dados(self):
+    def getting_premiuns(self):
 
         lista_dfs = []
         data_inicial = []
         
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.databse_folder = os.getenv("PREMIUNS_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
+
         for i, nome_premio in enumerate(self.lista_nome_fatores):
 
-            df = pd.read_parquet(f'{self.caminho_premios_de_risco}/{nome_premio}_{self.liquidez[i]}.parquet')
+            df = pd.read_parquet(f'{self.full_desired_path}/{nome_premio}_{self.liquidez[i]}.parquet')
             df['data'] = pd.to_datetime(df['data']).dt.date
 
             lista_dfs.append(df)
@@ -54,12 +59,11 @@ class MakeResultsPremium:
         data_inicial = max(data_inicial)
 
         self.premios_de_risco = self.premios_de_risco[(self.premios_de_risco['data'] >= data_inicial) &
-                                                      (self.premios_de_risco['data'] <= self.data_final_analise)]
+                                                      (self.premios_de_risco['data'] <= self.final_analysis_date)]
 
         self.premios_de_risco = self.premios_de_risco.assign(premio_fator = 
                                                              (1 + self.premios_de_risco['primeiro_quartil'])/(1 + self.premios_de_risco['quarto_quartil'])) 
         
-
         self.premios_de_risco['primeiro_quartil'] = 1 + self.premios_de_risco['primeiro_quartil'] 
         self.premios_de_risco['segundo_quartil'] = 1 + self.premios_de_risco['segundo_quartil'] 
         self.premios_de_risco['terceiro_quartil'] = 1 + self.premios_de_risco['terceiro_quartil'] 
@@ -68,9 +72,17 @@ class MakeResultsPremium:
 
     def retorno_quartis(self):
 
-
         df_primeiro_quartis = pd.DataFrame(index = self.premios_de_risco['data'].unique())
         df_premios_de_risco = pd.DataFrame(index = self.premios_de_risco['data'].unique())
+
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.databse_folder = os.getenv("IMAGES_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
 
         for i, nome_premio in enumerate(self.lista_nome_fatores):
 
@@ -108,7 +120,7 @@ class MakeResultsPremium:
                 #diretorio_atual = os.getcwd()
                 #print("Diretório atual:", diretorio_atual)
 
-                plt.savefig(f'{self.caminho_imagens}/barras_quartis_{nome_premio}_{self.liquidez[i]}')
+                plt.savefig(f'{self.full_desired_path}/barras_quartis_{nome_premio}_{self.liquidez[i]}')
 
                 plt.close()
 
@@ -128,7 +140,7 @@ class MakeResultsPremium:
 
                 plt.title(nome_premio)
 
-                plt.savefig(f'{self.caminho_imagens}/linha_quartis_{nome_premio}_{self.liquidez[i]}')
+                plt.savefig(f'{self.full_desired_path}/linha_quartis_{nome_premio}_{self.liquidez[i]}')
 
                 plt.close()
 
@@ -142,7 +154,7 @@ class MakeResultsPremium:
 
                 plt.title(nome_premio + " 1º Quartil minus 4º quartil")
 
-                plt.savefig(f'{self.caminho_imagens}/premio_de_risco_{nome_premio}_{self.liquidez[i]}')
+                plt.savefig(f'{self.full_desired_path}/premio_de_risco_{nome_premio}_{self.liquidez[i]}')
 
                 plt.close()
 
@@ -162,7 +174,7 @@ class MakeResultsPremium:
 
                 plt.title(nome_premio + " Janela móvel 12M")
 
-                plt.savefig(f'{self.caminho_imagens}/movel_12m_premio_de_risco_{nome_premio}_{self.liquidez[i]}')
+                plt.savefig(f'{self.full_desired_path}/movel_12m_premio_de_risco_{nome_premio}_{self.liquidez[i]}')
 
                 plt.close()
 
@@ -183,7 +195,7 @@ class MakeResultsPremium:
 
         plt.title('Comparação entre 1º quartil')
 
-        plt.savefig(f'{self.caminho_imagens}/comparando_1Q')
+        plt.savefig(f'{self.full_desired_path}/comparando_1Q')
 
         plt.close()
 
@@ -199,7 +211,7 @@ class MakeResultsPremium:
 
         plt.title('Comparação entre prêmios de risco')
 
-        plt.savefig(f'{self.caminho_imagens}/comparando_premios')
+        plt.savefig(f'{self.full_desired_path}/comparando_premios')
 
         plt.close()
 
@@ -207,20 +219,12 @@ class MakeResultsPremium:
 
     def fazer_pdf(self):
 
-        #diretorio_atual = os.getcwd()
-        #print("Diretório atual:", diretorio_atual)
-
-        os.chdir(self.caminho_imagens)
-        
-        #diretorio_atual = os.getcwd()
-        #print("Diretório atual para PDF:", diretorio_atual)
-
         MakePDF(fatores = self.lista_nome_fatores, liquidez = self.liquidez, matriz_correl = self.matriz_correl,
-                caminho_imagens=self.caminho_imagens, nome_arquivo=self.nome_arquivo)
+                nome_arquivo=self.file_name)
            
 if __name__ == "__main__":
 
-    dicionario_fatores = {
+    factors_dict = {
                           #'QUALITY_ROIC': 1000000,
                           #'QUALITY_ROE': 1000000,
                           'VALOR_EBIT_EV': 1000000,
@@ -235,16 +239,12 @@ if __name__ == "__main__":
                           #'RISCO_VOL': 1000000,
                            }
 
-    premios = MakeResultsPremium(data_final_analise="2021-12-31", dicionario_fatores=dicionario_fatores,
-                                 caminho_imagens = r'.\finapp\files\images', 
-                                 nome_arquivo = r'..\\PDFs\avaliando-VALOR_EBIT_EV-MOMENTO_R6M-TAMANHO_VALOR_DE_MERCADO.pdf',
-                                 caminho_premios_de_risco=r'.\finapp\files\premios_risco')
+    premios = MakeResultsPremium(final_analysis_date="2021-12-31", factors_dict=factors_dict,
+                                 file_name = r'..\\PDFs\avaliando-VALOR_EBIT_EV-MOMENTO_R6M-TAMANHO_VALOR_DE_MERCADO.pdf')
 
     #diretorio_atual = os.getcwd()
     #print("Diretório atual antes puxar_dados:", diretorio_atual)
 
-    premios.puxando_dados()
+    premios.getting_premiuns()
     premios.retorno_quartis()
-    premios.fazer_pdf()
-
-
+    #premios.fazer_pdf()

@@ -4,13 +4,18 @@ import datetime
 from dateutil.relativedelta  import relativedelta
 from resultados_factor import MakeReportResult
 import os
+from dotenv import load_dotenv
 
-class backtest_indicators():
+class MakeBacktest():
 
     def __init__(self, data_final, filtro_liquidez, balanceamento, numero_ativos, nome_indicador = None, ordem_indicador = None,
                 corretagem = 0, impacto_mercado = 0, data_inicial = None, nome_arquivo = 'backtest.pdf', 
                 caminho_imagens = None, caminho_dados = None, **kargs):
-        
+                        
+        print("Inicializing MakeBacktest!")
+
+        load_dotenv()
+
         self.nome_arquivo = nome_arquivo
         self.caminho_imagens = caminho_imagens
         self.caminho_dados = caminho_dados
@@ -46,14 +51,19 @@ class backtest_indicators():
         self.impacto_mercado = impacto_mercado
         self.dinheiro_inicial = 10000
 
-        #diretorio_atual = os.getcwd()
-        #print("Diretório atual para _init_:", diretorio_atual)
+        print("OK.")
 
     def pegando_dados(self):
         
-        os.chdir(self.caminho_dados)
+        self.current_folder = os.getcwd()
 
-        # Obtém o diretório atual
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.databse_folder = os.getenv("DATABASE_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
+
         #diretorio_atual = os.getcwd()
         #print("Diretório atual para puxar_dados:", diretorio_atual)
 
@@ -245,9 +255,7 @@ class backtest_indicators():
         #diretorio_atual = os.getcwd()
         #print("Diretório atual para PDF:", diretorio_atual)
 
-        MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, 
-                         caminho_imagens=self.caminho_imagens, caminho_benchmarks= self.caminho_dados,
-                              nome_arquivo=self.nome_arquivo)
+        MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, nome_arquivo=self.nome_arquivo)
 
 
 if __name__ == "__main__":
@@ -307,15 +315,12 @@ if __name__ == "__main__":
 
     nome_pdf = nome_pdf + str(balanceamento) + '_' + str(filtro_liquidez) + "M_" + str(numero_ativos) + "A.pdf"
 
-    backtest = backtest_indicators(data_final="2021-12-31", data_inicial= '2011-12-30', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
-                                                numero_ativos=numero_ativos, caminho_dados=r'.\finapp\files',
-                                                caminho_imagens=r'.\finapp\files\images', corretagem=0.01,
-                                                nome_arquivo=fr'.\finapp\files\PDFs\indicators\{nome_pdf}',
-                                            **dicionario_carteira)
+    backtest = MakeBacktest(data_final="2021-12-31", data_inicial= '2011-12-30', filtro_liquidez=(filtro_liquidez * 1000000), balanceamento=balanceamento, 
+                            numero_ativos=numero_ativos, corretagem=0.01, nome_arquivo=nome_pdf,**dicionario_carteira)
     
 
-    backtest.pegando_dados()
-    backtest.filtrando_datas()
-    backtest.criando_carteiras()
-    backtest.calculando_retorno_diario()
-    backtest.make_report()
+    # backtest.pegando_dados()
+    # backtest.filtrando_datas()
+    # backtest.criando_carteiras()
+    # backtest.calculando_retorno_diario()
+    # backtest.make_report()

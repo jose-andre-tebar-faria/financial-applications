@@ -3,16 +3,32 @@ import os
 import numpy as np
 from statsmodels.regression.rolling import RollingOLS
 import statsmodels.api as sm
+from dotenv import load_dotenv
 
 #A COLUNA COM O INDICADOR TEM QUE SE CHAMAR "valor"
 
 class MakeIndicator():
 
-    def __init__(self, data_path):
+    def __init__(self):
 
-        os.chdir(data_path)
+        print("Inicializing MakeIndicator!")
+
+        load_dotenv()
+
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.databse_folder = os.getenv("DATABASE_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
+        
+        print("OK.")
 
     def making_momentum(self, months):
+
+        print("Making Momentum " + str(months) + " month(s).")
 
         output_df = pd.DataFrame()
         quotations = pd.read_parquet('cotacoes.parquet')
@@ -28,8 +44,12 @@ class MakeIndicator():
         #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet(f'momento_{months}_meses.parquet', index = False)
+        
+        print("OK.")
 
-    def median_volume(self):
+    def median_volume(self,months):
+
+        print("Making Median Volume " + str(months) + " month(s).")
 
         output_df = pd.DataFrame()
         quotations = pd.read_parquet('cotacoes.parquet')
@@ -37,15 +57,19 @@ class MakeIndicator():
 
         quotations = quotations[['data', 'ticker', 'volume_negociado']]
         quotations['volume_negociado'] = quotations.groupby('ticker')['volume_negociado'].fillna(0)
-        quotations['valor'] = quotations.groupby('ticker')['volume_negociado'].rolling(21).median().reset_index(0,drop=True)
+        quotations['valor'] = quotations.groupby('ticker')['volume_negociado'].rolling(months * 21).median().reset_index(0,drop=True)
         quotations = quotations.dropna()
         output_df = quotations[['data', 'ticker', 'valor']]
 
         #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet(f'volume_mediano.parquet', index = False)
+        
+        print("OK.")
 
     def ebit_divida_liquida(self):
+
+        print("Making EBIT / Dívida_Líquida.")
 
         df_ebit = pd.read_parquet('Ebit12m.parquet')
         df_ebit = df_ebit.assign(id_dado = df_ebit['ticker'].astype(str) + "_" + df_ebit['data'].astype(str))
@@ -73,7 +97,11 @@ class MakeIndicator():
 
         output_df.to_parquet(f'ebit_dl.parquet', index = False)
 
+        print("OK.")
+
     def pl_divida_bruta(self):
+
+        print("Making Patrimônio_Líquido / Dívida_Bruta.")
 
         df_pl = pd.read_parquet('PatrimonioLiquido.parquet')
         df_pl = df_pl.dropna()
@@ -103,7 +131,11 @@ class MakeIndicator():
 
         output_df.to_parquet('pl_db.parquet', index = False)
 
+        print("OK.")
+
     def volatility(self, years):
+
+        print("Making Volatility " + str(years) + " year(s).")
 
         output_df = pd.DataFrame()
         quotations = pd.read_parquet('cotacoes.parquet')
@@ -120,8 +152,12 @@ class MakeIndicator():
         #print(output_df[output_df['ticker'] == 'WEGE3'])
 
         output_df.to_parquet(f'vol_{int(252 * years)}.parquet', index = False)
+        
+        print("OK.")
 
     def beta(self, years):
+
+        print("Making Beta " + str(years) + " year(s).")
 
         quotations = pd.read_parquet('cotacoes.parquet')
         cotaoces_ibov = pd.read_parquet('ibov.parquet')
@@ -171,9 +207,12 @@ class MakeIndicator():
         #print(betas[betas['ticker'] == 'WEGE3'])
 
         betas.to_parquet(f'beta_{int(252 * years)}.parquet', index = False)
+        
+        print("OK.")
 
     def ratio_moving_mean(self, mm_curta, mm_longa):
 
+        print("Making Ratio Moving Mean. Média curta: " + str(mm_curta) + " períodos. Média longa: " + str(mm_longa) + " períodos.")
         output_df = pd.DataFrame()
         quotations = pd.read_parquet('cotacoes.parquet')
         quotations['data'] = pd.to_datetime(quotations['data']).dt.date
@@ -188,17 +227,4 @@ class MakeIndicator():
 
         output_df.to_parquet(f'mm_{mm_curta}_{mm_longa}.parquet', index = False)
 
-
-if __name__ == "__main__":
-
-    indicator = MakeIndicator(data_path=r'./finapp/files')
-
-    indicator.making_momentum(months=12)
-    indicator.making_momentum(months=1)
-    indicator.making_momentum(months=6)
-    indicator.median_volume()
-    indicator.ratio_moving_mean(7, 40)
-    indicator.beta(1)
-    indicator.volatility(1)
-    indicator.pl_divida_bruta()
-    indicator.ebit_divida_liquida()
+        print("OK.")

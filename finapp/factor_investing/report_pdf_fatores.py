@@ -1,4 +1,5 @@
 from fpdf import FPDF
+import os
 
 class PDF(FPDF):
 
@@ -21,15 +22,22 @@ class PDF(FPDF):
 
 class MakePDF():
 
-    def __init__(self, fatores, liquidez, matriz_correl,
-                 nome_arquivo = "premios_de_risco.pdf", caminho_imagens = None):
-            
+    def __init__(self, fatores, liquidez, matriz_correl, nome_arquivo = "premios_de_risco.pdf"):
+        
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.databse_folder = os.getenv("IMAGES_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
+
         self.lista_nome_fatores = fatores
         self.liquidez = liquidez
         self.matriz_correl = matriz_correl
         
         self.nome_arquivo = nome_arquivo
-        self.caminho_imagens = caminho_imagens
         
         self.pdf = PDF("P", "mm", "Letter")
         self.pdf.alias_nb_pages()
@@ -157,7 +165,6 @@ class MakePDF():
 
 
                 self.pdf.cell(5, 8)
-
 
     def pagina_fator(self, nome_fator, liquidez):
 

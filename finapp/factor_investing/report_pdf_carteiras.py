@@ -1,10 +1,10 @@
 from fpdf import FPDF
 import os
+from dotenv import load_dotenv
 
 
 class PDF(FPDF):
 
-    
     def header(self):
         
         #diretorio_atual = os.getcwd()
@@ -34,8 +34,10 @@ class MakePDF():
             expectativa_matematica, percentual_cart_supera_ibov, maior_sequencia_vitorias, 
             maior_sequencia_derrotas, joesley_day, mar20, boasorteday, greve_caminhao, 
             crise_2008, precatorios, retorno_21_min, retorno_63_min, retorno_126_min, 
-            retorno_252_min, retorno_504_min, retorno_756_min, nome_arquivo = "backtest.pdf", caminho_imagens = None):
+            retorno_252_min, retorno_504_min, retorno_756_min, nome_arquivo = "backtest.pdf"):
         
+        load_dotenv()
+
         self.drawdown_maximo = dd_all
         self.turn_over_medio = turn_over_medio
         self.dia_inicial = dia_inicial
@@ -71,7 +73,6 @@ class MakePDF():
         self.retorno_756_min = retorno_756_min 
 
         self.nome_arquivo = nome_arquivo
-        self.caminho_imagens = caminho_imagens
         
         self.pdf = PDF("P", "mm", "Letter")
         self.pdf.set_auto_page_break(auto = True, margin = 15)
@@ -79,6 +80,15 @@ class MakePDF():
         self.pdf.add_page()
         self.pdf.set_fill_color(255, 255, 255)
         self.pdf.set_draw_color(35, 155, 132)
+
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.databse_folder = os.getenv("IMAGES_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
 
         self.tabela_dias()
         self.grafico_retorno_acum()
@@ -88,21 +98,21 @@ class MakePDF():
         self.retorno_ano_a_ano_mes_a_mes()
         self.grafico_janelas_moveis()
 
-        # Retorna para caminho ./financial-applications
-        diretorio_atual = os.getcwd()
-        diretorio_pai = os.path.dirname(diretorio_atual)
-        os.chdir(diretorio_pai)
-        diretorio_atual = os.getcwd()
-        diretorio_pai = os.path.dirname(diretorio_atual)
-        os.chdir(diretorio_pai)
-        diretorio_atual = os.getcwd()
-        diretorio_pai = os.path.dirname(diretorio_atual)
-        os.chdir(diretorio_pai)
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.desired_folder = os.getenv("INDICATORS_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.desired_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
 
         #diretorio_atual = os.getcwd()
         #print("Diretório atual para output PDF:", diretorio_atual)
 
-        self.pdf.output(f"{self.nome_arquivo}")
+        self.file_name = os.path.join(self.full_desired_path,self.nome_arquivo)
+
+        self.pdf.output(self.file_name)
 
     def tabela_dias(self):
 
@@ -120,7 +130,6 @@ class MakePDF():
                 border = True, fill = False, align = "C")
 
         self.pdf.ln(7)
-
 
     def grafico_retorno_acum(self):
 
