@@ -242,18 +242,15 @@ class MakeBacktest():
 
         df_retornos = df_retornos.assign(retorno = df_retornos['dinheiro'].pct_change())
         df_retornos = df_retornos.drop(0, axis = 0)
-
-        #df = pd.DataFrame(carteiras)
-        print(carteiras)
-
+        
         self.df_retornos = df_retornos
+
+        carteiras = carteiras.reset_index(level='ticker')
+        return carteiras
 
     def make_report(self):
 
         self.carteira_por_periodo = self.carteira_por_periodo.set_index('data')
-
-        #diretorio_atual = os.getcwd()
-        #print("Diretório atual para PDF:", diretorio_atual)
 
         MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, nome_arquivo=self.nome_arquivo)
 

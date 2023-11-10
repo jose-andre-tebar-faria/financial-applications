@@ -429,7 +429,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
 ### **4) avaliar_premios_de_risco.py** - classe
     - puxando_dados()
     - retorno_quartis()
-    - fazer_pdf()
+    - fazer_pdf(
 ### **5) modelo_regressão.py** - classe
     -  OLS Regression Result
         ideal que:

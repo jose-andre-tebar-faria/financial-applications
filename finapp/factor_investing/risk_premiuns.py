@@ -11,9 +11,14 @@ class RiskPremium:
         print("Inicializing RiskPremium!")
 
         load_dotenv()
-
+        
         self.indicators = list(indicators_dict.keys())
-        self.indicators_order = list(indicators_dict.values())
+        #print(self.indicators)
+        
+        desired_value = 'order'
+        self.indicators_order = [order[desired_value] for order in indicators_dict.values()]
+        #print(self.indicators_order)
+
         self.liquidity = liquidity
         self.premium_name = premium_name
 
@@ -140,6 +145,8 @@ class RiskPremium:
             lista_dfs[1] = df_info_pontuais.iloc[empresas_por_quartil: (empresas_por_quartil * 2)]
             lista_dfs[2] = df_info_pontuais.iloc[(empresas_por_quartil * 2): (empresas_por_quartil * 3)]
             lista_dfs[3] = df_info_pontuais.iloc[(empresas_por_quartil * 3): ((empresas_por_quartil * 4) + sobra_empresas)]
+                
+        #print("df_info_pontuais", df_info_pontuais)
     
         #print("primeiro_quartil",lista_dfs[0])
 
@@ -149,8 +156,8 @@ class RiskPremium:
         premiuns_dataframe['id_premio'] = premiuns_dataframe['nome_premio'].astype(str) + "_" + premiuns_dataframe['liquidez'].astype(str) + "_" + premiuns_dataframe['data'].astype(str)
         premiuns_dataframe.dropna(inplace=True)
         self.premiuns_dataframe = premiuns_dataframe
-        
-        #print("df_info_pontuais", df_info_pontuais)
+
+        return self.premiuns_dataframe
 
     def saving_premiuns(self):
         
@@ -164,37 +171,3 @@ class RiskPremium:
             os.chdir(self.full_desired_path)
 
         self.premiuns_dataframe.to_parquet(f'{self.full_desired_path}/{self.premium_name}_{self.liquidity}.parquet', index = False)
-
-if __name__ == "__main__":
-
-    indicators_dict = {
-                        #'ValorDeMercado': 'crescente'
-                        #'ROIC': 'decrescente'
-                        #'ROE': 'decrescente'
-                        #'EBIT_EV': 'decrescente'
-                        #'L_P': 'decrescente'
-                        #'vol_252': 'crescente'
-                        #'ebit_dl': 'decrescente'
-                        #'pl_db': 'decrescente'
-                        #'mm_7_40': 'descrescente'
-                        #'momento_1_meses': 'decrescente'
-                        #'momento_6_meses': 'decrescente'
-                        'momento_12_meses': 'decrescente'
-                        }
-                        
-    #premium_name= 'TAMANHO_VALOR_DE_MERCADO', 
-                # 'QUALITY_ROIC', QUALITY_ROE,
-                # 'VALOR_EBIT_EV', 'VALOR_L_P, 
-                # 'RISCO_VOL', 
-                # 'ALAVANCAGEM_EBIT_DL', 'ALAVANCAGEM_PL_DB',
-                # 'MOMENTO_MM_7_40', 'MOMENTO_R6M'
-
-    premium = RiskPremium(indicators_dict,  liquidity = 1000000, premium_name = 'MOMENTO_R12M')
-
-    #premium.getting_quotations()
-    #premium.getting_possible_dates()
-    #premium.filtering_volume()
-    #premium.getting_indicators()
-    #premium.discovering_initial_month()
-    #premium.calculating_premiuns()
-    #premium.saving_premiuns()
