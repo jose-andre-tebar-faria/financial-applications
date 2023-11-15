@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import statsmodels.api as sm
 
@@ -19,14 +20,25 @@ class linear_regression():
             self.liquidez.append(item)
 
 
-    def puxando_dados_premios(self):
+    def getting_premium_data(self):
 
-        df_premios = pd.read_parquet(f'{self.caminho_premios_de_risco}/market_premium.parquet')
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.premiuns_folder = os.getenv("PREMIUNS_FOLDER")
+        self.database_folder = os.getenv("DATABASE_FOLDER")
+        self.premiuns_path = os.path.join(self.project_folder,self.premiuns_folder)
+        self.database_path = os.path.join(self.project_folder,self.database_folder)
+
+        if(self.current_folder != self.project_folder):
+            os.chdir(self.project_folder)
+
+        df_premios = pd.read_parquet(f'{self.premiuns_path}\market_premium.parquet')
         df_premios['data'] = pd.to_datetime(df_premios['data'])
         
         for i, nome_premio in enumerate(self.lista_nome_fatores):
 
-            df = pd.read_parquet(f'{self.caminho_premios_de_risco}/{nome_premio}_{self.liquidez[i]}.parquet')
+            df = pd.read_parquet(f'{self.premiuns_path}\{nome_premio}_{self.liquidez[i]}.parquet')
             df['data'] = pd.to_datetime(df['data'])
 
             df = df.assign(premio_fator = (1 + df['primeiro_quartil'])/ (1 + df['quarto_quartil']) - 1)
@@ -54,11 +66,10 @@ class linear_regression():
 
         self.df_premios = df_premios
         self.universo = universo
-        print('df_premios',df_premios)
-        print('universo 01',universo)
+        # print('df_premios',df_premios)
+        # print('universo 01',universo)
 
-
-    def calculando_universo(self):
+    def calculating_universe(self):
 
         universo = self.universo
         universo = universo.set_index('data')
@@ -79,9 +90,9 @@ class linear_regression():
         universo['U_RF'] = (1 + universo['universo_medio'])/ (1 + universo['rf']) - 1
         universo = universo.set_index('data')
         self.universo = universo
-        print('universo 02', self.universo)
+        # print('universo 02', self.universo)
 
-    def regressao(self):
+    def execute_regression(self):
 
         Y = self.universo['U_RF']
         X = self.df_premios
@@ -90,6 +101,16 @@ class linear_regression():
         
         model = sm.OLS(Y, X_C)
         resultado = model.fit()
+
+        print('R-square:\n', resultado.rsquared)
+        print('F-statistic:\n', resultado.fvalue)
+        print('Prob (F-statistic):\n', resultado.f_pvalue)
+        print('P-Value for const:\n', resultado.pvalues['const'])
+        # print('Coeficientes:\n', resultado.params)
+        # print('\nValores-P:\n', resultado.pvalues)
+        # print('\nValores ajustados (fitted values):\n', resultado.fittedvalues)
+        # print('\nResíduos:\n', resultado.resid)
+
         print(resultado.summary())
 
 
@@ -105,7 +126,7 @@ if __name__ == "__main__":
                            }
 
     fazendo_modelo = linear_regression(data_final_analise= "2021-12-31", dicionario_fatores = dicionario_fatores, 
-                                       caminho_premios_de_risco=R'.\finapp\files\premios_risco',
+                                       caminho_premios_de_risco=R'.\finapp\files\risk_premiuns',
                                        caminho_cdi = R'.\finapp\files')
 
     fazendo_modelo.puxando_dados_premios()

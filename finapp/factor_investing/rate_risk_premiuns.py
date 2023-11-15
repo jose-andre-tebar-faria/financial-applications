@@ -75,6 +75,56 @@ class MakeResultsPremium:
         df_primeiro_quartis = pd.DataFrame(index = self.premios_de_risco['data'].unique())
         df_premios_de_risco = pd.DataFrame(index = self.premios_de_risco['data'].unique())
 
+        # self.current_folder = os.getcwd()
+
+        # self.project_folder = os.getenv("PROJECT_FOLDER")
+        # self.databse_folder = os.getenv("IMAGES_FOLDER")
+        # self.full_desired_path = os.path.join(self.project_folder,self.databse_folder)
+
+        # if(self.current_folder != self.full_desired_path):
+        #     os.chdir(self.full_desired_path)
+
+        dataframe_columns = ['acum_primeiro_quartil', 'acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil', 'nome_indicador']
+        ranking_indicator = pd.DataFrame(columns=dataframe_columns)
+
+        for i, nome_premio in enumerate(self.lista_nome_fatores):
+
+            fator = self.premios_de_risco[(self.premios_de_risco['nome_premio'] == nome_premio) &
+                                            (self.premios_de_risco['liquidez'] == self.liquidez[i])]
+
+            tamanho_fator = len(fator['primeiro_quartil'])
+            #print("tamanho_fator: ", tamanho_fator)
+        
+            if tamanho_fator != 0:
+
+                acum_primeiro_quartil = (fator['primeiro_quartil'].cumprod() - 1).iloc[-1]
+                acum_segundo_quartil = (fator['segundo_quartil'].cumprod() - 1).iloc[-1]
+                acum_terceiro_quartil = (fator['terceiro_quartil'].cumprod() - 1).iloc[-1]
+                acum_quarto_quartil = (fator['quarto_quartil'].cumprod() - 1).iloc[-1]
+                
+                factor_name = (fator['nome_premio']).iloc[-1]
+
+                ranking_indicator.loc[i, 'nome_indicador'] = factor_name
+                ranking_indicator.loc[i, 'acum_primeiro_quartil'] = acum_primeiro_quartil
+                ranking_indicator.loc[i, 'acum_segundo_quartil'] = acum_segundo_quartil
+                ranking_indicator.loc[i, 'acum_terceiro_quartil'] = acum_terceiro_quartil
+                ranking_indicator.loc[i, 'acum_quarto_quartil'] = acum_quarto_quartil
+
+                ranking_indicator['ranking_indicators'] = ranking_indicator['acum_primeiro_quartil'].rank(ascending=False)
+                ranking_indicator.sort_values('ranking_indicators', ascending=True, inplace=True)
+
+                df_primeiro_quartis.loc[:, f"{nome_premio}"] = (fator['primeiro_quartil'].cumprod() - 1).values
+                df_premios_de_risco.loc[:, f"{nome_premio}"] = (fator['premio_fator'].cumprod() - 1).values
+        
+        return ranking_indicator
+
+    def create_pdf_images(self, list_premiuns_to_pdf):
+
+        self.list_premiuns_to_pdf = list_premiuns_to_pdf
+
+        df_primeiro_quartis = pd.DataFrame(index = self.premios_de_risco['data'].unique())
+        df_premios_de_risco = pd.DataFrame(index = self.premios_de_risco['data'].unique())
+
         self.current_folder = os.getcwd()
 
         self.project_folder = os.getenv("PROJECT_FOLDER")
@@ -87,7 +137,7 @@ class MakeResultsPremium:
         dataframe_columns = ['acum_primeiro_quartil', 'acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil', 'nome_indicador']
         ranking_indicator = pd.DataFrame(columns=dataframe_columns)
 
-        for i, nome_premio in enumerate(self.lista_nome_fatores):
+        for i, nome_premio in enumerate(self.list_premiuns_to_pdf):
 
             #print("lista_nome_fatores: ", self.lista_nome_fatores)
             #print("nome_premio; ", nome_premio)
@@ -234,39 +284,10 @@ class MakeResultsPremium:
         plt.close()
 
         self.matriz_correl = df_premios_de_risco.corr()
-        
-        return ranking_indicator
 
-    def fazer_pdf(self):
+    def fazer_pdf(self, list_premiuns_to_pdf):
 
-        MakePDF(fatores = self.lista_nome_fatores, liquidez = self.liquidez, matriz_correl = self.matriz_correl,
+        self.list_premiuns_to_pdf = list_premiuns_to_pdf
+
+        MakePDF(fatores = self.list_premiuns_to_pdf, liquidez = self.liquidez, matriz_correl = self.matriz_correl,
                 nome_arquivo=self.file_name)
-           
-if __name__ == "__main__":
-
-    factors_dict = {
-                          'QUALITY_ROIC': 1000000,
-                          #'QUALITY_ROE': 1000000,
-                          #'VALOR_EBIT_EV': 1000000,
-                          #'VALOR_L_P': 1000000,
-                          #'ALAVANCAGEM_EBIT_DL': 1000000,
-                          #'ALAVANCAGEM_PL_DB': 1000000,
-                          #'MOMENTO_R6M': 1000000,
-                          #'MOMENTO_R1M': 1000000,
-                          #'MOMENTO_R12M': 1000000,
-                          #'MOMENTO_MM_7_40': 1000000,
-                          'TAMANHO_VALOR_DE_MERCADO': 1000000,
-                          #'RISCO_VOL': 1000000,
-                          'TAMANHO_VALOR_DE_MERCADO-QUALITY_ROIC': 1000000,
-                          'TAMANHO_VALOR_DE_MERCADO_VALOR_EBIT_EV_MOMENTO_R6M': 1000000,
-                           }
-
-    premios = MakeResultsPremium(final_analysis_date="2021-12-31", factors_dict=factors_dict,
-                                 file_name = r'..\\PDFs\avaliando-COMBINACOES.pdf')
-
-    #diretorio_atual = os.getcwd()
-    #print("Diretório atual antes puxar_dados:", diretorio_atual)
-
-    premios.getting_premiuns()
-    premios.retorno_quartis()
-    premios.fazer_pdf()

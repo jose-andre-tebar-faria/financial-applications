@@ -88,6 +88,8 @@ class RiskPremium:
 
     def calculating_premiuns(self):
 
+        print("Calculating Premium.")
+        
         dataframe_columns = ['primeiro_quartil', 'segundo_quartil', 'terceiro_quartil', 'quarto_quartil', 'universo']
         premiuns_dataframe = pd.DataFrame(columns=dataframe_columns, index=self.list_all_last_dates_each_month)
 
@@ -157,6 +159,8 @@ class RiskPremium:
         premiuns_dataframe.dropna(inplace=True)
         self.premiuns_dataframe = premiuns_dataframe
 
+        print("Ok.")
+        
         return self.premiuns_dataframe
 
     def saving_premiuns(self):

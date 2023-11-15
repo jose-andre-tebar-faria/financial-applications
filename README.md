@@ -433,9 +433,10 @@ Cada .parquet contido no database se refere ao seguinte indicador.
 ### **5) modelo_regressão.py** - classe
     -  OLS Regression Result
         ideal que:
+            coef                Positivo (quanto maior, mais relevante na modelagem)
             R-squared           mais próximo de 1
             F-statistic         maior possível
-            P-Valor (P>|t|)     quanto maior, mais irrelevante na modelagem
+            P-Valor (P>|t|)     menor possível (aceitável menor que 5%)
                 queremos o ALPHA maior possível 'const'
     
                                 OLS Regression Results Example
