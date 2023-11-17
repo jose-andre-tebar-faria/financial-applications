@@ -12,7 +12,7 @@ class MakeBacktest():
                 corretagem = 0, impacto_mercado = 0, data_inicial = None, nome_arquivo = 'backtest.pdf', 
                 caminho_imagens = None, caminho_dados = None, **kargs):
                         
-        print("Inicializing MakeBacktest!")
+        print("\nInicializing MakeBacktest!")
 
         load_dotenv()
 

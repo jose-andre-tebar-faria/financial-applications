@@ -1,76 +1,126 @@
 import os
 from dotenv import load_dotenv
 import pandas as pd
+import numpy as np
+import update_asset_profile as uap
 
-load_dotenv()
+class BcgMatrix:
 
-current_folder = os.getcwd()
+    def __init__(self, bcg_dimensions):
+        
+        self.bcg_dimensions = bcg_dimensions
+        print("\nInicializing BCG Matrix!")
 
-project_folder = os.getenv("PROJECT_FOLDER")
-databse_folder = os.getenv("DATABASE_FOLDER")
-full_desired_path = os.path.join(project_folder,databse_folder)
+        load_dotenv()
 
-if(current_folder != full_desired_path):
-    os.chdir(full_desired_path)
+        self.asset_acess = uap.UpdateAssetProfile()
 
-#
-##
-###
-# LENDO ASSESTS NA BASE DE WEBSCRAPING (MÃE)
-###
-##
-#
-print('=== BUSCANDO ASSETS DA BASE DE WEBSRAPING! ==\n')
+        current_folder = os.getcwd()
 
-assets_b3_database = pd.DataFrame()
-list_asset_b3_database = []
+        project_folder = os.getenv("PROJECT_FOLDER")
+        databse_folder = os.getenv("DATABASE_FOLDER")
+        self.full_desired_path = os.path.join(project_folder,databse_folder)
 
-assets_database_parquet = pd.read_parquet(f'{full_desired_path}/assets_database.parquet')
-assets_database_df = pd.DataFrame(assets_database_parquet)
-assets_database_df.reset_index(inplace=True)
-
-# print(assets_database_df)
-
-assets_b3_database = assets_database_df.sort_values(by='asset', ascending= True)
-assets_b3_database.reset_index(inplace=True, drop=True)
-
-assets_b3_database = assets_b3_database
-# print('primeiros 10 tickers em ordem alfabética: \n', assets_b3_database[:10], '\n')
-print('Foram encontrados', len(assets_b3_database), 'tickers na base de webscraping!\n')
+        if(current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
 
 #
 ##
 ###
-# LENDO ASSESTS DISTINTOS NA BASE DE COTAÇÕES
+# CALCULANDO MATRIX BCG
 ###
 ##
 #
-print('=== BUSCANDO ASSETS DA BASE DE COTAÇÕES! ==\n')
+    def create_bcg_matrix(self):
 
-assets_quotations_database = pd.DataFrame(columns=['asset', 'quotations_in_database'])
-list_asset_quotations_database = []
+        print('\n=== CALCULANDO MATRIZ BCG! ==')
 
-quotations_database_parquet = pd.read_parquet(f'{full_desired_path}/cotacoes.parquet')
+        asset_profile_database = self.asset_acess.read_profile_database()
 
-quotations_database = pd.DataFrame(quotations_database_parquet)
+        sectors = asset_profile_database.drop_duplicates('sector')['sector'].sort_values(ascending = True)
+        sectors.reset_index(inplace=True, drop=True)
+        list_sectors = list(sectors)
+        print('\nForam localizados', len(list_sectors), ' setores.')
 
-# print(quotations_database)
-print('Foram encontrados', len(quotations_database), 'cotações!')
+        subsectors = asset_profile_database.drop_duplicates('subsector')['subsector'].sort_values(ascending = True)
+        subsectors.reset_index(inplace=True, drop=True)
+        list_subsectors = list(subsectors)
+        print('\nForam localizados', len(list_subsectors), ' subsetores.')
+        # print(list_subsectors)
 
-assets_quotations_database['asset'] = quotations_database['ticker'].str[:4]
+        acum_category_profile = asset_profile_database
 
-# print(assets_quotations_database)
+        for dimension in self.bcg_dimensions:
 
-assets_quotations_database['quotations_in_database'] = assets_quotations_database.groupby('asset')['asset'].transform('count')
-distint_tickers_in_quotations_database = assets_quotations_database.drop_duplicates('asset').sort_values(by=['asset'], ascending = True)
-distint_tickers_in_quotations_database.reset_index(inplace=True, drop=True)
+            dimension_column = dimension + '_marketshare'
+            dimension_destin_column = dimension + '_bcg_category'
 
-distint_tickers_in_quotations_database = distint_tickers_in_quotations_database
+            if(dimension == 'sector'):
+                list_category = list_sectors
+            if(dimension == 'subsector'):
+                list_category = list_subsectors
+            # print(list_category)
 
-# print('primeiros 10 tickers em ordem alfabética: \n', distint_tickers_in_quotations_database[:10], '\n', '\n')
-print('Foram encontrados', len(distint_tickers_in_quotations_database), 'tickers na base de cotações!\n')
+            for category_filter in list_category:
 
-asset_profile_database = pd.merge(distint_tickers_in_quotations_database, assets_b3_database, on='asset')
+                # print('=== category: ', category_filter)
+                category_profile_database = asset_profile_database[['asset', dimension, dimension_column, 'last_growth_rate']][asset_profile_database[dimension] == category_filter].sort_values(by=['last_growth_rate', dimension], ascending = False)
+                # print(category_profile_database)
 
-print('Assets profile database: \n',asset_profile_database)
-# print(len(iguais))
+                threshold_last_growth_rate = category_profile_database['last_growth_rate'].astype(float).mean()
+                threshold_category_marketshare = category_profile_database[dimension_column].astype(float).mean()
+                # print('\nthreshold_last_growth_rate: \n', threshold_last_growth_rate)
+                # print('threshold_', dimension , '_marketshare: \n', threshold_category_marketshare)
+
+                conditions = [
+                    (asset_profile_database['last_growth_rate'] >= threshold_last_growth_rate) & (asset_profile_database[dimension_column] >= threshold_category_marketshare),
+                    (asset_profile_database['last_growth_rate'] < threshold_last_growth_rate) & (asset_profile_database[dimension_column] >= threshold_category_marketshare),
+                    (asset_profile_database['last_growth_rate'] >= threshold_last_growth_rate) & (asset_profile_database[dimension_column] < threshold_category_marketshare),
+                    (asset_profile_database['last_growth_rate'] < threshold_last_growth_rate) & (asset_profile_database[dimension_column] < threshold_category_marketshare)
+                ]
+
+                categories = ['Estrela', 'Vaca Leiteira', 'Ponto de Interrogação', 'Abacaxi']
+                category_profile_database[f'{dimension}_bcg_category'] = pd.DataFrame(np.select(conditions, categories))
+                category_profile = category_profile_database.drop(columns=[dimension, dimension_column, 'last_growth_rate'])
+                # print(category_profile)
+
+                for index, row in category_profile.iterrows():
+                    asset = row['asset']
+                    # print(asset)
+                    bcg_category = row[dimension_destin_column]
+                    # print(bcg_category)
+
+                    # Encontrar o índice correspondente no DataFrame 1
+                    index_to_go = acum_category_profile.index[acum_category_profile['asset'] == asset].tolist()
+                    # print(index_df1)
+
+                    if index_to_go:
+                        acum_category_profile.at[index_to_go[0], dimension_destin_column] = bcg_category
+                        # print(acum_category_profile[acum_category_profile['asset'] == asset])
+                        # print('')
+
+        bcg_matrix = acum_category_profile[['asset', 'sector', 'sector_marketshare', 'subsector', 'subsector_marketshare', 'last_growth_rate', 'sector_bcg_category', 'subsector_bcg_category']]
+        # print('Estrelas DUPLAS: \n', bcg_matrix[(bcg_matrix['sector_bcg_category'] == 'Estrela') & (bcg_matrix['subsector_bcg_category'] == 'Estrela')])
+        # print('Estrelas do Setor: \n', bcg_matrix[(bcg_matrix['sector_bcg_category'] == 'Estrela')])
+        # print('Estrelas do Subsetor: \n', bcg_matrix[bcg_matrix['subsector_bcg_category'] == 'Estrela'])
+        print('\nBCG Matrix: \n', bcg_matrix)
+
+        print('\t==saving BCG matrix to file bcg_matrix.parquet.')
+        bcg_matrix.to_parquet(f'{self.full_desired_path}/bcg_matrix.parquet', index = True)
+
+    def read_bcg_matrix_database(self):
+        
+        bcg_matrix_read = pd.read_parquet(f'{self.full_desired_path}/bcg_matrix.parquet')
+        bcg_matrix_read_df = pd.DataFrame(bcg_matrix_read)
+        bcg_matrix_read_df.reset_index(inplace=True)
+        # print(bcg_matrix_read_df)
+
+        return bcg_matrix_read_df
+
+if __name__ == "__main__":
+    
+    bcg_dimensions = ['sector', 'subsector']
+
+    bcg_matrix = BcgMatrix(bcg_dimensions)
+
+    bcg_matrix.create_bcg_matrix()

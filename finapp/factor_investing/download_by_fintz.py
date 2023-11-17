@@ -8,7 +8,7 @@ class FintzData:
 
     def __init__(self):
 
-        print("Inicializing FintzData!")
+        print("Inicializing Downloader by Fintz!")
 
         load_dotenv()
 

@@ -1,16 +1,21 @@
-import download_fintz_data as dfd
+import download_by_fintz as dbf
+import download_by_api as dba
+import download_by_webscrapping as dbw
 import make_indicators as mi
 import risk_premiuns as rp
 import rate_risk_premiuns as rrp
 import factor_calculator as fc
 import market_premium as mp
 import regression_model as rm
+import update_asset_profile as uap
+import create_bcg_matrix as cbm
 
 import os
 from dotenv import load_dotenv
 import pandas as pd
 from itertools import combinations
 import subprocess
+import numpy as np
 from dateutil.relativedelta  import relativedelta
 
 class FinappController:
@@ -105,23 +110,30 @@ if __name__ == "__main__":
     finapp = FinappController()
 
     # enable database update
-    update_database             = False
+    update_database                 = False
+    update_api_database             = False
+    update_fintz_database           = False
+    update_webscrapping_database    = False
+    # enable asset profile update
+    update_asset_profile            = False
+    # enable create BCG Matrix
+    update_bcg_matrix               = False
     # enable indicators update
-    update_indicators           = False
+    update_indicators               = False
     # enable calculate risk premiuns database update
-    calculate_risk_premiuns     = False
+    calculate_risk_premiuns         = False
     # enable rating risks
-    rate_risk_premiuns          = False
+    rate_risk_premiuns              = False
     # enable run a regression model
-    execute_regression_model    = False
+    execute_regression_model        = False
     # enable generation of wallet
-    generate_wallets            = True
+    generate_wallets                = False
     # enable requirements.txt update
-    update_requirements_txt     = False
+    update_requirements_txt         = False
 
     ###
     ##
-    #download_fintz_data
+    #update_database
     ##
     ###
     demonstration_list = [
@@ -137,27 +149,84 @@ if __name__ == "__main__":
                          'LucroLiquidoSociosControladora12m'
                          ]
 
-    indicators_list = [
+    fintz_indicators_list = [
                         'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado'
                         ]
     
+    bc_dict = {
+                'selic':    {'bc_code': '432'},
+                'ipca':     {'bc_code': '433'},
+                'dolar':    {'bc_code': '1'},
+                }
+
     if(update_database):
 
         print(".\n..\n...\nUpdating Database!\n...\n..\n.")
 
-        reading_data = dfd.FintzData()
+        if(update_fintz_database):
 
-        for demonstration in demonstration_list:
-           reading_data.download_accounting_files(demonstration=True, data_name = demonstration)
+            data_from_fintz = dbf.FintzData()
 
-        for indicator in indicators_list:
-           reading_data.download_accounting_files(indicator=True, data_name = indicator)
+            for demonstration in demonstration_list:
+                data_from_fintz.download_accounting_files(demonstration=True, data_name = demonstration)
 
-        reading_data.download_cdi(initial_date="2000-01-01")
-        reading_data.download_ibov(initial_date="2000-01-01")
-        reading_data.download_quotations()
+            for indicator in fintz_indicators_list:
+                data_from_fintz.download_accounting_files(indicator=True, data_name = indicator)
+
+            data_from_fintz.download_cdi(initial_date="2000-01-01")
+            data_from_fintz.download_ibov(initial_date="2000-01-01")
+            data_from_fintz.download_quotations()
         
+        if(update_api_database):
+
+            data_from_api = dba.DownloadByApi()
+
+            bc_data = data_from_api.getting_bc_data(bc_dict)
+
+        if(update_webscrapping_database):
+
+            data_from_webscrapping = dbw.DownloadByWebscrapping()
+
+            b3_sectors = data_from_webscrapping.getting_b3_assets_sector_by_site()
+
         print(".\n.\n=== UPDATE COMPLETE! ===")
+
+    ###
+    ##
+    #update_asset_profile
+    ##
+    ###
+    if(update_asset_profile):
+
+        print(".\n..\n...\nUpdating Asset Profile!\n...\n..\n.")
+
+        profile_updater = uap.UpdateAssetProfile()
+
+        profile_updater.getting_assets_database()
+        profile_updater.getting_assets_from_quotation()
+        profile_updater.calculationg_growth_rate()
+        profile_updater.calculationg_marketshare()
+        profile_updater.save_profile_database()
+
+        profile_updater.read_profile_database()
+   
+    ###
+    ##
+    #bcg_matrix
+    ##
+    ###
+    bcg_dimensions_list = [
+                        'sector', 
+                        'subsector',
+                    ]
+
+    if(update_bcg_matrix):
+
+        print(".\n..\n...\nCreating BCG Matrix!\n...\n..\n.")
+
+        bcg_matrix = cbm.BcgMatrix(bcg_dimensions_list)
+
+        bcg_matrix.create_bcg_matrix()
 
     ###
     ##
@@ -189,14 +258,14 @@ if __name__ == "__main__":
     ###
     indicators_dict = {
                         'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
-                        # 'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
+                        'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
                         # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
                         'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
-                        # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
-                        # 'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
-                        'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
-                        'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
-                        'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
+                        'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
+                        'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
+                        # 'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
+                        # 'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
+                        # 'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
                         # 'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
                         'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
                         # 'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
@@ -205,13 +274,14 @@ if __name__ == "__main__":
     # choose de indicators combinations to rate
     single_combinations     = True
     double_combinations     = True
-    triple_combinations     = False
+    triple_combinations     = True
     
     #True if you want to update a existing file
     update_existing_file    = False
 
     number_of_top_comb_indicators = 10
     number_of_top_single_indicators = 3
+
 
     if(calculate_risk_premiuns):
 
@@ -301,7 +371,7 @@ if __name__ == "__main__":
         ranking_indicator = pd.DataFrame(columns=dataframe_columns)
 
         ranking_indicator = rating_premiuns.retorno_quartis()
-        print('.\n.\nIndicators ranking: ', ranking_indicator[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
+        print('.\n.\nIndicators ranking: \n', ranking_indicator[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
 
         ranking_indicator = pd.DataFrame(ranking_indicator)
 
@@ -318,16 +388,18 @@ if __name__ == "__main__":
 
         top_indicators['Pure'] = top_indicators['nome_indicador'].isin(list_premium_name)
 
-        print('.\n.\ntop_indicators', number_of_top_comb_indicators, ': \n', top_indicators[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
+        print('.\n.\ntop_indicators', number_of_top_comb_indicators, 'combinated: \n', top_indicators[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
 
-        dataframe_columns = ['ranking_single_indicators', 'contagem', 'nome_indicador', 'acum_primeiro_quartil']
+
+        dataframe_columns = ['ranking_single_indicators', 'contagem', 'nome_indicador']
         distribution_indicadors = pd.DataFrame(columns = dataframe_columns)
 
         distribution_indicadors['nome_indicador'] = list_premium_name
         distribution_indicadors['contagem'] = 0
 
-        ##corrigir abaixo para pegar o retorno acumulado do indicador puro
-        distribution_indicadors['acum_primeiro_quartil'] = ranking_indicator['acum_primeiro_quartil']
+        distribution_indicadors = pd.merge(distribution_indicadors, ranking_indicator, on = 'nome_indicador', how = 'left')
+        distribution_indicadors = distribution_indicadors.drop(columns=['acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil',  'ranking_indicators'])
+        # print(distribution_indicadors)
 
         for i, indicator in enumerate(distribution_indicadors['nome_indicador']):
             indicator_presence = top_indicators[indicator+'_Contido'].sum()
@@ -339,9 +411,89 @@ if __name__ == "__main__":
         
         print('.\n.\ndistribution_indicadors: \n', distribution_indicadors)
 
-        top_single_indicators = distribution_indicadors.head(number_of_top_single_indicators)
 
-        print('.\n.\ntop_single_indicators', number_of_top_single_indicators, ': \n', top_single_indicators['nome_indicador'])
+
+
+        ###
+        ##
+        # CREATE AUTOMATIC PONDERATED WALLET
+        # 
+        ##
+        ###
+
+        number_of_top_indicators = 2
+        best_indicators_list = []
+
+        best_indicators_list = list(ranking_indicator['nome_indicador'].head(number_of_top_indicators))
+        print(f'\nOs {number_of_top_indicators} primeiros indicadores: \n', best_indicators_list)
+
+        marker = '-with-'
+        auto_wallet_dict = {}
+        number_of_wallets = number_of_top_indicators
+        wallet_proportion = 1/number_of_wallets
+
+        default_wallet = {'wallet-1': {'indicadores': {}, 'peso': 1}, 
+                        'wallet-2': {'indicadores': {}, 'peso': 1},
+                        'wallet-3': {'indicadores': {}, 'peso': 1},
+                        'wallet-4': {'indicadores': {}, 'peso': 1},}
+
+        wallet_number = 1
+        existing_wallets_list = []
+        
+        for indicators_comb in best_indicators_list:
+            split_indicator = indicators_comb.split(marker)
+            # print(split_indicator)
+
+            indicators_list = []
+
+            for file_name in split_indicator:
+
+                chave_encontrada = None
+
+                for chave, subdicionario in indicators_dict.items():
+                    if 'file_name' in subdicionario and subdicionario['file_name'] == file_name:
+                        chave_encontrada = chave
+                        indicators_list.append(chave)
+                        break
+            print(f'\nindicators_list for wallet-{wallet_number}: ', indicators_list)
+
+            for file_name in indicators_list:
+                # print(file_name)
+                # print(indicators_dict)
+
+                if file_name in indicators_dict:
+                    
+                    order_value = indicators_dict[file_name]['order']
+                    # print(order_value)
+
+                    wallet_name = 'wallet-' + str(wallet_number)
+                    # print(wallet_name)
+                    default_wallet[wallet_name]['indicadores'][file_name] = {'caracteristica': order_value}
+                    default_wallet[wallet_name]['peso'] = wallet_proportion
+                    # print(auto_wallet_dict)
+                    # print('\nWallet dict to append: \n', default_wallet)
+
+                auto_wallet_dict.update(default_wallet)
+                # print('\nAutomatic wallet dict created: \n', auto_wallet_dict)
+
+            existing_wallets_list.append(wallet_name)
+            # print(existing_wallets_list)
+            wallet_number+=1
+
+        print('\nExisting wallets in dict created: ', existing_wallets_list)
+
+        wallets_dict = {wallet: auto_wallet_dict[wallet] for wallet in existing_wallets_list}
+        print('\nAutomatic wallet dict created: \n', wallets_dict)
+
+
+        ###
+        ##
+        # calculation single indicator ranking
+        ##
+        ###
+
+        top_single_indicators = distribution_indicadors.head(number_of_top_single_indicators)
+        # print('.\n.\ntop_single_indicators', number_of_top_single_indicators, ': \n', top_single_indicators['nome_indicador'])
 
         best_indicator = ranking_indicator[ranking_indicator['ranking_indicators'] == 1]
         print('.\n.\nO melhor indicador até a data definida foi: ', str(best_indicator['nome_indicador'].iloc[-1]))
@@ -350,12 +502,37 @@ if __name__ == "__main__":
         print('\t rentabilidade acumulada do terceiro_quartil: ', int((best_indicator['acum_terceiro_quartil'].iloc[-1]) * 100), '%')
         print('\t rentabilidade acumulada do quarto_quartil: ', int((best_indicator['acum_quarto_quartil'].iloc[-1]) * 100), '%')
 
-        list_premiuns_to_pdf = list(top_indicators['nome_indicador'])
 
-        rating_premiuns.create_pdf_images(list_premiuns_to_pdf)
-        rating_premiuns.fazer_pdf(list_premiuns_to_pdf)
+        # top_single_indicators = top_single_indicators.drop(columns=['contagem', 'ranking_single_indicators', 'acum_primeiro_quartil'])
+        # top_single_indicators = top_single_indicators.reset_index(drop=True)
+        # print(top_single_indicators)
         
+        # top_single_indicators_list = top_single_indicators['nome_indicador'].to_list()
+        # print(top_single_indicators_list)
+
+
+
+        #
+        ##
+        # CREATING PDF
+        ##
+        #
+
+        list_premiuns_to_pdf = list(top_indicators['nome_indicador'])
+        # rating_premiuns.create_pdf_images(list_premiuns_to_pdf)
+        # rating_premiuns.fazer_pdf(list_premiuns_to_pdf)
+
+
+        #
+        ##
+        # PREPARING DATA FOR REGRESSION
         premiuns_to_regression_dict = dict.fromkeys(top_single_indicators['nome_indicador'], 1000000)
+
+
+
+
+        print('\nAutomatic wallet dict created: \n', wallets_dict)
+
 
         print(".\n.\n=== RATING COMPLETE! ===")
 
@@ -368,6 +545,8 @@ if __name__ == "__main__":
 
         print(".\n..\n...\nRunning Regression Model!\n...\n..\n.")
 
+        print('\nPremius to regression: \n', premiuns_to_regression_dict)
+
         fazendo_modelo = rm.linear_regression(data_final_analise= "2021-12-31", dicionario_fatores = premiuns_to_regression_dict, 
                                        caminho_premios_de_risco=R'./finapp/files/risk_premiuns',
                                        caminho_cdi = R'./finapp/files')
@@ -375,24 +554,26 @@ if __name__ == "__main__":
         fazendo_modelo.getting_premium_data()
         fazendo_modelo.calculating_universe()
         fazendo_modelo.execute_regression()
+    
     ###
     ##
     #factor_calculator
     ##
     ###
-    wallets_dict = {
-        'carteira1': {
-                'indicadores': {
-                    #'momento_1_meses': {'caracteristica': 'decrescente'},
-                    'momento_6_meses': {'caracteristica': 'decrescente'},
-                    #'momento_12_meses': {'caracteristica': 'decrescente'},
-                    # 'mm_7_40': {'caracteristica': 'decrescente'},
-                    'ValorDeMercado': {'caracteristica': 'crescente'},
-                    'EBIT_EV': {'caracteristica': 'decrescente'},
-                    # 'ebit_dl': {'caracteristica': 'decrescente'},
-                },
-                'peso': 1
-        },
+
+    # wallets_dict = {
+    #     'carteira1': {
+    #             'indicadores': {
+    #                 #'momento_1_meses': {'caracteristica': 'decrescente'},
+    #                 'momento_6_meses': {'caracteristica': 'decrescente'},
+    #                 #'momento_12_meses': {'caracteristica': 'decrescente'},
+    #                 # 'mm_7_40': {'caracteristica': 'decrescente'},
+    #                 'ValorDeMercado': {'caracteristica': 'crescente'},
+    #                 'EBIT_EV': {'caracteristica': 'decrescente'},
+    #                 # 'ebit_dl': {'caracteristica': 'decrescente'},
+    #             },
+    #             'peso': 1
+    #     },
         # 'carteira2': {
         #         'indicadores': {
         #             #'momento_1_meses': {'caracteristica': 'decrescente'},
@@ -403,13 +584,14 @@ if __name__ == "__main__":
         #             #'EBIT_EV': {'caracteristica': 'decrescente'},
         #             #'ebit_dl': {'caracteristica': 'decrescente'},
         #         },
-        #         'peso': 0.3
+        #         'peso': 0.33
+        # },
         # }
-        }
+    # print(wallets_dict)
     
-    rebalance_periods = 10
+    rebalance_periods = 14
     liquidity_filter = 1
-    asset_quantity = 10
+    asset_quantity = 5
     
     if(generate_wallets):
 
@@ -418,23 +600,26 @@ if __name__ == "__main__":
         #before initialize class must define the name of the file
         pdf_name = ''
 
-        print("Wallet(s) configuration:")
+        print("Setup configuration =")
 
         for nome_carteira, carteira in wallets_dict.items():
                 
-                print("\t wallet: ", nome_carteira, '// peso: ', carteira['peso'] * 100, '%')
+                print("\n\t", nome_carteira, '\n\t\t peso: ', carteira['peso'] * 100, '%')
 
                 pdf_name = pdf_name + nome_carteira + "_peso" + str(carteira['peso']).replace(".", "") + "_" 
 
                 indicadores = carteira['indicadores']
 
-                print("\t indicator(s): ")
+                print("\t\t indicator(s): ")
                 
                 for indicador, ordem in indicadores.items():
 
-                    print('\t\t', indicador)
+                    print('\t\t\t', indicador)
 
                     pdf_name = pdf_name + indicador + "_"
+
+        print('\n\tAssets per wallet: ', asset_quantity)
+        print('\n\tRebalance periods: ', rebalance_periods)
 
         pdf_name = pdf_name + str(rebalance_periods) + '_' + str(liquidity_filter) + "M_" + str(asset_quantity) + "A.pdf"
 
@@ -448,10 +633,90 @@ if __name__ == "__main__":
         
         last_wallet = wallets.loc[wallets.index[-1]]
         last_wallet = last_wallet.reset_index()
+        print('\nLast wallet defined below: \n', last_wallet)
+        
+        last_wallet_rebalance_date = last_wallet.loc[last_wallet.index[-1], 'data']
+        print('\nLast wallet rebalance_date: ', last_wallet_rebalance_date)
+        
+        #
+        ##
+        ###
+        # CREATE PDF REPORT
+        ###
+        ##
+        #
+        # backtest.make_report()
 
-        print('Last wallet defined below: \n', last_wallet)
 
-        backtest.make_report()
+        #
+        ##
+        ## une a matrix BCG (bcg_matrix) aos últimos resultados da carteira
+        ##
+        #
+        last_wallet['ticker'] = last_wallet['ticker'].str[:4]
+        last_wallet = last_wallet.rename(columns={'ticker': 'asset'})
+
+        last_wallet = last_wallet.set_index('asset', drop=True)
+        # last_wallet = last_wallet.drop(columns = 'index')
+        # print(last_wallet)
+
+        bcg_matrix_acess = cbm.BcgMatrix(bcg_dimensions_list)
+        bcg_matrix = bcg_matrix_acess.read_bcg_matrix_database()
+
+        bcg_matrix_df = pd.DataFrame(bcg_matrix)
+
+        bcg_matrix_df = bcg_matrix_df.set_index('asset', drop=True)
+        bcg_matrix_df = bcg_matrix_df.drop(columns = 'index')
+        # print(bcg_matrix_df)
+        
+        final_analysis = pd.merge(bcg_matrix_df, last_wallet, on='asset')
+        print('\nNightvision: \n', final_analysis.sort_values(by=['sector', 'subsector']))
+        
+
+        analysis_assets_list = list(final_analysis.index)
+        print('\nWallet assets list: \n', analysis_assets_list)
+
+        analysis_assets_list = [element + '3' for element in analysis_assets_list]
+        
+
+        #
+        ##
+        ## calcula o rendimento nos últimos 'rebalance_periods' de cada asset da última carteira
+        ##
+        #
+        current_folder = os.getcwd()
+
+        project_folder = os.getenv("PROJECT_FOLDER")
+        databse_folder = os.getenv("DATABASE_FOLDER")
+        full_desired_path = os.path.join(project_folder,databse_folder)
+
+        if(current_folder != full_desired_path):
+            os.chdir(full_desired_path)
+
+        quotations_database_parquet = pd.read_parquet(f'{full_desired_path}/cotacoes.parquet')
+
+        quotations_database = pd.DataFrame(quotations_database_parquet[['data', 'ticker', 'preco_fechamento_ajustado']][quotations_database_parquet['ticker'].isin(analysis_assets_list)])
+        quotations_database['data'] = pd.to_datetime(quotations_database['data'])
+        quotations_database.sort_values(['ticker', 'data'], inplace=True)
+        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = rebalance_periods) * 100
+
+        last_period_variation = quotations_database.groupby('ticker')['last_period_variation'].last()
+        print('\nAssets perc_change in rebalance_periods: \n',last_period_variation)
+
+        print('\nNumber of assets in final wallet: ', len(analysis_assets_list))
+
+        mean_last_period_variation = last_period_variation.mean()
+        print(f'\nAvarage wallet rentability past {rebalance_periods} periods: ', round(mean_last_period_variation,2) , '%')
+
+        last_analysis_date = quotations_database.loc[quotations_database.index[-1], 'data']
+        print('\nLast analysis date: ', pd.to_datetime(last_analysis_date))
+
+
+
+
+
+
+
 
         print(".\n.\n=== GENERATION COMPLETE! ===")
 
@@ -478,5 +743,4 @@ if __name__ == "__main__":
         full_desired_path = os.path.join(project_folder, requirements_file_name)
 
         with open(full_desired_path, "w") as arquivo:
-            # print("deveria salvar")
             arquivo.write(requirements_data)
