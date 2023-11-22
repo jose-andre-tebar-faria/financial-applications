@@ -110,22 +110,22 @@ if __name__ == "__main__":
     finapp = FinappController()
 
     # enable database update
-    update_database                 = False
+    update_database                 = True
     update_api_database             = False
     update_fintz_database           = True
     update_webscrapping_database    = False
     # enable asset profile update
-    update_asset_profile            = False
+    update_asset_profile            = True
     # enable create BCG Matrix
-    update_bcg_matrix               = False
+    update_bcg_matrix               = True
     # enable indicators update
-    update_indicators               = False
+    update_indicators               = True
     # enable calculate risk premiuns database update
     calculate_risk_premiuns         = True
     # enable rating risks
     rate_risk_premiuns              = True
     # enable run a regression model
-    execute_regression_model        = False
+    execute_regression_model        = True
     # enable generation of wallet
     generate_wallets                = True
     # enable requirements.txt update
@@ -699,20 +699,11 @@ if __name__ == "__main__":
             os.chdir(full_desired_path)
 
         quotations_database_parquet = pd.read_parquet(f'{full_desired_path}/cotacoes.parquet')
-
+        
         quotations_database = pd.DataFrame(quotations_database_parquet[['data', 'ticker', 'preco_fechamento_ajustado']][quotations_database_parquet['ticker'].isin(analysis_assets_list)])
         quotations_database['data'] = pd.to_datetime(quotations_database['data'])
         quotations_database.sort_values(['ticker', 'data'], inplace=True)
-
-        last_analysis_date = quotations_database.loc[quotations_database.index[-1], 'data']
-        last_analysis_date = pd.to_datetime(last_analysis_date)
-        print('\nLast analysis date: ', last_analysis_date)
-
-        periods_since_last_rebalance = (last_analysis_date - last_wallet_rebalance_date).days
-
-        print('\nPeriods since last rebalance: ', periods_since_last_rebalance)
-
-        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = periods_since_last_rebalance) * 100
+        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = rebalance_periods) * 100
 
         last_period_variation = quotations_database.groupby('ticker')['last_period_variation'].last()
         print('\nAssets perc_change in rebalance_periods: \n',last_period_variation)
@@ -720,7 +711,17 @@ if __name__ == "__main__":
         print('\nNumber of assets in final wallet: ', len(analysis_assets_list))
 
         mean_last_period_variation = last_period_variation.mean()
-        print(f'\nAvarage wallet rentability past {periods_since_last_rebalance} periods: ', round(mean_last_period_variation,2) , '%')
+        print(f'\nAvarage wallet rentability past {rebalance_periods} periods: ', round(mean_last_period_variation,2) , '%')
+
+        last_analysis_date = quotations_database.loc[quotations_database.index[-1], 'data']
+        print('\nLast analysis date: ', pd.to_datetime(last_analysis_date))
+
+
+
+
+
+
+
 
         print(".\n.\n=== GENERATION COMPLETE! ===")
 
