@@ -112,7 +112,7 @@ if __name__ == "__main__":
     # enable database update
     update_database                 = False
     update_api_database             = False
-    update_fintz_database           = False
+    update_fintz_database           = True
     update_webscrapping_database    = False
     # enable asset profile update
     update_asset_profile            = False
@@ -121,13 +121,13 @@ if __name__ == "__main__":
     # enable indicators update
     update_indicators               = False
     # enable calculate risk premiuns database update
-    calculate_risk_premiuns         = False
+    calculate_risk_premiuns         = True
     # enable rating risks
-    rate_risk_premiuns              = False
+    rate_risk_premiuns              = True
     # enable run a regression model
     execute_regression_model        = False
     # enable generation of wallet
-    generate_wallets                = False
+    generate_wallets                = True
     # enable requirements.txt update
     update_requirements_txt         = False
 
@@ -150,8 +150,8 @@ if __name__ == "__main__":
                          ]
 
     fintz_indicators_list = [
-                        'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado'
-                        ]
+                            'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado'
+                            ]
     
     bc_dict = {
                 'selic':    {'bc_code': '432'},
@@ -258,7 +258,7 @@ if __name__ == "__main__":
     ###
     indicators_dict = {
                         'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
-                        'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
+                        # 'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
                         # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
                         'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
                         'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
@@ -280,8 +280,6 @@ if __name__ == "__main__":
     update_existing_file    = False
 
     number_of_top_comb_indicators = 10
-    number_of_top_single_indicators = 3
-
 
     if(calculate_risk_premiuns):
 
@@ -343,6 +341,9 @@ if __name__ == "__main__":
     #rate_risk_premiuns   
     ##
     ###
+    
+    number_of_top_indicators = 2
+
     if(rate_risk_premiuns):
 
         print(".\n..\n...\nRating Risk Premiuns!\n...\n..\n.")
@@ -351,8 +352,6 @@ if __name__ == "__main__":
         len_premium_name = len(premium_name)
 
         list_combinations = finapp.calculate_combinations(premium_name, len_premium_name, single_combinations, double_combinations, triple_combinations)
-
-        # if(len(list_combinations) > 0):
 
         print('Number of combinations: ', len(list_combinations))
 
@@ -421,7 +420,6 @@ if __name__ == "__main__":
         ##
         ###
 
-        number_of_top_indicators = 2
         best_indicators_list = []
 
         best_indicators_list = list(ranking_indicator['nome_indicador'].head(number_of_top_indicators))
@@ -483,7 +481,7 @@ if __name__ == "__main__":
         print('\nExisting wallets in dict created: ', existing_wallets_list)
 
         wallets_dict = {wallet: auto_wallet_dict[wallet] for wallet in existing_wallets_list}
-        print('\nAutomatic wallet dict created: \n', wallets_dict)
+        # print('\nAutomatic wallet dict created: \n', wallets_dict)
 
 
         ###
@@ -492,6 +490,7 @@ if __name__ == "__main__":
         ##
         ###
 
+        number_of_top_single_indicators = 3
         top_single_indicators = distribution_indicadors.head(number_of_top_single_indicators)
         # print('.\n.\ntop_single_indicators', number_of_top_single_indicators, ': \n', top_single_indicators['nome_indicador'])
 
@@ -502,13 +501,13 @@ if __name__ == "__main__":
         print('\t rentabilidade acumulada do terceiro_quartil: ', int((best_indicator['acum_terceiro_quartil'].iloc[-1]) * 100), '%')
         print('\t rentabilidade acumulada do quarto_quartil: ', int((best_indicator['acum_quarto_quartil'].iloc[-1]) * 100), '%')
 
-
         # top_single_indicators = top_single_indicators.drop(columns=['contagem', 'ranking_single_indicators', 'acum_primeiro_quartil'])
         # top_single_indicators = top_single_indicators.reset_index(drop=True)
         # print(top_single_indicators)
         
         # top_single_indicators_list = top_single_indicators['nome_indicador'].to_list()
         # print(top_single_indicators_list)
+
 
 
 
@@ -521,6 +520,8 @@ if __name__ == "__main__":
         list_premiuns_to_pdf = list(top_indicators['nome_indicador'])
         # rating_premiuns.create_pdf_images(list_premiuns_to_pdf)
         # rating_premiuns.fazer_pdf(list_premiuns_to_pdf)
+
+
 
 
         #
@@ -589,7 +590,7 @@ if __name__ == "__main__":
         # }
     # print(wallets_dict)
     
-    rebalance_periods = 14
+    rebalance_periods = 21
     liquidity_filter = 1
     asset_quantity = 5
     
@@ -636,6 +637,7 @@ if __name__ == "__main__":
         print('\nLast wallet defined below: \n', last_wallet)
         
         last_wallet_rebalance_date = last_wallet.loc[last_wallet.index[-1], 'data']
+        last_wallet_rebalance_date = pd.to_datetime(last_wallet_rebalance_date)
         print('\nLast wallet rebalance_date: ', last_wallet_rebalance_date)
         
         #
@@ -684,6 +686,9 @@ if __name__ == "__main__":
         ## calcula o rendimento nos últimos 'rebalance_periods' de cada asset da última carteira
         ##
         #
+
+        # rebalance_periods = last_wallet_rebalance_date
+
         current_folder = os.getcwd()
 
         project_folder = os.getenv("PROJECT_FOLDER")
@@ -698,7 +703,16 @@ if __name__ == "__main__":
         quotations_database = pd.DataFrame(quotations_database_parquet[['data', 'ticker', 'preco_fechamento_ajustado']][quotations_database_parquet['ticker'].isin(analysis_assets_list)])
         quotations_database['data'] = pd.to_datetime(quotations_database['data'])
         quotations_database.sort_values(['ticker', 'data'], inplace=True)
-        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = rebalance_periods) * 100
+
+        last_analysis_date = quotations_database.loc[quotations_database.index[-1], 'data']
+        last_analysis_date = pd.to_datetime(last_analysis_date)
+        print('\nLast analysis date: ', last_analysis_date)
+
+        periods_since_last_rebalance = (last_analysis_date - last_wallet_rebalance_date).days
+
+        print('\nPeriods since last rebalance: ', periods_since_last_rebalance)
+
+        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = periods_since_last_rebalance) * 100
 
         last_period_variation = quotations_database.groupby('ticker')['last_period_variation'].last()
         print('\nAssets perc_change in rebalance_periods: \n',last_period_variation)
@@ -706,17 +720,7 @@ if __name__ == "__main__":
         print('\nNumber of assets in final wallet: ', len(analysis_assets_list))
 
         mean_last_period_variation = last_period_variation.mean()
-        print(f'\nAvarage wallet rentability past {rebalance_periods} periods: ', round(mean_last_period_variation,2) , '%')
-
-        last_analysis_date = quotations_database.loc[quotations_database.index[-1], 'data']
-        print('\nLast analysis date: ', pd.to_datetime(last_analysis_date))
-
-
-
-
-
-
-
+        print(f'\nAvarage wallet rentability past {periods_since_last_rebalance} periods: ', round(mean_last_period_variation,2) , '%')
 
         print(".\n.\n=== GENERATION COMPLETE! ===")
 

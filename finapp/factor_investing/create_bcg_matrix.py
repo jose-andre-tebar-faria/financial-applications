@@ -67,10 +67,61 @@ class BcgMatrix:
                 category_profile_database = asset_profile_database[['asset', dimension, dimension_column, 'last_growth_rate']][asset_profile_database[dimension] == category_filter].sort_values(by=['last_growth_rate', dimension], ascending = False)
                 # print(category_profile_database)
 
+
+
+
+
+                # threshold_last_growth_rate = category_profile_database['last_growth_rate'].astype(float).mean()
+                # threshold_category_marketshare = category_profile_database[dimension_column].astype(float).mean()
+                # print('\nthreshold_last_growth_rate: \n', threshold_last_growth_rate)
+                # print('threshold_', dimension , '_marketshare: \n', threshold_category_marketshare)
+
+                # std_threshold_last_growth_rate = category_profile_database['last_growth_rate'].astype(float).std()
+                # std_threshold_category_marketshare = category_profile_database[dimension_column].astype(float).std()
+                # print('\nstd_threshold_last_growth_rate: \n', std_threshold_last_growth_rate)
+                # print('std_threshold_', dimension , '_marketshare: \n', std_threshold_category_marketshare)
+
+
+                # conditions = [
+                #     (asset_profile_database['last_growth_rate'] >= threshold_last_growth_rate) & (asset_profile_database[dimension_column] >= threshold_category_marketshare),
+                #     (asset_profile_database['last_growth_rate'] < threshold_last_growth_rate) & (asset_profile_database[dimension_column] >= threshold_category_marketshare),
+                #     (asset_profile_database['last_growth_rate'] >= threshold_last_growth_rate) & (asset_profile_database[dimension_column] < threshold_category_marketshare),
+                #     (asset_profile_database['last_growth_rate'] < threshold_last_growth_rate) & (asset_profile_database[dimension_column] < threshold_category_marketshare)
+                # ]
+
+                # std_multiplicator = 0.1
+
+                # conditions = [
+                #     (asset_profile_database['last_growth_rate'] > (threshold_last_growth_rate + std_multiplicator*std_threshold_last_growth_rate)) & (asset_profile_database[dimension_column] > (threshold_category_marketshare + std_multiplicator*std_threshold_category_marketshare)),
+                #     (asset_profile_database['last_growth_rate'] < (threshold_last_growth_rate - std_multiplicator*std_threshold_last_growth_rate)) & (asset_profile_database[dimension_column] > (threshold_category_marketshare + std_multiplicator*std_threshold_category_marketshare)),
+                #     (asset_profile_database['last_growth_rate'] > (threshold_last_growth_rate + std_multiplicator*std_threshold_last_growth_rate)) & (asset_profile_database[dimension_column] < (threshold_category_marketshare - std_multiplicator*std_threshold_category_marketshare)),
+                #     (asset_profile_database['last_growth_rate'] < (threshold_last_growth_rate - std_multiplicator*std_threshold_last_growth_rate)) & (asset_profile_database[dimension_column] < (threshold_category_marketshare - std_multiplicator*std_threshold_category_marketshare)),
+                #     (asset_profile_database['last_growth_rate'] >= (threshold_last_growth_rate - std_multiplicator*std_threshold_last_growth_rate)) & 
+                #     (asset_profile_database['last_growth_rate'] <= (threshold_last_growth_rate + std_multiplicator*std_threshold_last_growth_rate)) &
+                #     (asset_profile_database[dimension_column] >= (threshold_category_marketshare - std_multiplicator*std_threshold_category_marketshare)) & 
+                #     (asset_profile_database[dimension_column] <= (threshold_category_marketshare + std_multiplicator*std_threshold_category_marketshare))
+                # ]
+
+                # categories = ['Estrela', 'Vaca Leiteira', 'Ponto de Interrogação', 'Abacaxi', 'Instável']
+                # category_profile_database[f'{dimension}_bcg_category'] = pd.DataFrame(np.select(conditions, categories))
+
+
+
+
+
+
+
+
+
                 threshold_last_growth_rate = category_profile_database['last_growth_rate'].astype(float).mean()
                 threshold_category_marketshare = category_profile_database[dimension_column].astype(float).mean()
                 # print('\nthreshold_last_growth_rate: \n', threshold_last_growth_rate)
                 # print('threshold_', dimension , '_marketshare: \n', threshold_category_marketshare)
+
+                std_threshold_last_growth_rate = category_profile_database['last_growth_rate'].astype(float).std()
+                std_threshold_category_marketshare = category_profile_database[dimension_column].astype(float).std()
+                # print('\nstd_threshold_last_growth_rate: \n', std_threshold_last_growth_rate)
+                # print('std_threshold_', dimension , '_marketshare: \n', std_threshold_category_marketshare)
 
                 conditions = [
                     (asset_profile_database['last_growth_rate'] >= threshold_last_growth_rate) & (asset_profile_database[dimension_column] >= threshold_category_marketshare),
@@ -81,6 +132,12 @@ class BcgMatrix:
 
                 categories = ['Estrela', 'Vaca Leiteira', 'Ponto de Interrogação', 'Abacaxi']
                 category_profile_database[f'{dimension}_bcg_category'] = pd.DataFrame(np.select(conditions, categories))
+
+
+
+
+
+
                 category_profile = category_profile_database.drop(columns=[dimension, dimension_column, 'last_growth_rate'])
                 # print(category_profile)
 

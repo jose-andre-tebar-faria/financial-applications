@@ -3,12 +3,19 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service
+import base64
+from io import BytesIO
+from PIL import Image
 import time
 import pandas as pd
 import os
+import numpy as np
 from dotenv import load_dotenv
+
+import update_asset_profile as uap
 
 class DownloadByWebscrapping:
 
@@ -248,3 +255,76 @@ class DownloadByWebscrapping:
 
 
         # api_key = 'UTBW1G0YXLD6LKJ5'
+
+
+    def getting_asset_logos_google_by_site(self):
+
+        # URL da página da web que contém a imagem
+        url_base = 'https://www.google.com/search?q=cotações+'
+
+        profile_updater = uap.UpdateAssetProfile()
+
+        assets_database_df = profile_updater.read_profile_database()
+
+        assets_list = list(assets_database_df['asset'])
+        # print(assets_list)
+
+        tickers_list = [element + '3' for element in assets_list]
+        tickers_list = tickers_list[150:]
+        print(tickers_list)
+        
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+
+        current_folder = os.getcwd()
+
+        project_folder = os.getenv("PROJECT_FOLDER")
+        databse_folder = os.getenv("LOGOS_FOLDER")
+        full_desired_path = os.path.join(project_folder,databse_folder)
+
+        if(current_folder != full_desired_path):
+            os.chdir(full_desired_path)
+
+        for ticker in tickers_list:
+
+            url = url_base + ticker
+            # print(url)
+            file_name = f'logo_{ticker}.png'
+
+            if os.path.exists(file_name):
+
+                print(f'O arquivo {file_name} já existe.\n')
+
+            else:
+                
+                delay_to_request = np.random.randint(2,6)
+                time.sleep(delay_to_request)
+                driver.get(url)
+
+                try:
+                    img_element = driver.find_element(By.XPATH, '//*[@id="dimg_1"]')
+                    img_src = img_element.get_attribute('src')
+
+                    img_data = img_src.split(',')[1]
+                    img_binary = base64.b64decode(img_data)
+
+                    print('Logo referente ao ticker: ', ticker)
+                    # Salvar a imagem localmente ou realizar outras operações, por exemplo, exibir a imagem usando a biblioteca Pillow (PIL)
+                    with BytesIO(img_binary) as img_buffer:
+                        
+                        img = Image.open(img_buffer)
+                        img.save(file_name)
+                        print('Download OK.')
+                except NoSuchElementException:
+                    print(f'O a logo referente ao ticker {ticker} não pôde ser encontrado.\n')
+
+        # driver.maximize_window()
+
+
+if __name__ == "__main__":
+    print('')
+
+    asset_logos = DownloadByWebscrapping()
+    
+    asset_logos.getting_asset_logos_google_by_site()
+
+
