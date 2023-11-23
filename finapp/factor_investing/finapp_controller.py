@@ -9,6 +9,7 @@ import market_premium as mp
 import regression_model as rm
 import update_asset_profile as uap
 import create_bcg_matrix as cbm
+import wallet_manager as wm
 
 import os
 from dotenv import load_dotenv
@@ -17,6 +18,7 @@ from itertools import combinations
 import subprocess
 import numpy as np
 from dateutil.relativedelta  import relativedelta
+from datetime import datetime
 
 class FinappController:
 
@@ -110,26 +112,52 @@ if __name__ == "__main__":
     finapp = FinappController()
 
     # enable database update
-    update_database                 = True
+    update_database                 = False
     update_api_database             = False
-    update_fintz_database           = True
+    update_fintz_database           = False
     update_webscrapping_database    = False
+
+
     # enable asset profile update
-    update_asset_profile            = True
+    update_asset_profile            = False
+
+
     # enable create BCG Matrix
-    update_bcg_matrix               = True
+    update_bcg_matrix               = False
+
+
     # enable indicators update
-    update_indicators               = True
+    update_indicators               = False
+
+
     # enable calculate risk premiuns database update
     calculate_risk_premiuns         = True
     # enable rating risks
     rate_risk_premiuns              = True
     # enable run a regression model
     execute_regression_model        = True
+
+
+    # enable configure setup database
+    config_setups                   = True
+    read_setup                      = True
+    save_setup                      = False
+    close_setup                     = False
+    delete_setup                    = False
+
+    
+    # enable configure wallet composition database
+    config_wallet_composition       = True
+    read_wallet_composition         = False
+    save_wallet_composion           = True
+
+
     # enable generation of wallet
     generate_wallets                = True
+
+
     # enable requirements.txt update
-    update_requirements_txt         = False
+    update_requirements_txt         = True
 
     ###
     ##
@@ -480,8 +508,8 @@ if __name__ == "__main__":
 
         print('\nExisting wallets in dict created: ', existing_wallets_list)
 
-        wallets_dict = {wallet: auto_wallet_dict[wallet] for wallet in existing_wallets_list}
-        # print('\nAutomatic wallet dict created: \n', wallets_dict)
+        setup_dict = {wallet: auto_wallet_dict[wallet] for wallet in existing_wallets_list}
+        # print('\nAutomatic wallet dict created: \n', setup_dict)
 
 
         ###
@@ -532,7 +560,7 @@ if __name__ == "__main__":
 
 
 
-        print('\nAutomatic wallet dict created: \n', wallets_dict)
+        print('\nAutomatic wallet dict created: \n', setup_dict)
 
 
         print(".\n.\n=== RATING COMPLETE! ===")
@@ -555,14 +583,52 @@ if __name__ == "__main__":
         fazendo_modelo.getting_premium_data()
         fazendo_modelo.calculating_universe()
         fazendo_modelo.execute_regression()
-    
+
+    ###
+    ##
+    # save setup in database
+    ##
+    ###
+
+    user_name_adm = 'andre-tebar'
+    create_date_auto = datetime.now()
+    create_date_auto = create_date_auto.strftime('%Y-%m-%d')
+
+    rebalance_periods = 21
+    liquidity_filter = 1
+    asset_quantity = 5
+
+    if(config_setups):
+
+        wallet_manager = wm.WalletManager()
+        
+        if(read_setup):
+            wallet_manager.read_setups()
+
+        if(save_setup):
+            new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, number_of_assets = asset_quantity, rebalance_periods = rebalance_periods, user_name = user_name_adm, create_date = create_date_auto)
+
+            # new_setup_to_insert = wallet_manager.preparing_setup_data(wallet_id='first-shot', setups_dict = setup_dict, user_name = 'pacient-zero', create_date = '1892-10-23')
+            # new_setup_to_insert = wallet_manager.preparing_setup_data(wallet_id='first-shot', setups_dict = setup_dict, user_name = 'tebinha', create_date = '1992-08-12')
+
+            wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
+
+        if(close_setup):
+            wallet_manager.close_setup(wallet_id='first-shot', user_name='pacient-zero', close_date = '2023-11-22')
+            # wallet_manager.close_setup(wallet_id='first-shot', user_name='tebinha', close_date = '2023-11-21')
+
+        if(delete_setup):
+            wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='227', user_name='andre-tebar')
+            # wallet_manager.delete_setup(wallet_manager, wallet_id='first-shot', user_name='tebinha')
+            # wallet_manager.delete_setup(wallet_manager, wallet_id='first-shot', user_name='pacient-zero')
+
     ###
     ##
     #factor_calculator
     ##
     ###
 
-    # wallets_dict = {
+    # setup_dict = {
     #     'carteira1': {
     #             'indicadores': {
     #                 #'momento_1_meses': {'caracteristica': 'decrescente'},
@@ -588,11 +654,7 @@ if __name__ == "__main__":
         #         'peso': 0.33
         # },
         # }
-    # print(wallets_dict)
-    
-    rebalance_periods = 21
-    liquidity_filter = 1
-    asset_quantity = 5
+    # print(setup_dict)
     
     if(generate_wallets):
 
@@ -603,7 +665,7 @@ if __name__ == "__main__":
 
         print("Setup configuration =")
 
-        for nome_carteira, carteira in wallets_dict.items():
+        for nome_carteira, carteira in setup_dict.items():
                 
                 print("\n\t", nome_carteira, '\n\t\t peso: ', carteira['peso'] * 100, '%')
 
@@ -624,8 +686,8 @@ if __name__ == "__main__":
 
         pdf_name = pdf_name + str(rebalance_periods) + '_' + str(liquidity_filter) + "M_" + str(asset_quantity) + "A.pdf"
 
-        backtest = fc.MakeBacktest(data_final="2023-12-30", data_inicial= '2011-12-30', filtro_liquidez=(liquidity_filter * 1000000), balanceamento = rebalance_periods, 
-                                    numero_ativos = asset_quantity, corretagem = 0.01, nome_arquivo = pdf_name, **wallets_dict)
+        backtest = fc.MakeBacktest(data_final="2023-12-31", data_inicial= '2011-12-30', filtro_liquidez=(liquidity_filter * 1000000), balanceamento = rebalance_periods, 
+                                    numero_ativos = asset_quantity, corretagem = 0.01, nome_arquivo = pdf_name, **setup_dict)
 
         backtest.pegando_dados()
         backtest.filtrando_datas()
@@ -648,6 +710,13 @@ if __name__ == "__main__":
         ##
         #
         # backtest.make_report()
+
+
+
+
+        wallet_to_database = last_wallet
+
+
 
 
         #
@@ -683,7 +752,7 @@ if __name__ == "__main__":
 
         #
         ##
-        ## calcula o rendimento nos últimos 'rebalance_periods' de cada asset da última carteira
+        ## calcula o rendimento de cada ativo e médio desde o último rebalanciamento da carteira
         ##
         #
 
@@ -703,27 +772,48 @@ if __name__ == "__main__":
         quotations_database = pd.DataFrame(quotations_database_parquet[['data', 'ticker', 'preco_fechamento_ajustado']][quotations_database_parquet['ticker'].isin(analysis_assets_list)])
         quotations_database['data'] = pd.to_datetime(quotations_database['data'])
         quotations_database.sort_values(['ticker', 'data'], inplace=True)
-        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = rebalance_periods) * 100
+
+        last_analysis_date = quotations_database.loc[quotations_database.index[-1], 'data']
+        last_analysis_date = pd.to_datetime(last_analysis_date)
+        print('\nLast analysis date: ', last_analysis_date)
+
+        days_since_last_periods = (last_analysis_date - last_wallet_rebalance_date).days
+
+        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = days_since_last_periods) * 100
 
         last_period_variation = quotations_database.groupby('ticker')['last_period_variation'].last()
-        print('\nAssets perc_change in rebalance_periods: \n',last_period_variation)
+        print('\nAssets perc_change in rebalance_periods: \n', last_period_variation)
 
         print('\nNumber of assets in final wallet: ', len(analysis_assets_list))
 
         mean_last_period_variation = last_period_variation.mean()
-        print(f'\nAvarage wallet rentability past {rebalance_periods} periods: ', round(mean_last_period_variation,2) , '%')
-
-        last_analysis_date = quotations_database.loc[quotations_database.index[-1], 'data']
-        print('\nLast analysis date: ', pd.to_datetime(last_analysis_date))
-
-
-
-
-
-
-
+        print(f'\nAvarage wallet rentability past {days_since_last_periods} periods: ', round(mean_last_period_variation,2) , '%')
 
         print(".\n.\n=== GENERATION COMPLETE! ===")
+
+    ###
+    ##
+    # configure wallet composition
+    ##
+    ###
+
+    wallet_id = '9863'
+
+    if(config_wallet_composition):
+
+        wallet_manager = wm.WalletManager()
+
+        if(read_wallet_composition):
+            
+            file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
+        
+        if(save_wallet_composion):
+            wallet_to_database = wallet_to_database.reset_index(drop=True)
+            wallet_to_database.rename(columns={'asset': 'ticker', 'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
+
+            print('\nWallet to database: \n', wallet_to_database)
+
+            wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = wallet_to_database)
 
     ###
     ##
