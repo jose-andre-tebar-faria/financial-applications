@@ -5,8 +5,6 @@ import numpy as np
 from io import StringIO
 from datetime import datetime
 
-import update_asset_profile as uap
-
 class WalletManager:
 
     def __init__(self):
@@ -96,13 +94,44 @@ class WalletManager:
 #
 ##
 ###
+# VERIFICANDO EXISTÊNCIA DO SETUP NO DATABASE
+###
+##
+#
+    def verify_setup_existence(self, wallet_manager, wallet_id):
+
+        setup_existent = False
+        self.wallet_id = str(wallet_id)
+
+        file_not_found, setups_df = wallet_manager.read_setups()
+        # print('Setup database: \n', setups_df)
+
+        if(file_not_found):
+
+            print('\t --- file wallets.parquet does not exists!')
+
+        else:
+            # print(self.wallet_id)
+            # print(setups_df['wallet_id'])
+            setup_existent = self.wallet_id in str(setups_df['wallet_id'])
+            # print(setup_existent)
+
+        return setup_existent
+
+#
+##
+###
 # INSERINDO SETUP NO DATABASE
 ###
 ##
 #
     def insert_setup(self, wallet_manager, new_setup):
-        
-        print('New setup: \n', new_setup)
+
+        wallet_id_existent = None
+        new_wallet_id = None
+        wallet_existent = False
+    
+        # print('New setup: \n', new_setup)
 
         file_not_found, setups_df = wallet_manager.read_setups()
         # print('Setup database: \n', setups_df)
@@ -111,6 +140,9 @@ class WalletManager:
 
             print('\t+++creating file wallets.parquet.')
             
+            new_wallet_id = new_setup['wallet_id'].iloc[0]
+            # print('new_wallet_id', new_wallet_id)
+
             # print('Setup updated: \n', new_setup)
             new_setup.to_parquet(f'{self.full_desired_path}/wallets.parquet', index = True)
         else:
@@ -121,6 +153,9 @@ class WalletManager:
 
             if(esta_contido):
                 print('Setup duplicated!')
+                # wallet_id_existent = (setups_df[['wallet_id']][setups_df['wallet_name'] == df_merge['wallet_name']]).iloc[0]
+                wallet_id_existent = (setups_df[['wallet_id']][setups_df['wallet_name'] == df_merge['wallet_name']]).at[0,'wallet_id']
+                # print('wallet_id_existent', wallet_id_existent)
                 
                 print('\t--- nothing to do!')
             else:
@@ -128,7 +163,6 @@ class WalletManager:
 
                 max_setup_index = setups_df.index.max()
                 # print('max_setup_index: ', max_setup_index)
-
 
                 setup_to_concat = new_setup.copy()
                 if(np.isnan(max_setup_index)):
@@ -143,7 +177,29 @@ class WalletManager:
                 updated_setup = pd.concat([setups_df, setup_to_concat], ignore_index=False)
                 print('Setup updated: \n', updated_setup)
 
+                new_wallet_id = setup_to_concat['wallet_id'].iloc[0]
+                # print('new_wallet_id', new_wallet_id)
+
                 updated_setup.to_parquet(f'{self.full_desired_path}/wallets.parquet', index = True)
+        
+
+        # print('wallet_id_existent', wallet_id_existent)
+        # print('new_wallet_id', new_wallet_id)
+        if(wallet_id_existent == None and new_wallet_id == None):
+            print('\n ---no wallet defined or found!')
+            wallet_existent = False
+        else:
+            wallet_existent = True
+            if(wallet_id_existent == None):
+                wallet_id = new_wallet_id
+            else:
+                wallet_id = wallet_id_existent
+        # print('wallet_id', wallet_id)
+
+
+
+        return wallet_id, wallet_existent
+        # return wallet_id_existent, new_wallet_id
 
 #
 ##
@@ -239,6 +295,29 @@ class WalletManager:
 
         return file_not_found, compositions_df
 
+
+#
+##
+###
+# VALIDANDO A COMPOSIÇÃO DA CARTEIRA
+###
+##
+#
+
+    def validate_portifolio_composition(self, wallet_defined):
+        
+        self.wallet_defined = wallet_defined
+        validation_result = False
+
+        sum_of_proportions = self.wallet_defined['wallet_proportion'].sum()
+
+        if(sum_of_proportions == 1):
+            validation_result = True
+        else:
+            print('\t---sum of wallet proportions is not 100%!\n')
+
+        return validation_result
+
 #
 ##
 ###
@@ -254,71 +333,69 @@ class WalletManager:
         self.wallet_manager = wallet_manager
 
         file_not_found, compositions_df = self.wallet_manager.read_portifolios_composition()
-        
+        setup_existence = self.wallet_manager.verify_setup_existence(self.wallet_manager, self.wallet_id)
+        validation_result = self.wallet_manager.validate_portifolio_composition(self.wallet_defined)
 
         if(file_not_found):
 
-            print('\t+++creating file wallets_composition.parquet.')
-            
-            compositions_df = pd.DataFrame(columns=['rebalance_date', 'ticker', 'wallet_proportion', 'wallet_id'])
-            compositions_df['rebalance_date'] = pd.to_datetime(compositions_df['rebalance_date'])
-            
-            destin_columns = {'rebalance_date': 'rebalance_date', 'wallet_proportion': 'wallet_proportion', 'ticker': 'ticker'}
-
-            for new_column, origin_column in destin_columns.items():
-                compositions_df[new_column] = self.wallet_defined.loc[:, origin_column]
-            
-            compositions_df['wallet_id'] = self.wallet_id
-
-            print('\nFirst setup!')
-            print('\nNew composition: \n', compositions_df)
-            compositions_df.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
-        else:
-            # print(compositions_df)
-            self.wallet_defined['wallet_id'] = self.wallet_id
-            # print(self.wallet_defined)
-
-            df_merge = pd.merge(compositions_df, self.wallet_defined, on=['ticker', 'wallet_id', 'rebalance_date'], how='left', indicator=True)
-            esta_contido = (df_merge['_merge'] == 'both').any()
-            # print(esta_contido)
-            
-            if(esta_contido):
-                print('\nWallet composition duplicated!')
+            if(validation_result and setup_existence):
+                print('\n\t+++creating file wallets_composition.parquet.')
                 
-                print('\t--- nothing to do!')
+                self.wallet_defined['wallet_id'] = wallet_id
+                self.wallet_defined['executed'] = False
+                self.wallet_defined['execution_date'] = pd.NA
+                self.wallet_defined['rebalance_date'] = pd.to_datetime(self.wallet_defined['rebalance_date'])
+
+                print('\nFirst setup!')
+                print('\nNew composition: \n', self.wallet_defined)
+                self.wallet_defined.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
             else:
-                print('New wallet composition!')
+                if(setup_existence == False):
+                    print('Setup does not exist in database.\n')
+                if(validation_result == False):
+                    print('Wallet validation FAILED.\n')
+        else:
+
+            if(validation_result and setup_existence):
+                # print(compositions_df)
+                self.wallet_defined['wallet_id'] = self.wallet_id
+                self.wallet_defined['executed'] = False
+                self.wallet_defined['execution_date'] = pd.NA
+                self.wallet_defined['rebalance_date'] = pd.to_datetime(self.wallet_defined['rebalance_date'])
+                # print(self.wallet_defined)
+
+                df_merge = pd.merge(compositions_df, self.wallet_defined, on=['ticker', 'wallet_id', 'rebalance_date'], how='left', indicator=True)
+                esta_contido = (df_merge['_merge'] == 'both').any()
+                # print(esta_contido)
                 
-                max_composition_index = compositions_df.index.max()
-                # print('max_composition_index: ', max_composition_index)
-
-                composition_to_concat = pd.DataFrame(columns=['rebalance_date', 'ticker', 'wallet_proportion', 'wallet_id'])
-                composition_to_concat['rebalance_date'] = pd.to_datetime(composition_to_concat['rebalance_date'])
-                
-                destin_columns = {'rebalance_date': 'rebalance_date', 'wallet_proportion': 'wallet_proportion', 'ticker': 'ticker'}
-
-                for new_column, origin_column in destin_columns.items():
-                    composition_to_concat[new_column] = self.wallet_defined.loc[:, origin_column]
-
-                composition_to_concat['wallet_id'] = self.wallet_id
-
-                if(np.isnan(max_composition_index)):
-                    print('First setup!\n')
+                if(esta_contido):
+                    print('\nWallet composition duplicated!')
+                    
+                    print('\t--- nothing to do!')
                 else:
-                    composition_to_concat.index = composition_to_concat.index + max_composition_index + 1
+                    print('New wallet composition!')
+                    
+                    max_composition_index = compositions_df.index.max()
+                    # print('max_composition_index: ', max_composition_index)
 
-                print('Wallet composition to concat: \n', composition_to_concat)
+                    if(np.isnan(max_composition_index)):
+                        print('First setup!\n')
+                    else:
+                        self.wallet_defined.index = self.wallet_defined.index + max_composition_index + 1
 
-                print('\t...updating file wallets_composition.parquet.')
-            
-                updated_wallet_composition = pd.concat([compositions_df, composition_to_concat], ignore_index=False)
-                print('\nNew composition: \n', updated_wallet_composition)
+                    print('Wallet composition to concat: \n', self.wallet_defined)
 
-                updated_wallet_composition.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
+                    print('\t...updating file wallets_composition.parquet.')
+                
+                    updated_wallet_composition = pd.concat([compositions_df, self.wallet_defined], ignore_index=False)
+                    print('\nNew composition: \n', updated_wallet_composition)
 
-
-
-
+                    updated_wallet_composition.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
+            else:
+                if(setup_existence == False):
+                    print('\n ---setup does not exist in database.\n')
+                if(validation_result == False):
+                    print('Wallet validation FAILED.\n')
 
 
 #
@@ -429,8 +506,30 @@ class WalletManager:
 
 
 
+#
+##
+###
+# VERIFICANDO NECESSIDADE DE REBALANCEAMENTO
+###
+##
+#
+    def verify_compositions_to_execute(self, wallet_manager, wallet_id = None):
+
+        file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
+
+        if(file_not_found):
+
+            print('\t --- file wallets_composition.parquet does not exists!')
+            
+        else:
+            compostion_to_execute = compositions_df[compositions_df['executed'] == False]
+            compostion_to_execute.sort_values(['rebalance_date', 'ticker'], inplace=True)
+            print('Wallets composition not executed: \n', compostion_to_execute)
+
+            return compostion_to_execute
 
 
+ 
 
 
 #
@@ -440,10 +539,10 @@ class WalletManager:
 ###
 ##
 #
-    def create_transaction(self, asset, operation_type, transaction_date, wallet):
+    def create_transaction(self, ticker, operation_type, transaction_date, wallet_id):
 
-        self.asset = asset
-        self.wallet = wallet
+        self.ticker = ticker
+        self.wallet_id = wallet_id
         self.operation_type = operation_type
         self.transaction_date = transaction_date
 
@@ -489,8 +588,8 @@ if __name__ == "__main__":
     # print(wallets_df[['wallet_id', 'wallet_name', 'number_of_assets', 'user_name', 'proportion', 'close_date', 'rebalance_periods', 'last_rebalance_date']])
 
     # new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, rebalance_periods = 2, user_name = 'pacient-zero', create_date = '1892-10-23')
-    # new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, rebalance_periods = rebalance_periods, number_of_assets = asset_quantity, user_name = user_name, create_date = create_date)
-    # wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
+    new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, rebalance_periods = rebalance_periods, number_of_assets = asset_quantity, user_name = user_name, create_date = create_date)
+    wallet_id, wallet_existent = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
 
     # wallet_manager.close_setup(wallet_id='first-shot', user_name='pacient-zero', close_date = '2023-11-22')
     # wallet_manager.close_setup(wallet_id='first-shot', user_name='tebinha', close_date = '2023-11-21')
@@ -501,41 +600,41 @@ if __name__ == "__main__":
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='5537', user_name='pacient-zero')
 
 
-
-
-
     ##############
     # WALLET COMPOSITION CONFIGURATION
     ##############
 
-    data = """rebalance_date,ticker,wallet_proportion
-            2023-11-16,BRFS3,0.1
-            2023-11-16,CEAB3,0.1
-            2023-11-16,CSED3,0.1
-            2023-11-16,CSUD3,0.1
-            2023-11-16,MDNE3,0.2
-            2023-11-16,NINJ3,0.1
-            2023-11-16,SEER3,0.1
-            2023-11-16,TEND3,0.1
-            2023-11-16,VLID3,0.1
+    data0 = """rebalance_date,ticker,wallet_proportion
+            2023-10-16,BRFS3,0.25
+            2023-10-16,CEAB3,0.25
+            2023-10-16,PETR4,0.25
+            2023-10-16,WEGE3,0.25
+            """
+    data1 = """rebalance_date,ticker,wallet_proportion
+            2023-11-16,NINJ3,0.33
+            2023-11-16,TEND3,0.34
+            2023-11-16,CSUD3,0.33
             """
     
     data2 = """rebalance_date,ticker,wallet_proportion
-            2023-11-16,WEGE3,0.5
-            2023-11-16,PETR4,0.5
+            2023-12-16,WEGE3,0.5
+            2023-12-16,PETR4,0.5
             """
     
-    # last_wallet_csv = pd.read_csv(StringIO(data))
-    # last_wallet_defined = pd.DataFrame(last_wallet_csv)
-    # print('last_wallet_defined: \n', last_wallet_defined)
+    last_wallet_csv = pd.read_csv(StringIO(data2))
+    last_wallet_defined = pd.DataFrame(last_wallet_csv)
+    last_wallet_defined['rebalance_date'] = pd.to_datetime(last_wallet_defined['rebalance_date'])
+    # last_wallet_defined['wallet_proportion'] = (last_wallet_defined['wallet_proportion']).astype(float)
+    print('last_wallet_defined: \n', last_wallet_defined)
 
-    wallet_id = '627'
+    if wallet_existent is False:
+        print('\n ---no wallet defined or found! forcing save_wallet_composion to FALSE...\n')
+        wallet_id = str(wallet_id)
+        save_wallet_composion = False
+    # print('wallet_id', wallet_id)
 
-    wallet_manager.read_portifolios_composition()
-    # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = last_wallet_defined)
-
-
-
+    # wallet_manager.read_portifolios_composition()
+    wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = last_wallet_defined)
 
 
     ##############
@@ -558,6 +657,15 @@ if __name__ == "__main__":
     # operation_code = 'P-01'
     # operation_name = 'purchase'
 
-    wallet_manager.read_type_transaction()
+    # wallet_manager.read_type_transaction()
     # wallet_manager.create_type_transaction(operation_type = operation_type, operation_code = operation_code, operation_name = operation_name)
     # wallet_manager.delete_type_transaction(operation_code = operation_code)
+
+
+
+    ##############
+    # BUY/SELL MANAGER
+    ##############
+
+
+    # wallet_manager.verify_compositions_to_execute(wallet_manager=wallet_manager)
