@@ -83,13 +83,13 @@ class UpdateAssetProfile:
         # list_subsectors = list(subsectors)
         # # print(list_subsectors)
 
-        #
-        ##
-        ###
-        # LENDO OS ATUAIS VALORES DE MERCADO NA BASE ValorDeMercado
-        ###
-        ##
-        #
+#
+##
+# CALCULANDO O GROWTH RATE -> OUTPUT(VARIAÇÃO PERCENTUAL ANUAL DE VALOR DE MERCADO + ÚLTIMA VARIAÇÃO PERCENTUAL)
+##
+#
+    def calculationg_growth_rate(self):
+        
         print('\n=== BUSCANDO VALORES DE MERCADO NA BASE DE ValorDeMercado! ==')
 
         marketvalue_database_parquet = pd.read_parquet(f'{self.full_desired_path}/ValorDeMercado.parquet')
@@ -106,13 +106,6 @@ class UpdateAssetProfile:
         # print(montly_marketvalue_database_df[montly_marketvalue_database_df['asset'] == 'AALR'])
         # print(montly_marketvalue_database_df)
 
-#
-##
-# CALCULANDO O GROWTH RATE -> OUTPUT(VARIAÇÃO PERCENTUAL ANUAL DE VALOR DE MERCADO + ÚLTIMA VARIAÇÃO PERCENTUAL)
-##
-#
-    def calculationg_growth_rate(self):
-        
         print('\n=== CALCULANDO GROWTH RATE! ==')
 
         growth_rate = pd.DataFrame()

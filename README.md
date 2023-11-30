@@ -1,5 +1,5 @@
 <h1 align="center">
-    <img src=".\files\colored_eye.svg" width="155" />
+    <img src=".\files\images\colored_eye.svg" width="155" />
     <p>🙇🏽‍♂️ financial-applications 🙇🏽 </p>
 </h1>
 
@@ -42,13 +42,13 @@ print('Hello World!')
 
 #
 <h1 align="center">
-    <img src=".\files\gear.svg" width="155" />
+    <img src=".\files\images\gear.svg" width="155" />
     <p>FINAPP</p>
 </h1>
 
 ## 🚨 ABOUT
 
-### This **Project** intends to create an application that can optimize a stock wallet for long-term investments. Where are using here ywo types of analisys, first a Factor Investing modeling considering a 5 Factor Model by Eugene Fama & Kenneth French, and then a technical analisys.
+### This **Project** intends to create an application that can optimize a stock wallet for long-term investments. Where are using here two types of analisys, first a Factor Investing modeling considering a 5 Factor Model by Eugene Fama & Kenneth French, and then a technical analisys.
 
 # 🧭 Factor Investing
 
@@ -68,7 +68,7 @@ Esses cinco fatores são usados para analisar os retornos das ações e entender
 
 ## 🪒 Equation
 <h1 align="center">
-    <img src=".\files\fama-french-5-factor-model-equation.png" width="1550" />
+    <img src=".\files\images\fama-french-5-factor-model-equation.png" width="1550" />
 </h1>
 
 ## ⚒ Indicators
@@ -96,6 +96,95 @@ Para cada fator aprensentado acima deve-se modelar o indicador que descreve aque
     - **Margem de lucro**: A margem de lucro reflete a rentabilidade da empresa, medida como a relação entre o lucro líquido e a receita total.
     - **Endividamento**: O nível de dívida da empresa, muitas vezes medido pela relação entre dívida e patrimônio líquido ou pela relação entre dívida e EBITDA.
     - **Eficiência operacional**: Isso pode ser avaliado por métricas como o retorno sobre o patrimônio líquido (ROE) e o retorno sobre o ativo (ROA).
+
+## 🎪 Fluxo de execução
+A aplicação tem 4 grandes núcleos de execução e tratamento de dados, conforme indicado abaixo:
+
+<div style="text-align: justify;">
+
+1. **Gerenciamento de dados**: o objetivo aqui é possuir uma base de dados concisa e confiável para que toda a metodologia aplicada não seja comprometida por dados errados. Parte dos dados tem como origem a plataforma Fintz (Curso Código.py) através de uma API disponibilizada por eles (classe ***FintzData*** provinda do arquivo ***download_by_fintz.py***). Também foram criadas classes para download de dados via API (classe ***DownloadByApi*** provinda do arquivo ***download_by_api.py***) e Webscraping (classe ***DownloadByWebscrapping*** provinda do arquivo ***download_by_webscraping.py***). Além das classes de download de dados também foram criadas classes para tratamento de dados de cadastro de empresas para que possa ser usado no momento de apresentar resultados de forma informativa. Para isso existem as classes ***UpdateAssetProfile***, provinda do arquivos ***update_asset_profile.py***, e ***BcgMatrix*** provinda do arquivo ***create_bcg_matrix.py***.
+
+___
+#### **download_by_fintz.py** - classe usada para criação e/ou atualização da base primária de dados
+    download_quotations() - método usado para baixar os dados históricos de cotação.
+
+    download_cdi(initial_date) - método usado para baixar os dados históricos dos retornos do CDI.
+
+    download_ibov(initial_date) - método usado para baixar os dados históricos dos retornos do índice do Ibovespa.
+
+    download_accounting_files(demonstration = True, data_name = 'X')
+        - Ebit12m
+        - DividaBruta
+        - DividaLiquida
+        - Ebit
+        - LucroLiquido12m
+        - PatrimonioLiquido
+        - ReceitaLiquida12m
+
+    download_accounting_files(indicators = True, data_name = 'X')
+        - EV
+        - EBIT_EV
+        - L_P
+        - P_L
+        - ROE
+        - ROIC
+        - LPA
+        - ValorDeMercado
+#### **download_by_api.py** - classe usada para criação e/ou atualização da base primária de dados através de métodos que invocam APIs
+    getting_bc_data(bc_dict) - método usado para baixar dados provindos da base de dados do Banco Central através da dos códigos de cada dado.
+
+#### **download_by_webscraping.py** - classe usada para criação e/ou atualização da base primária de dados através de métodos que usam técnica de webscraping em websites
+    getting_b3_assets_sector_by_site() - método usado para fazer webscraping do website da B3 para pegar os setores das empresas listadas na bolsa brasileira.
+
+    getting_asset_logos_google_by_site() - método usado para fazer webscraping dos logos (.png) das empresas existentes no database pelo site do Google.
+
+#### **update_asset_profile.py** - classe usada para criação e/ou atualização da base cadastral das empresas.
+    getting_assets_database() - método usado para leitura da base de empresas - sectors_assets_b3_webscraping.parquet - providas do webscraping do website da B3.
+
+    getting_assets_from_quotation() - método usado para busca das empresas distintas presentes na base de cotações para iniciar a criação do banco de dados cadastral das empresas.
+
+    calculationg_growth_rate() - método usado para busca e preparo dos dados para cálculo da taxa de crescimento aplicando a função de variação percentual do valores de mercado ANUAL de cada empresa e captura da última taxa de crescimento das empresas. essa busca é feita na base de ValorDeMercado.
+
+    calculationg_marketshare() - método usado para cálculo de marketshare das empresas presentes na base de cotações com relação ao Setor e Subsetor identificado a partir do webscraping no website da B3.
+
+    save_profile_database() - método usado para salvar o dataframe criado, e concatenado, a partir dos métodos anteriores no arquivo asset_database.parquet.
+
+    read_profile_database() - método usado para leitura do banco de dados cadastral e informativo de empresas no arquivo asset_database.parquet. o método retorna um dataframe com os dados para trabalho.
+
+#### **create_bcg_matrix.py** - classe usada para criação e/ou atualização da base de dados contendo a classificação referente a metodologia da Matriz BCG.
+    create_bcg_matrix() - método usado para criação do arquivo bcg_matrix.parquet na qual contém a classificação BCG das empresas listadas na B3 em 4 grupos, Estrela / Vaca Leitera / Ponto de Interrogação / Abacaxi. essa classificação é feita por Setor e Subsetor para que consigamos segregar melhor os dados, para definir os limites de classificação de cada quadrante foi feita a média aritimética de taxas de crescimento e marketshare de cada Setor ou Subsetor.
+
+    read_bcg_matrix_database() - método usado para leitura da base de dados de classificação BCG contida no arquivo bcg_matrix.parquet.
+
+#### **make_indicators.py** - classe usada para criação e/ou atualização da base de dados contendo indicadores calculados pela própria aplicação a partir de dados já baixados anteriormente.
+    making_momentum(months) - método usado para cálculo da média de rentabilidade dos últimos 'months' meses referente exclusivamente a variação dos preços de fechamentos mensal de cada empresa. é criado como output desse método um arquivo chamado momento_{months}_meses.parquet.
+
+    median_volume(months) - método usado para cálculo do volume mediano transacionado mensalmente por cada ticker criando o arquivo volume_mediano.parquet como output.
+
+    ebit_divida_liquida() - método usado para cálculo a proporção entre EBIT e Dívida Líquida de cada empres, criando o arquivo ebit_dl.parquet como output.
+
+    pl_divida_bruta() - método usado para cálculo da proporção entre o Patrimônio Líquido e a Dívida Bruta de uma empresa, criando o arquivo pl_db.parquet como output.
+
+    volatility(years) - método usado para cálculo da volatilidade (variância) do preço de cada empresa num período de 'years' anos, criando o arquivo vol_{int(252 * years)}.parquet como output.
+
+    beta(years) - método usado para cálculo do Beta das empresas da bolsa realizando uma regressão linear contra o Ibovespa, criando o arquivo beta_{int(252 * years)}.parquet como output.
+
+    ratio_moving_mean(mm_curta, mm_longa) - método usado para cálculo da proporção entre as médias móveis de dois períodos (longo e curto) para identificar o cruzamento dessas médias, como feito na análise técnica. Caso a média menor for maior que a média longa apresenta uma tendência de alta, criando o arquivo mm_{mm_curta}_{mm_longa}.parquet como output.
+
+</div>
+
+
+___
+2. **Cálculo e Avaliação de prêmios de risco associados aos indicadores**: 
+
+___
+3. **Execução de backtests com parâmetros realistas**: 
+
+___
+4. **Automatização do rebalanceamento de carteiras**:
+
+
+
 
 ## 🗺 [Entidades](https://github.com/jose-andre-tebar-faria/financial-applications/tree/master/finapp/files)
 
@@ -358,58 +447,7 @@ Cada .parquet contido no database se refere ao seguinte indicador.
     1   2011-10-27  WEGE3       3.195411
 
 
-## 🎪 Fluxo de execução
-    1) classe 'load_data_fintz.py' realiza atualização da base de dados
-    2) classe 'making_indicators.py' cria indicadores e salva na base de dados
-    4) classe 'premios_risco.py' cria o DataFrame dos retornos para o indicador selecionado. 
-    5) rank companies monthly
-    6) create montlhy_wallet
 
-    ### BACK TESTING
-    7) create monthly returns dataframe
-    8) create returns heatmap plot for sns
-    9) create acum returns heatmap plot for sns
-    10) create ibov acum returns heatmap plot for sns 
-    11) compare model & ibov monthly returns
-    12) create compare ibov returns heatmap plot for sns
-    13) configure heatmaps
-
-### **1) load_data_fintz.py** - classe usada para criação e/ou atualização da base primária de dados
-    - cotacoes()
-    - cdi()
-    - ibov()
-    - *demonstrativos* / pegando_arquivo_contabil(demonstracao=True, nome_dado = 'X')
-        - Ebit12m
-        - DividaBruta
-        - DividaLiquida
-        - Ebit
-        - LucroLiquido12m
-        - PatrimonioLiquido
-        - ReceitaLiquida12m
-    - *indicadores* / pegando_arquivo_contabil(indicadores=True, nome_dado = 'X')
-        - EV
-        - EBIT_EV
-        - L_P
-        - P_L
-        - ROE
-        - ROIC
-        - LPA
-        - ValorDeMercado
-### **2) fazendo_indicador.py** - classe usada para criação e/ou atualização de indicadores de análise.
-    - fazer_indicador_momento(meses=X)
-        - output: momento_X_meses.parquet
-    - volume_mediano()
-        - output: volume_mediano.parquet
-    - media_movel_proporcao(X,Y)
-        - output: mm_X_Y.parquet
-    - beta(X)
-        - output: beta_X.parquet
-    - volatilidade(X)
-        - output: vol_X.parquet
-    - pl_divida_bruta()
-        - output: pl_db.parquet
-    - ebit_divida_liquida()
-        - output: ebit_dl.parquet
 ### **3-a) premios_de_risco.py** - classe usada para cálculo dos prêmios de risco atrelado a cada combinação de fatores
     - pegando_dados_cotacoes()
     - pegando_datas_possiveis()

@@ -19,6 +19,7 @@ import subprocess
 import numpy as np
 from dateutil.relativedelta  import relativedelta
 from datetime import datetime
+import time
 
 class FinappController:
 
@@ -258,6 +259,8 @@ class FinappController:
 
 if __name__ == "__main__":
 
+    init_time_execution = time.time()
+
     finapp = FinappController()
 
     # enable database update
@@ -294,14 +297,17 @@ if __name__ == "__main__":
     final_analysis_date             = '2022-12-31'
     rating_premiuns_file_name       = r'..\\PDFs\avaliando-TOP10_INDICATORS.pdf'
     number_of_top_indicators        = 2
+    create_rating_pdf               = False
+    
+    
     # enable run a regression model
-    execute_regression_model        = False
+    execute_regression_model        = True
 
 
     # enable configure setup database
-    config_setups                   = True
+    config_setups                   = False
     read_setup                      = False
-    save_setup                      = True
+    save_setup                      = False
     close_setup                     = False
     delete_setup                    = False
     # setup configurations
@@ -315,12 +321,13 @@ if __name__ == "__main__":
     generate_wallets                = True
     factor_calc_initial_date        = '2019-12-31'
     factor_calc_end_date            = '2023-12-31'
+    create_wallets_pfd              = False
     
 
     # enable configure wallet composition database
-    config_wallet_composition       = True
+    config_wallet_composition       = False
     read_wallet_composition         = False
-    save_wallet_composion           = True
+    save_wallet_composion           = False
 
 
     # enable requirements.txt update
@@ -453,8 +460,8 @@ if __name__ == "__main__":
     ###
     indicators_dict = {
                         'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
-                        # 'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
-                        # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
+                        'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
+                        'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
                         'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
                         'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
                         'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
@@ -601,19 +608,15 @@ if __name__ == "__main__":
         print('\t rentabilidade acumulada do terceiro_quartil: ', int((best_indicator['acum_terceiro_quartil'].iloc[-1]) * 100), '%')
         print('\t rentabilidade acumulada do quarto_quartil: ', int((best_indicator['acum_quarto_quartil'].iloc[-1]) * 100), '%')
 
-
-
         #
         ##
         # CREATING PDF
         ##
         #
-        # list_premiuns_to_pdf = list(top_indicators['nome_indicador'])
-        # rating_premiuns.create_pdf_images(list_premiuns_to_pdf)
-        # rating_premiuns.fazer_pdf(list_premiuns_to_pdf)
-
-
-
+        if(create_rating_pdf):
+            list_premiuns_to_pdf = list(top_indicators['nome_indicador'])
+            rating_premiuns.create_pdf_images(list_premiuns_to_pdf)
+            rating_premiuns.fazer_pdf(list_premiuns_to_pdf)
 
         #
         ##
@@ -624,11 +627,7 @@ if __name__ == "__main__":
 
         premiuns_to_regression_dict = dict.fromkeys(top_single_indicators['nome_indicador'], 1000000)
 
-
-
-
         print('\nAutomatic wallet dict created: \n', setup_dict)
-
 
         print(".\n.\n=== RATING COMPLETE! ===")
 
@@ -742,13 +741,11 @@ if __name__ == "__main__":
         
         #
         ##
-        ###
         # CREATE PDF REPORT
-        ###
         ##
         #
-        # backtest.make_report()
-
+        if(create_wallets_pfd):
+            backtest.make_report()
 
         #
         ## prepara a última carteira definida para salvar
@@ -762,12 +759,12 @@ if __name__ == "__main__":
         #
         ## [OPTIONAL] une a matrix BCG (bcg_matrix) aos últimos resultados da carteira
         #
-        # analysis_assets_list = finapp.compose_last_wallet_with_bcg_matrix(last_wallet, bcg_dimensions_list)
+        analysis_assets_list = finapp.compose_last_wallet_with_bcg_matrix(last_wallet, bcg_dimensions_list)
         
         #
         ## [OPTIONAL] calcula o rendimento de cada ativo e médio desde o último rebalanciamento da carteira
         #
-        # finapp.calculate_wallet_returns_since_last_rebalance(analysis_assets_list)
+        finapp.calculate_wallet_returns_since_last_rebalance(analysis_assets_list)
 
         print(".\n.\n=== GENERATION COMPLETE! ===")
 
@@ -819,3 +816,8 @@ if __name__ == "__main__":
 
         with open(full_desired_path, "w") as arquivo:
             arquivo.write(requirements_data)
+    
+    end_time_execution = time.time()
+
+    execution_time = round((end_time_execution - init_time_execution), 2)
+    print('\nexcution_time: ', execution_time, 'seconds.')

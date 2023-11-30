@@ -130,6 +130,7 @@ class WalletManager:
         wallet_id_existent = None
         new_wallet_id = None
         wallet_existent = False
+        esta_contido = False
     
         # print('New setup: \n', new_setup)
 
@@ -146,17 +147,24 @@ class WalletManager:
             # print('Setup updated: \n', new_setup)
             new_setup.to_parquet(f'{self.full_desired_path}/wallets.parquet', index = True)
         else:
-            
-            df_merge = pd.merge(setups_df, new_setup, on=['wallet_name', 'proportion', 'rebalance_periods', 'user_name'], how='left', indicator=True)
-            esta_contido = (df_merge['_merge'] == 'both').any()
-            # print(esta_contido)
+            wallet_id_database_list = list(setups_df['wallet_id'])
+            wallet_id_database_list = list(set(wallet_id_database_list))
+            # print(wallet_id_database_list)
 
+            for wallet_id_database in wallet_id_database_list:
+                setup_to_verify = setups_df[setups_df['wallet_id'] == wallet_id_database]
+                df_merge = pd.merge(setup_to_verify, new_setup, on=['wallet_name', 'proportion', 'rebalance_periods', 'user_name', 'indicator_1', 'indicator_2', 'indicator_3'], how='left', indicator=True)
+                # print(df_merge)
+                found_in_database = (df_merge['_merge'] == 'both').all()
+                # print(found_in_database)
+                if(found_in_database):
+                    esta_contido = True
+                    # wallet_id_existent = (setups_df[['wallet_id']][setups_df['wallet_name'] == df_merge['wallet_name']]).at[0,'wallet_id']
+                    wallet_id_existent = setup_to_verify['wallet_id'].iloc[0]
+                    # print('wallet_id_existent', wallet_id_existent)
+                    
             if(esta_contido):
-                print('Setup duplicated!')
-                # wallet_id_existent = (setups_df[['wallet_id']][setups_df['wallet_name'] == df_merge['wallet_name']]).iloc[0]
-                wallet_id_existent = (setups_df[['wallet_id']][setups_df['wallet_name'] == df_merge['wallet_name']]).at[0,'wallet_id']
-                # print('wallet_id_existent', wallet_id_existent)
-                
+                print('Setup duplicated!')                
                 print('\t--- nothing to do!')
             else:
                 print('New setup!')
@@ -182,7 +190,6 @@ class WalletManager:
 
                 updated_setup.to_parquet(f'{self.full_desired_path}/wallets.parquet', index = True)
         
-
         # print('wallet_id_existent', wallet_id_existent)
         # print('new_wallet_id', new_wallet_id)
         if(wallet_id_existent == None and new_wallet_id == None):
@@ -195,8 +202,6 @@ class WalletManager:
             else:
                 wallet_id = wallet_id_existent
         # print('wallet_id', wallet_id)
-
-
 
         return wallet_id, wallet_existent
         # return wallet_id_existent, new_wallet_id
@@ -332,6 +337,8 @@ class WalletManager:
         self.wallet_defined = wallet_defined
         self.wallet_manager = wallet_manager
 
+        esta_contido = False
+
         file_not_found, compositions_df = self.wallet_manager.read_portifolios_composition()
         setup_existence = self.wallet_manager.verify_setup_existence(self.wallet_manager, self.wallet_id)
         validation_result = self.wallet_manager.validate_portifolio_composition(self.wallet_defined)
@@ -364,10 +371,22 @@ class WalletManager:
                 self.wallet_defined['rebalance_date'] = pd.to_datetime(self.wallet_defined['rebalance_date'])
                 # print(self.wallet_defined)
 
-                df_merge = pd.merge(compositions_df, self.wallet_defined, on=['ticker', 'wallet_id', 'rebalance_date'], how='left', indicator=True)
-                esta_contido = (df_merge['_merge'] == 'both').any()
-                # print(esta_contido)
-                
+                wallet_id_database_list = list(compositions_df['wallet_id'])
+                wallet_id_database_list = list(set(wallet_id_database_list))
+                # print(wallet_id_database_list)
+
+                for wallet_id_database in wallet_id_database_list:
+                    setup_to_verify = compositions_df[compositions_df['wallet_id'] == wallet_id_database]
+                    df_merge = pd.merge(setup_to_verify, self.wallet_defined, on=['ticker', 'rebalance_date', 'executed', 'execution_date'], how='left', indicator=True)
+                    # print(df_merge)
+                    found_in_database = (df_merge['_merge'] == 'both').all()
+                    # print(found_in_database)
+                    if(found_in_database):
+                        esta_contido = True
+                        # wallet_id_existent = (setups_df[['wallet_id']][setups_df['wallet_name'] == df_merge['wallet_name']]).at[0,'wallet_id']
+                        wallet_id_existent = setup_to_verify['wallet_id'].iloc[0]
+                        # print('wallet_id_existent', wallet_id_existent)
+
                 if(esta_contido):
                     print('\nWallet composition duplicated!')
                     
@@ -453,11 +472,11 @@ class WalletManager:
             # print(esta_contido)
             
             if(esta_contido):
-                print('Wallet composition duplicated!')
+                print('Operation type duplicated!')
                 
                 print('\t--- nothing to do!')
             else:
-                print('New wallet composition!')
+                print('New type transaction!')
 
                 max_type_transaction_index = type_transaction_df.index.max()
                 # print('max_type_transaction_index: ', max_type_transaction_index)
@@ -467,7 +486,7 @@ class WalletManager:
                 else:
                     operation_type_df.index = operation_type_df.index + max_type_transaction_index + 1
 
-                print('Wallet composition to concat: \n', operation_type_df)
+                print('Operation type to concat: \n', operation_type_df)
 
                 print('\t...updating file type_transaction.parquet.')
             

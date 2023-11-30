@@ -162,7 +162,6 @@ class MakeIndicator():
         quotations = pd.read_parquet('cotacoes.parquet')
         cotaoces_ibov = pd.read_parquet('ibov.parquet')
 
-
         cotaoces_ibov.loc['5846'] = ['2023-08-10', 118349.60]
 
         cotaoces_ibov['retorno_ibov'] = cotaoces_ibov['fechamento'].pct_change()
