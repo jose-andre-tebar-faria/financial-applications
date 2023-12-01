@@ -244,6 +244,9 @@ class FinappController:
         last_analysis_date = pd.to_datetime(last_analysis_date)
         print('\nLast analysis date: ', last_analysis_date)
 
+        #
+        ## corrigir para encontrar o número de PERÍODOS até a data do último rebalanceamento
+        #
         days_since_last_periods = (last_analysis_date - last_wallet_rebalance_date).days
 
         quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = days_since_last_periods) * 100
@@ -295,18 +298,18 @@ if __name__ == "__main__":
     # enable rating risks
     rate_risk_premiuns              = True
     final_analysis_date             = '2022-12-31'
-    rating_premiuns_file_name       = r'..\\PDFs\avaliando-TOP10_INDICATORS.pdf'
-    number_of_top_indicators        = 2
+    rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
     create_rating_pdf               = False
     
     
     # enable run a regression model
-    execute_regression_model        = True
+    execute_regression_model        = False
 
 
     # enable configure setup database
     config_setups                   = False
-    read_setup                      = False
+    number_of_top_indicators        = 2
+    read_setup                      = True
     save_setup                      = False
     close_setup                     = False
     delete_setup                    = False
@@ -320,13 +323,13 @@ if __name__ == "__main__":
     # enable generation of wallet
     generate_wallets                = True
     factor_calc_initial_date        = '2019-12-31'
-    factor_calc_end_date            = '2023-12-31'
-    create_wallets_pfd              = False
+    factor_calc_end_date            = '2024-12-31'
+    create_wallets_pfd              = True
     
 
     # enable configure wallet composition database
     config_wallet_composition       = False
-    read_wallet_composition         = False
+    read_wallet_composition         = True
     save_wallet_composion           = False
 
 
@@ -451,6 +454,18 @@ if __name__ == "__main__":
         indicator.pl_divida_bruta()
         indicator.ebit_divida_liquida()
         
+        peg_ratio = indicator.peg_ratio()
+        # print('last 15 peg_ratios: \n', peg_ratio.tail(15)) #[[peg_ratio['ticker'] == 'WEGE3']]
+
+        p_vp = indicator.p_vp()
+        # print(p_vp.tail(20))
+
+        p_ebit = indicator.p_ebit()
+        # print(p_ebit.tail(20))
+
+        net_margin = indicator.net_margin()
+        # print(net_margin.tail(20))
+
         print(".\n.\n=== UPDATE COMPLETE! ===")
 
     ###
@@ -461,19 +476,23 @@ if __name__ == "__main__":
     indicators_dict = {
                         'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
                         'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
-                        'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
-                        'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
-                        'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
-                        'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
-                        # 'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
+                        # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
+                        # 'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
+                        # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
+                        # 'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
+                        'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
                         # 'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
                         # 'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
                         # 'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
                         'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
                         # 'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
+                        # 'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
+                        'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
+                        # 'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
+                        # 'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
                         }
 
-    number_of_top_comb_indicators = 10
+    number_of_top_comb_indicators = 5
 
     if(calculate_risk_premiuns):
 
@@ -777,10 +796,10 @@ if __name__ == "__main__":
 
         wallet_manager = wm.WalletManager()
 
-        if wallet_existent is False:
-            print('\n ---no wallet defined or found! forcing save_wallet_composion to FALSE...\n')
-            wallet_id = str(wallet_id)
-            save_wallet_composion = False
+        # if wallet_existent is False:
+        #     print('\n ---no wallet defined or found! forcing save_wallet_composion to FALSE...\n')
+        #     wallet_id = str(wallet_id)
+        #     save_wallet_composion = False
 
         if(read_wallet_composition):
             
@@ -819,5 +838,7 @@ if __name__ == "__main__":
     
     end_time_execution = time.time()
 
-    execution_time = round((end_time_execution - init_time_execution), 2)
-    print('\nexcution_time: ', execution_time, 'seconds.')
+    execution_time_in_sec = round((end_time_execution - init_time_execution), 2)
+    execution_time_in_min = round((execution_time_in_sec / 60.0), 2)
+
+    print(f'\nexcution_time: {execution_time_in_sec} seconds. [{execution_time_in_min} min]')

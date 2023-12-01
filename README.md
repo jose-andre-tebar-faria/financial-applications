@@ -5,52 +5,28 @@
 
 ## 🚨 ABOUT
 
-### This **Project** have a lot of python code for download and analisys of stock market.
+<div style="text-align: justify;">
 
-## ⚓ seven_mean_factor_investing
-
-This folder contains a static code that have a end-to-end work flow. The code itself can download all needed data for applying the 7 mean model using a factor investing methodology with backtest.
-
-Basically this code are creating a dataframe that contains in the lines - last business day of each month - the mean of the profitability of last 7 months, considering only price! after that, for each month, the program rank all the companies and choose the first 8 (TOP8) to be in our wallet. Each month the program calibrate the TOP8 stocks to compose our wallet! In the end are create a .png image to show the mapheat with profitability.
-
-#### **CODE FLOW**:
-    1) read total and monthly ibov indices compose
-    2) download all needed data throught yahoo_finance
-
-    ### MODELING
-    3) calculate monthly returns in percentage
-    4) 🚩transform montlhy_returns dataframe to monthly last seven mean return in percentage droping missing data
-    5) rank companies monthly
-    6) create montlhy_wallet
-
-    ### BACK TESTING
-    7) create monthly returns dataframe
-    8) create returns heatmap plot for sns
-    9) create acum returns heatmap plot for sns
-    10) create ibov acum returns heatmap plot for sns 
-    11) compare model & ibov monthly returns
-    12) create compare ibov returns heatmap plot for sns
-    13) configure heatmaps
-
-Below a example of how a code will be presented here.
-
-```bash
-#example of bash
-print('Hello World!')
-```
-#
+### This repository, financial-applications, contains a wealth of Python code for downloading and analyzing stock market data. Our flagship application, ***FINAPP***, aims to create an end-to-end system capable of manipulating an extensive database of market information to optimize, suggest, and execute the best indices and assets for stock investments in the Brazilian market.
+</div>
 
 #
+
 <h1 align="center">
-    <img src=".\files\images\gear.svg" width="155" />
+    <img src=".\files\images\gear.svg" width="142" />
     <p>FINAPP</p>
 </h1>
 
 ## 🚨 ABOUT
 
-### This **Project** intends to create an application that can optimize a stock wallet for long-term investments. Where are using here two types of analisys, first a Factor Investing modeling considering a 5 Factor Model by Eugene Fama & Kenneth French, and then a technical analisys.
+<div style="text-align: justify;">
 
-# 🧭 Factor Investing
+### This **Project** intends to create an application that can optimize a stock wallet rebalances for long-term investments. Using a Factor Investiment methology to rate indices that represent companies, we're trying to develop an application that full-automatizate - from ana
+</div>
+
+#
+
+## 🧭 Factor Investing
 
 O modelo de 5 fatores, desenvolvido por Eugene Fama e Kenneth French, é uma extensão do modelo de três fatores original (CAPM) que visa explicar os retornos de ações com base em cinco fatores diferentes. Esses cinco fatores são:
 
@@ -496,3 +472,40 @@ Cada .parquet contido no database se refere ao seguinte indicador.
         ALAVANCAGEM_EBIT_DL          0.1023      0.038      2.671      0.009       0.026       0.178
         TAMANHO_VALOR_DE_MERCADO     0.4513      0.034     13.420      0.000       0.385       0.518
         mkt_premium                  0.8485      0.029     29.262      0.000       0.791       0.906
+
+#
+
+
+## ⚓ seven_mean_factor_investing
+
+This folder contains a static code that have a end-to-end work flow. The code itself can download all needed data for applying the 7 mean model using a factor investing methodology with backtest.
+
+Basically this code are creating a dataframe that contains in the lines - last business day of each month - the mean of the profitability of last 7 months, considering only price! after that, for each month, the program rank all the companies and choose the first 8 (TOP8) to be in our wallet. Each month the program calibrate the TOP8 stocks to compose our wallet! In the end are create a .png image to show the mapheat with profitability.
+
+#### **CODE FLOW**:
+    1) read total and monthly ibov indices compose
+    2) download all needed data throught yahoo_finance
+
+    ### MODELING
+    3) calculate monthly returns in percentage
+    4) 🚩transform montlhy_returns dataframe to monthly last seven mean return in percentage droping missing data
+    5) rank companies monthly
+    6) create montlhy_wallet
+
+    ### BACK TESTING
+    7) create monthly returns dataframe
+    8) create returns heatmap plot for sns
+    9) create acum returns heatmap plot for sns
+    10) create ibov acum returns heatmap plot for sns 
+    11) compare model & ibov monthly returns
+    12) create compare ibov returns heatmap plot for sns
+    13) configure heatmaps
+
+Below a example of how a code will be presented here.
+
+```bash
+#example of bash
+print('Hello World!')
+```
+#
+

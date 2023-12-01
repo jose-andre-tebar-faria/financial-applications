@@ -227,3 +227,268 @@ class MakeIndicator():
         output_df.to_parquet(f'mm_{mm_curta}_{mm_longa}.parquet', index = False)
 
         print("OK.")
+
+    def peg_ratio(self):
+
+        print("Making PEG Ration")
+
+        #FAZER O CÁLCULO DO LUCRO POR AÇÃO
+        net_profit = pd.read_parquet('LucroLiquido.parquet')
+        net_profit = net_profit[['ticker', 'data', 'valor']]
+        net_profit = net_profit.rename(columns={'valor': 'valor_np'})
+        net_profit['data'] = pd.to_datetime(net_profit['data'])
+        net_profit['ticker'] = net_profit['ticker'].astype(str)
+        net_profit['valor_np'] = net_profit['valor_np'].astype(float)
+        net_profit = net_profit.sort_values(['data', 'ticker'])
+        # print('net_profit: \n', net_profit)
+
+        total_number_of_stocks = pd.read_parquet('TotalAcoes.parquet')
+        total_number_of_stocks = total_number_of_stocks[['ticker', 'data', 'valor']]
+        total_number_of_stocks = total_number_of_stocks.rename(columns={'valor': 'valor_nos'})
+        total_number_of_stocks['data'] = pd.to_datetime(total_number_of_stocks['data'])
+        total_number_of_stocks['ticker'] = total_number_of_stocks['ticker'].astype(str)
+        total_number_of_stocks['valor_nos'] = total_number_of_stocks['valor_nos'].astype(float)
+        total_number_of_stocks = total_number_of_stocks.sort_values(['data', 'ticker'])
+        # print('total_number_of_stocks: \n', total_number_of_stocks)
+
+        peg_ratio = pd.merge(net_profit, total_number_of_stocks, on=['ticker', 'data'], suffixes=('_np', '_nos'))
+
+        peg_ratio['valor_lpa'] = peg_ratio['valor_np'] / peg_ratio['valor_nos']
+
+        # LPA base fintz
+        # lpa_data = pd.read_parquet('LPA.parquet')
+        # lpa_data = lpa_data[['ticker', 'data', 'valor']]
+        # lpa_data = lpa_data.rename(columns={'valor': 'valor_lpa'})
+        # lpa_data['data'] = pd.to_datetime(lpa_data['data'])
+        # lpa_data['ticker'] = lpa_data['ticker'].astype(str)
+        # lpa_data['valor_lpa'] = lpa_data['valor_lpa'].astype(float)
+        # lpa_data = lpa_data.dropna()
+        # print('lpa_data: \n', lpa_data)
+
+        pl_data = pd.read_parquet('L_P.parquet')
+        pl_data = pl_data[['ticker', 'data', 'valor']]
+        pl_data = pl_data.rename(columns={'valor': 'valor_pl'})
+        pl_data['data'] = pd.to_datetime(pl_data['data'])
+        pl_data['ticker'] = pl_data['ticker'].astype(str)
+        pl_data['valor_pl'] = pl_data['valor_pl'].astype(float)
+        pl_data = pl_data.dropna()
+        # print('pl_data: \n', pl_data)
+        
+        peg_ratio = pd.merge(peg_ratio, pl_data[['ticker', 'data', 'valor_pl']], on=['ticker', 'data'])
+        # print('merged_data: \n', peg_ratio)#.groupby(['ticker', 'data']).mean())
+
+        # Ordenar os dados por 'ticker' e 'data' para garantir a ordem correta
+        peg_ratio = peg_ratio.sort_values(['data', 'ticker'])
+
+        # Calcular variação percentual do LPA entre períodos
+        peg_ratio['lpa_variation'] = peg_ratio.groupby('ticker')['valor_lpa'].pct_change()
+        peg_ratio = peg_ratio.dropna()
+        # print('peg_ratio: \n', peg_ratio)
+
+        # Calcular PEG Ratio com tratamento para divisão por zero
+        try:
+            peg_ratio['peg_ratio'] = peg_ratio['valor_pl'] / (peg_ratio['lpa_variation'] - 1)
+            peg_ratio['peg_ratio_invert'] = 1 / peg_ratio['peg_ratio']
+        except ZeroDivisionError:
+            # Tratamento para evitar divisão por zero
+            print("Erro: Variação percentual do LPA não pode ser zero.")
+            return None
+        except pd.errors.OverflowError:
+            # Tratamento para evitar overflow (inf ou -inf)
+            print("Erro: Divisão resultou em infinito.")
+            return None
+
+        # Substituir infinitos (inf e -inf) por NaN
+        peg_ratio.replace([np.inf, -np.inf], np.nan, inplace=True)
+        peg_ratio = peg_ratio.sort_values(['data', 'ticker'])
+        # print('peg_ratio: \n', peg_ratio)
+
+        peg_ratio_to_parquet = peg_ratio[['ticker', 'data', 'peg_ratio_invert']]
+        peg_ratio_to_parquet = peg_ratio_to_parquet.rename(columns={'peg_ratio_invert': 'valor'})
+
+        peg_ratio_to_parquet.to_parquet('peg_ratio_invert.parquet', index = False)
+        # print('peg_ratio_to_parquet: \n', peg_ratio_to_parquet)
+
+        print("OK.")
+
+        return peg_ratio[['ticker', 'data', 'peg_ratio']]
+    
+    def p_vp(self):
+
+        print("Making P_VP")
+
+        quotations = pd.read_parquet('cotacoes.parquet')
+        quotations = quotations[['ticker', 'data', 'preco_fechamento_ajustado']]
+        quotations = quotations.rename(columns={'preco_fechamento_ajustado': 'valor_quo'})
+        quotations['data'] = pd.to_datetime(quotations['data'])
+        quotations['ticker'] = quotations['ticker'].astype(str)
+        quotations['valor_quo'] = quotations['valor_quo'].astype(float)
+        # print('quotations: \n', quotations)
+
+        patrimonial_value = pd.read_parquet('PatrimonioLiquido.parquet')
+        patrimonial_value = patrimonial_value[['ticker', 'data', 'valor']]
+        patrimonial_value = patrimonial_value.rename(columns={'valor': 'valor_pl'})
+        patrimonial_value['data'] = pd.to_datetime(patrimonial_value['data'])
+        patrimonial_value['ticker'] = patrimonial_value['ticker'].astype(str)
+        patrimonial_value['valor_pl'] = patrimonial_value['valor_pl'].astype(float)
+        patrimonial_value = patrimonial_value.sort_values(['data', 'ticker'])
+        # print('patrimonial_value: \n', patrimonial_value)
+
+        total_number_of_stocks = pd.read_parquet('TotalAcoes.parquet')
+        total_number_of_stocks = total_number_of_stocks[['ticker', 'data', 'valor']]
+        total_number_of_stocks = total_number_of_stocks.rename(columns={'valor': 'valor_nos'})
+        total_number_of_stocks['data'] = pd.to_datetime(total_number_of_stocks['data'])
+        total_number_of_stocks['ticker'] = total_number_of_stocks['ticker'].astype(str)
+        total_number_of_stocks['valor_nos'] = total_number_of_stocks['valor_nos'].astype(float)
+        total_number_of_stocks = total_number_of_stocks.sort_values(['data', 'ticker'])
+        # print('total_number_of_stocks: \n', total_number_of_stocks)
+
+        p_vp = pd.merge(pd.merge(total_number_of_stocks, patrimonial_value, on=['ticker', 'data'], how='outer'), quotations, on=['ticker', 'data'], how='outer')
+        p_vp = p_vp.sort_values(['data', 'ticker'])
+        p_vp = p_vp.dropna()
+        # print('merged_data: \n', p_vp)
+        
+        try:
+            p_vp['p_vp'] = (p_vp['valor_quo']) / (p_vp['valor_pl'] / p_vp['valor_nos'])
+            p_vp['p_vp_invert'] = 1 / p_vp['p_vp']
+        except ZeroDivisionError:
+            print("Erro: Divisão não pode ser zero.")
+            return None
+        except pd.errors.OverflowError:
+            print("Erro: Divisão resultou em infinito.")
+            return None
+        
+        p_vp.replace([np.inf, -np.inf], np.nan, inplace=True)
+        p_vp = p_vp.sort_values(['data', 'ticker'])
+        # print('p_vp: \n', p_vp)
+
+        p_vp_to_parquet = p_vp[['ticker', 'data', 'p_vp_invert']]
+        p_vp_to_parquet = p_vp_to_parquet.rename(columns={'p_vp_invert': 'valor'})
+
+        p_vp_to_parquet.to_parquet('p_vp_invert.parquet', index = False)
+        # print('p_vp_to_parquet: \n', p_vp_to_parquet)
+
+        print("OK.")
+
+        return p_vp[['ticker', 'data', 'p_vp']]
+
+    def p_ebit(self):
+
+        print("Making P_EBIT")
+
+        quotations = pd.read_parquet('cotacoes.parquet')
+        quotations = quotations[['ticker', 'data', 'preco_fechamento_ajustado']]
+        quotations = quotations.rename(columns={'preco_fechamento_ajustado': 'valor_quo'})
+        quotations['data'] = pd.to_datetime(quotations['data'])
+        quotations['ticker'] = quotations['ticker'].astype(str)
+        quotations['valor_quo'] = quotations['valor_quo'].astype(float)
+        quotations = quotations.sort_values(['data', 'ticker'])
+        # print('quotations: \n', quotations)
+
+        ebit = pd.read_parquet('Ebit12m.parquet')
+        ebit = ebit[['ticker', 'data', 'valor']]
+        ebit = ebit.rename(columns={'valor': 'valor_eb'})
+        ebit['data'] = pd.to_datetime(ebit['data'])
+        ebit['ticker'] = ebit['ticker'].astype(str)
+        ebit['valor_eb'] = ebit['valor_eb'].astype(float)
+        ebit = ebit.sort_values(['data', 'ticker'])
+        # print('ebit: \n', ebit)
+
+        p_ebit = pd.merge(quotations, ebit, on=['ticker', 'data'], how='outer')
+        p_ebit = p_ebit.dropna()
+        # print('merged_data: \n', p_ebit)
+        
+        try:
+            p_ebit['p_ebit'] = 100000000 * (p_ebit['valor_quo']) / (p_ebit['valor_eb'])
+            p_ebit['p_ebit_invert'] = 1 / p_ebit['p_ebit']
+        except ZeroDivisionError:
+            print("Erro: Divisão não pode ser zero.")
+            return None
+        except pd.errors.OverflowError:
+            print("Erro: Divisão resultou em infinito.")
+            return None
+        
+        p_ebit.replace([np.inf, -np.inf], np.nan, inplace=True)
+        p_ebit = p_ebit.sort_values(['data', 'ticker'])
+        # print('p_ebit: \n', p_ebit)
+
+        p_ebit_to_parquet = p_ebit[['ticker', 'data', 'p_ebit_invert']]
+        p_ebit_to_parquet = p_ebit_to_parquet.rename(columns={'p_ebit_invert': 'valor'})
+
+        p_ebit_to_parquet.to_parquet('p_ebit_invert.parquet', index = False)
+        # print('p_ebit_to_parquet: \n', p_ebit_to_parquet)
+
+        print("OK.")
+
+        return p_ebit[['ticker', 'data', 'p_ebit']]
+    
+    def net_margin(self):
+
+        print("Making NET_MARGIN")
+
+        net_profit = pd.read_parquet('LucroLiquido.parquet')
+        net_profit = net_profit[['ticker', 'data', 'valor']]
+        net_profit = net_profit.rename(columns={'valor': 'valor_np'})
+        net_profit['data'] = pd.to_datetime(net_profit['data'])
+        net_profit['ticker'] = net_profit['ticker'].astype(str)
+        net_profit['valor_np'] = net_profit['valor_np'].astype(float)
+        net_profit = net_profit.sort_values(['data', 'ticker'])
+        # print('net_profit: \n', net_profit)
+
+        net_revenue = pd.read_parquet('ReceitaLiquida.parquet')
+        net_revenue = net_revenue[['ticker', 'data', 'valor']]
+        net_revenue = net_revenue.rename(columns={'valor': 'valor_nr'})
+        net_revenue['data'] = pd.to_datetime(net_revenue['data'])
+        net_revenue['ticker'] = net_revenue['ticker'].astype(str)
+        net_revenue['valor_nr'] = net_revenue['valor_nr'].astype(float)
+        net_revenue = net_revenue.sort_values(['data', 'ticker'])
+        # print('net_revenue: \n', net_revenue)
+
+        net_margin = pd.merge(net_profit, net_revenue, on=['ticker', 'data'], how='outer')
+        net_margin = net_margin.sort_values(['ticker', 'data'])
+        net_margin = net_margin.dropna()
+        # print('merged_data: \n', net_margin)
+        
+        try:
+            net_margin['net_margin'] = (net_margin['valor_np']) / (net_margin['valor_nr'])
+        except ZeroDivisionError:
+            print("Erro: Divisão não pode ser zero.")
+            return None
+        except pd.errors.OverflowError:
+            print("Erro: Divisão resultou em infinito.")
+            return None
+        
+        net_margin.replace([np.inf, -np.inf], np.nan, inplace=True)
+        net_margin = net_margin.sort_values(['data', 'ticker'])
+        # print('net_margin: \n', net_margin)
+
+        net_margin_to_parquet = net_margin[['ticker', 'data', 'net_margin']]    
+        net_margin['net_margin'] = net_margin['net_margin'] * 100
+        net_margin_to_parquet = net_margin_to_parquet.rename(columns={'net_margin': 'valor'})  
+
+        net_margin_to_parquet.to_parquet('net_margin.parquet', index = False)
+        # print('net_margin_to_parquet: \n', net_margin_to_parquet)  
+
+        print("OK.")
+        
+        return net_margin[['ticker', 'data', 'net_margin']]
+
+if __name__ == "__main__":
+
+    indicator = MakeIndicator()
+
+    # SEEMS WORKING but different not always from statusinvest.com
+    peg_ratio = indicator.peg_ratio()
+    print('last 15 peg_ratios: \n', peg_ratio.tail(15)) #[[peg_ratio['ticker'] == 'WEGE3']]
+
+    # APPROVED
+    p_vp = indicator.p_vp()
+    print(p_vp.tail(15))
+
+    # IN TESTS (follow tendences OK)
+    p_ebit = indicator.p_ebit()
+    print(p_ebit.tail(15))
+
+    # APPROVED but different not always from statusinvest.com
+    net_margin = indicator.net_margin()
+    print(net_margin.tail(15))
