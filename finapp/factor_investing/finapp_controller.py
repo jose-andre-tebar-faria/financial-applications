@@ -127,6 +127,8 @@ class FinappController:
 
     def create_automatic_wallet(self, ranking_indicator):
         
+        print(ranking_indicator)
+
         best_indicators_list = []
 
         best_indicators_list = list(ranking_indicator['nome_indicador'].head(number_of_top_indicators))
@@ -259,6 +261,55 @@ class FinappController:
         mean_last_period_variation = last_period_variation.mean()
         print(f'\nAvarage wallet rentability past {days_since_last_periods} periods: ', round(mean_last_period_variation,2) , '%')
 
+    def run_update_database(self, update_fintz_database = None, update_api_database = None, update_webscrapping_database = None, 
+                            fintz_indicators_list = None, fintz_demonstration_list = None, initial_date = None,
+                            bc_dict = None):
+
+        print(".\n..\n...\nUpdating Database!\n...\n..\n.")
+
+        if(update_fintz_database == None):
+            update_fintz_database = False
+        
+        if(update_api_database == None):
+            update_api_database = False
+            
+        if(update_webscrapping_database == None):
+            update_webscrapping_database = False
+
+        if(initial_date == None):
+            initial_date = "2000-01-01"
+
+        if(update_fintz_database):
+
+            data_from_fintz = dbf.FintzData()
+
+            for demonstration in fintz_demonstration_list:
+                data_from_fintz.download_accounting_files(demonstration=True, data_name = demonstration)
+
+            for indicator in fintz_indicators_list:
+                data_from_fintz.download_accounting_files(indicator=True, data_name = indicator)
+
+            data_from_fintz.download_cdi(initial_date=initial_date)
+            data_from_fintz.download_ibov(initial_date=initial_date)
+            data_from_fintz.download_quotations()
+        
+        if(update_api_database):
+
+            data_from_api = dba.DownloadByApi()
+
+            bc_data = data_from_api.getting_bc_data(bc_dict)
+
+        if(update_webscrapping_database):
+
+            data_from_webscrapping = dbw.DownloadByWebscrapping()
+
+            b3_sectors = data_from_webscrapping.getting_b3_assets_sector_by_site()
+
+        if(update_fintz_database == False and update_api_database == False and update_webscrapping_database == False):
+            print(".\n.\n=== NOTHING TO DO! ===")
+        else:
+            print(".\n.\n=== UPDATE COMPLETE! ===")
+
 
 if __name__ == "__main__":
 
@@ -267,7 +318,7 @@ if __name__ == "__main__":
     finapp = FinappController()
 
     # enable database update
-    update_database                 = False
+    update_database                 = True
     update_api_database             = False
     update_fintz_database           = False
     update_webscrapping_database    = False
@@ -286,7 +337,7 @@ if __name__ == "__main__":
 
 
     # enable calculate risk premiuns database update
-    calculate_risk_premiuns         = True
+    calculate_risk_premiuns         = False
     # choose de indicators combinations to rate
     single_combinations             = True
     double_combinations             = True
@@ -296,7 +347,7 @@ if __name__ == "__main__":
 
 
     # enable rating risks
-    rate_risk_premiuns              = True
+    rate_risk_premiuns              = False
     final_analysis_date             = '2022-12-31'
     rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
     create_rating_pdf               = False
@@ -309,27 +360,31 @@ if __name__ == "__main__":
     # enable configure setup database
     config_setups                   = False
     number_of_top_indicators        = 2
-    read_setup                      = True
+    read_setup                      = False
     save_setup                      = False
     close_setup                     = False
     delete_setup                    = False
     # setup configurations
-    rebalance_periods               = 21
+    rebalance_periods               = 7
     liquidity_filter                = 1
     asset_quantity                  = 5
     user_name_adm                   = 'andre-tebar'
 
 
+    # enable rebalance wallet
+    rebalance_wallets               = False
+
+
     # enable generation of wallet
-    generate_wallets                = True
+    generate_wallets                = False
     factor_calc_initial_date        = '2019-12-31'
-    factor_calc_end_date            = '2024-12-31'
-    create_wallets_pfd              = True
+    factor_calc_end_date            = '2023-11-09'
+    create_wallets_pfd              = False
     
 
     # enable configure wallet composition database
     config_wallet_composition       = False
-    read_wallet_composition         = True
+    read_wallet_composition         = False
     save_wallet_composion           = False
 
 
@@ -341,18 +396,18 @@ if __name__ == "__main__":
     #update_database
     ##
     ###
-    demonstration_list = [
-                         'AcoesEmCirculacao', 'TotalAcoes',
-                         'PatrimonioLiquido',
-                         'LucroLiquido12m', 'LucroLiquido',
-                         'ReceitaLiquida', 'ReceitaLiquida12m', 
-                         'DividaBruta', 'DividaLiquida',
-                         'Disponibilidades', 
-                         'Ebit', 'Ebit12m',
-                         'Impostos', 'Impostos12m',
-                         'LucroLiquidoSociosControladora',
-                         'LucroLiquidoSociosControladora12m'
-                         ]
+    fintz_demonstration_list = [
+                                'AcoesEmCirculacao', 'TotalAcoes',
+                                'PatrimonioLiquido',
+                                'LucroLiquido12m', 'LucroLiquido',
+                                'ReceitaLiquida', 'ReceitaLiquida12m', 
+                                'DividaBruta', 'DividaLiquida',
+                                'Disponibilidades', 
+                                'Ebit', 'Ebit12m',
+                                'Impostos', 'Impostos12m',
+                                'LucroLiquidoSociosControladora',
+                                'LucroLiquidoSociosControladora12m'
+                                ]
 
     fintz_indicators_list = [
                             'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado'
@@ -366,35 +421,8 @@ if __name__ == "__main__":
 
     if(update_database):
 
-        print(".\n..\n...\nUpdating Database!\n...\n..\n.")
-
-        if(update_fintz_database):
-
-            data_from_fintz = dbf.FintzData()
-
-            for demonstration in demonstration_list:
-                data_from_fintz.download_accounting_files(demonstration=True, data_name = demonstration)
-
-            for indicator in fintz_indicators_list:
-                data_from_fintz.download_accounting_files(indicator=True, data_name = indicator)
-
-            data_from_fintz.download_cdi(initial_date="2000-01-01")
-            data_from_fintz.download_ibov(initial_date="2000-01-01")
-            data_from_fintz.download_quotations()
-        
-        if(update_api_database):
-
-            data_from_api = dba.DownloadByApi()
-
-            bc_data = data_from_api.getting_bc_data(bc_dict)
-
-        if(update_webscrapping_database):
-
-            data_from_webscrapping = dbw.DownloadByWebscrapping()
-
-            b3_sectors = data_from_webscrapping.getting_b3_assets_sector_by_site()
-
-        print(".\n.\n=== UPDATE COMPLETE! ===")
+        finapp.run_update_database(update_fintz_database = update_fintz_database, update_api_database = update_api_database, update_webscrapping_database = update_webscrapping_database,
+                                   fintz_indicators_list = fintz_indicators_list, fintz_demonstration_list = fintz_demonstration_list)
 
     ###
     ##
@@ -474,7 +502,7 @@ if __name__ == "__main__":
     ##
     ###
     indicators_dict = {
-                        'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
+                        # 'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
                         'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
                         # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
                         # 'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
@@ -482,9 +510,9 @@ if __name__ == "__main__":
                         # 'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
                         'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
                         # 'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
-                        # 'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
+                        'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
                         # 'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
-                        'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
+                        # 'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
                         # 'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
                         # 'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
                         'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
@@ -492,6 +520,25 @@ if __name__ == "__main__":
                         # 'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
                         }
 
+    indicators_dict_database = {
+                        'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
+                        'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
+                        'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
+                        'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
+                        'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
+                        'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
+                        'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
+                        'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
+                        'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
+                        'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
+                        'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
+                        'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
+                        'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
+                        'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
+                        'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
+                        'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
+                        }
+    
     number_of_top_comb_indicators = 5
 
     if(calculate_risk_premiuns):
@@ -510,6 +557,8 @@ if __name__ == "__main__":
             
             print('.\n.\nNumber of combinations: ', len(list_combinations), '\n.\n.')
 
+            # print(list_combinations)
+            print(indicators_dict)
             list_combination_file_name = finapp.create_file_names(list_combinations, indicators_dict)
 
             folder_files = finapp.reading_folder_files()
@@ -706,6 +755,158 @@ if __name__ == "__main__":
 
             wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='227', user_name='andre-tebar')
     
+        ###
+    ##
+    # rebalance wallets
+    ##
+    ###
+    if(rebalance_wallets):
+
+        print(".\n..\n...\nRebalancing Wallet(s)!\n...\n..\n.")
+
+        rebalance_wallet_id = '6904'
+        # print('\nrebalance_wallet_id: \n', rebalance_wallet_id)
+
+        rebalance_calc_end_date = '2023-12-02'
+
+        wallet_manager = wm.WalletManager()
+
+        #
+        ## READING SETUP
+        #
+        file_not_found, setup_df = wallet_manager.read_setups()
+        print(f'\nsetup database: \n', setup_df)
+
+        setup = setup_df[setup_df['wallet_id'] == rebalance_wallet_id]
+        print(f'\nsetup {rebalance_wallet_id}: \n', setup)
+
+        #
+        ## CAPTURING REBALANCE PERIODS AND NUMBER OF ASSETS PER WALLET
+        #
+        rebalance_periods_setup = int(setup['rebalance_periods'].iloc[0])
+        print('\nrebalance_periods_setup: \n', rebalance_periods_setup)
+        asset_quantity_setup = int(setup['number_of_assets'].iloc[0])
+        print('\nasset_quantity_setup: \n', asset_quantity_setup)
+
+        #
+        ## CREATE DICT PONDERATED WALLET
+        #
+        dataframe_columns = ['wallet_name', 'number_of_assets', 'proportion', 'indicator_1', 'indicator_2', 'indicator_3']
+        setup_dict_df = pd.DataFrame(columns=dataframe_columns)
+        
+        setup_to_dict_df = setup[dataframe_columns]
+        print('\nsetup_to_dict_df: \n', setup_to_dict_df)
+
+        setup_dict = {}
+
+        for index, row in setup_to_dict_df.iterrows():
+            wallet_name = row['wallet_name']
+            indicators_dict = {}
+
+            for indicator_col in ['indicator_1', 'indicator_2', 'indicator_3']:
+                indicator_name = row[indicator_col]
+                
+                if indicator_name is not None and indicator_name in indicators_dict_database:
+                    indicators_dict[indicator_name] = {'caracteristica': indicators_dict_database[indicator_name]['order']}
+
+            setup_dict[wallet_name] = {'indicadores': indicators_dict, 'peso': row['proportion']}
+
+        print('\nsetup_dict: \n', setup_dict)
+
+        #
+        ## CALCULATE BACKTEST TO VERIFY REBALANCE POSSIBILITY
+        #
+        pdf_name = 'tteesstt'
+
+        backtest = fc.MakeBacktest(data_final = rebalance_calc_end_date, data_inicial = factor_calc_initial_date, 
+                                   filtro_liquidez=(liquidity_filter * 1000000), balanceamento = rebalance_periods_setup, 
+                                   numero_ativos = asset_quantity_setup, corretagem = 0.01, nome_arquivo = pdf_name, **setup_dict)
+
+        backtest.pegando_dados()
+        backtest.filtrando_datas()
+        backtest.criando_carteiras()
+        wallets, returns = backtest.calculando_retorno_diario()
+        # print(wallets)
+        # print(returns)
+
+        #
+        ## FINDING LAST WALLET
+        #
+        last_calculated_wallet = wallets.loc[wallets.index[-1]]
+        last_calculated_wallet = last_calculated_wallet.reset_index()
+        last_calculated_wallet.rename(columns={'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
+        last_calculated_wallet['rebalance_date'] = pd.to_datetime(last_calculated_wallet['rebalance_date'])
+        last_calculated_wallet['ticker'] = last_calculated_wallet['ticker'].astype(str)
+        last_calculated_wallet['wallet_proportion'] = last_calculated_wallet['wallet_proportion'].astype(float)
+        print('\nCalculated wallet defined below: \n', last_calculated_wallet)
+        
+        last_calculated_rebalance_date = last_calculated_wallet.loc[last_calculated_wallet.index[-1], 'rebalance_date']
+        last_calculated_rebalance_date = pd.to_datetime(last_calculated_rebalance_date)
+        print('\ncalculation_rebalance_date: ', last_calculated_rebalance_date)
+
+        #
+        ## FINDING PREVIOUS WALLET
+        #
+        # previous_calculated_wallet = wallets.loc[wallets.index[-2]]
+        # previous_calculated_wallet = previous_calculated_wallet.reset_index()
+        # previous_calculated_wallet.rename(columns={'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
+        # previous_calculated_wallet['rebalance_date'] = pd.to_datetime(previous_calculated_wallet['rebalance_date'])
+        # previous_calculated_wallet['ticker'] = previous_calculated_wallet['ticker'].astype(str)
+        # previous_calculated_wallet['wallet_proportion'] = previous_calculated_wallet['wallet_proportion'].astype(float)
+        # print('\nprevious_calculated_wallet: \n', previous_calculated_wallet)
+        
+        # previous_calculated_rebalance_date = previous_calculated_wallet.loc[previous_calculated_wallet.index[-1], 'rebalance_date']
+        # previous_calculated_rebalance_date = pd.to_datetime(previous_calculated_rebalance_date)
+        # print('\nprevious_calculated_wallet: ', previous_calculated_rebalance_date)
+
+        #
+        ## READING WALLET COMPOSITION DATABASE
+        #
+        file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
+
+        wallet_composition = compositions_df[compositions_df['wallet_id'] == rebalance_wallet_id]
+        print(f'\ncomposition of wallet_id {rebalance_wallet_id}: \n', wallet_composition)
+        
+        last_rebalance_date = wallet_composition.loc[wallet_composition.index[-1], 'rebalance_date']
+        last_rebalance_date = pd.to_datetime(last_rebalance_date)
+        print('\nlast_rebalance_date: ', last_rebalance_date)
+
+        last_wallet_composition =  wallet_composition[wallet_composition['rebalance_date'] == last_rebalance_date]
+        # print('\nlast_wallet_composition: \n', last_wallet_composition)
+        last_wallet_composition_to_compare = last_wallet_composition[['rebalance_date', 'ticker', 'wallet_proportion']]
+        last_wallet_composition_to_compare = last_wallet_composition_to_compare.reset_index(drop=True)
+        last_wallet_composition_to_compare['rebalance_date'] = pd.to_datetime(last_wallet_composition_to_compare['rebalance_date'])
+        last_wallet_composition_to_compare['ticker'] = last_wallet_composition_to_compare['ticker'].astype(str)
+        last_wallet_composition_to_compare['wallet_proportion'] = last_wallet_composition_to_compare['wallet_proportion'].astype(float)
+        print('\nwallet_composition_to_compare: \n', last_wallet_composition_to_compare)
+
+        #
+        ## COMPARE DATES AND WALLET COMPOSITION (CALCULATED with LAST DATABASE COMPOSITION)
+        #
+        are_equal = last_wallet_composition_to_compare.equals(last_calculated_wallet)
+
+        if(are_equal):
+            print('\nequals!')
+        else:
+            print('\ndiff!')
+
+        if(last_rebalance_date == last_calculated_rebalance_date):
+            print('\nup-to-date!')
+        else:
+            print('\nneed to update composition!')
+
+            wallet_to_database = last_calculated_wallet
+
+            print('\nWallet to database: \n', wallet_to_database)
+
+            wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+            
+            print('\nUPDATED!')
+
+        if((last_rebalance_date == last_calculated_rebalance_date) and are_equal):
+            print('\nboth!')
+
+
     ###
     ##
     #factor_calculator
@@ -748,7 +949,9 @@ if __name__ == "__main__":
         backtest.pegando_dados()
         backtest.filtrando_datas()
         backtest.criando_carteiras()
-        wallets = backtest.calculando_retorno_diario()
+        wallets, returns = backtest.calculando_retorno_diario()
+        # print(wallets)
+        # print(returns)
         
         last_wallet = wallets.loc[wallets.index[-1]]
         last_wallet = last_wallet.reset_index()
@@ -794,6 +997,8 @@ if __name__ == "__main__":
     ###
     if(config_wallet_composition):
 
+        print(".\n..\n...\nConfiguring Wallet(s) Composition!\n...\n..\n.")
+
         wallet_manager = wm.WalletManager()
 
         # if wallet_existent is False:
@@ -810,6 +1015,10 @@ if __name__ == "__main__":
             print('\nWallet to database: \n', wallet_to_database)
 
             wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = wallet_to_database)
+
+
+
+
 
     ###
     ##

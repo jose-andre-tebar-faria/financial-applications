@@ -83,7 +83,7 @@ class WalletManager:
         try:
             wallets_parquet = pd.read_parquet(f'{self.full_desired_path}/wallets.parquet')
             wallets_df = pd.DataFrame(wallets_parquet)
-            print('Setup configuration: \n', wallets_df)
+            # print('Setup configuration: \n', wallets_df)
         except:
             wallets_df = None
             file_not_found = True
@@ -292,7 +292,7 @@ class WalletManager:
         try:
             compositions_parquet = pd.read_parquet(f'{self.full_desired_path}/wallets_composition.parquet')
             compositions_df = pd.DataFrame(compositions_parquet)
-            print('\nWallet composition configuration: \n', compositions_df)
+            # print('\nWallet composition configuration: \n', compositions_df)
         except:
             compositions_df = None
             file_not_found = True

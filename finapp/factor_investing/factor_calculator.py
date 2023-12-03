@@ -246,7 +246,7 @@ class MakeBacktest():
         self.df_retornos = df_retornos
 
         carteiras = carteiras.reset_index(level='ticker')
-        return carteiras
+        return carteiras, df_retornos
 
     def make_report(self):
 
