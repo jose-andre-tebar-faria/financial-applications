@@ -33,7 +33,7 @@ class WalletManager:
         
         self.setups_dict = setups_dict
 
-        setups_dataframe = pd.DataFrame(columns=['wallet_id', 'wallet_name', 'number_of_assets', 'actual_wallet_total_number_of_assets', 'user_name', 'proportion', 'create_date', 'close_date', 'rebalance_periods', 'last_rebalance_date'])
+        setups_dataframe = pd.DataFrame(columns=['wallet_id', 'wallet_name', 'number_of_assets', 'actual_wallet_total_number_of_assets', 'user_name', 'proportion', 'create_date', 'close_date', 'rebalance_periods', 'last_rebalance_date', 'indicator_1', 'indicator_2', 'indicator_3'])
         setups_dataframe['create_date'] = pd.to_datetime(setups_dataframe['create_date'])
         setups_dataframe['close_date'] = pd.to_datetime(setups_dataframe['close_date'])
         setups_dataframe['last_rebalance_date'] = pd.to_datetime(setups_dataframe['last_rebalance_date'])
@@ -83,7 +83,7 @@ class WalletManager:
         try:
             wallets_parquet = pd.read_parquet(f'{self.full_desired_path}/wallets.parquet')
             wallets_df = pd.DataFrame(wallets_parquet)
-            # print('Setup configuration: \n', wallets_df)
+            print('Setup configuration: \n', wallets_df)
         except:
             wallets_df = None
             file_not_found = True
@@ -228,7 +228,6 @@ class WalletManager:
             if(setup_to_delete.empty):
                 print('Setup does not exist!')
             else:
-                # new_setup = setups_df.loc[(setups_df['wallet_id'] != wallet_id) & (setups_df['user_name'] != user_name)]
                 new_setup = setups_df.drop(setups_df[condition].index)
                 print('New setup: \n', new_setup)
                 
@@ -292,7 +291,7 @@ class WalletManager:
         try:
             compositions_parquet = pd.read_parquet(f'{self.full_desired_path}/wallets_composition.parquet')
             compositions_df = pd.DataFrame(compositions_parquet)
-            # print('\nWallet composition configuration: \n', compositions_df)
+            print('\nWallet composition configuration: \n', compositions_df)
         except:
             compositions_df = None
             file_not_found = True

@@ -39,7 +39,7 @@ class TelegramUserManager:
             telegram_users_df['is_bot'] = telegram_users_df['is_bot'].astype(bool)
             telegram_users_df['is_adm'] = telegram_users_df['is_adm'].astype(bool)
             telegram_users_df = telegram_users_df.sort_values(['onboarding_date', 'username'])
-            # print('telegram_users: \n', telegram_users_df)
+            print('telegram_users: \n', telegram_users_df)
         except:
             telegram_users_df = None
             file_not_found = True
@@ -92,26 +92,65 @@ class TelegramUserManager:
 
         return telegram_user_df
 
+
+    def delete_telegram_user(self, username = None, user_id = None):
+        
+        if(username == None):
+            username = ''
+
+        file_not_found, telegram_user_database_df = TelegramUserManager.read_telegram_users(self)
+        telegram_user_database_df = telegram_user_database_df.reset_index(drop=True)
+        telegram_user_database_df['user_id'] = telegram_user_database_df['user_id'].astype(str)
+        telegram_user_database_df['username'] = telegram_user_database_df['username'].astype(str)
+        print('\ntelegram_user_database_df: \n', telegram_user_database_df)
+
+        if(file_not_found):
+            print('\telegram_users.parquet does not exist!')
+        else:
+            condition = (telegram_user_database_df['user_id'] == user_id) & (telegram_user_database_df['username'] == username)
+            user_to_delete = telegram_user_database_df[condition]
+            print('Setup to delete: \n', user_to_delete)
+
+            if(user_to_delete.empty):
+                print('Setup does not exist!')
+            else:
+                new_database = telegram_user_database_df.drop(telegram_user_database_df[condition].index)
+                print('New setup: \n', new_database)
+                
+                new_database.to_parquet(f'{self.full_desired_path}/telegram_users.parquet', index = True)
+
     def verify_telegram_user(self, telegram_user_df):
 
         new_user = False
+        username_existent = ''
+        user_id_existent = ''
         # print('\ntelegram_users: \n', telegram_user_df)
 
         file_not_found, telegram_user_database_df = TelegramUserManager.read_telegram_users(self)
         # print('\ntelegram_user_database_df: \n', telegram_user_database_df)
         
-        verifying_presence = pd.merge(telegram_user_database_df, telegram_user_df, on = ['user_id', 'username'], how = 'left')
-        # print('\nverifying_presence: \n', verifying_presence)
+        verifying_presence = pd.merge(telegram_user_database_df, telegram_user_df, on = ['user_id'], how = 'left', indicator=True)
+
+        found_in_database = (verifying_presence['_merge'] == 'both').any()
+        # print(found_in_database)
         
-        if(len(verifying_presence) == 0):
+        if(found_in_database):
+            verifying_presence = verifying_presence[verifying_presence['_merge'] == 'both']
+            found_user = verifying_presence[['user_id', 'username_x']][verifying_presence['_merge'] == 'both']
+            found_user.rename(columns={'username_x': 'username',}, inplace=True)
+            print('\nfound_user: \n', found_user)
+            username_existent = verifying_presence['username_x'].iloc[0]
+            # print('\nusername_existent', username_existent)
+        
+        if(found_in_database == False):
             print('.\n.\nnew user!\n.\n.')
             new_user = True
         else:
             print('.\nknown user!\n.')
-            user_id_detected = verifying_presence.at[0,'user_id']
-            print('user_detected: \n', telegram_user_database_df[telegram_user_database_df['user_id'] == user_id_detected])
+            user_id_existent = verifying_presence['user_id'].iloc[0]
+            print('user_detected: \n', telegram_user_database_df[telegram_user_database_df['user_id'] == user_id_existent])
 
-        return new_user
+        return new_user, verifying_presence, username_existent, user_id_existent
 
     def insert_telegram_user(self, telegram_user_df):
         
@@ -137,6 +176,7 @@ class TelegramUserManager:
             print("File not found.")
             
         updated_setup = pd.concat([telegram_users_df, telegram_user_df], ignore_index=False)
+        updated_setup = updated_setup.reset_index(drop=True)
         print('updated_setup: \n', updated_setup)
         
         updated_setup.to_parquet(f'{self.full_desired_path}/telegram_users.parquet', index = True)
@@ -154,5 +194,7 @@ if __name__ == "__main__":
 
     telegram_user_manager.read_telegram_users()
 
-    telegram_users_df = telegram_user_manager.prepare_telegram_user(user_id='1',username='aaa')
+    # telegram_users_df = telegram_user_manager.prepare_telegram_user(user_id='1',username='aaa')
     # telegram_user_manager.verify_telegram_user(telegram_users_df)
+
+    telegram_user_manager.delete_telegram_user(username = 'jandretebarf', user_id = '6013346178')
