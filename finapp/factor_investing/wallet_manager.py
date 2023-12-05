@@ -76,13 +76,16 @@ class WalletManager:
 ###
 ##
 #
-    def read_setups(self):
+    def read_setups(self, username = None):
 
         file_not_found = False
 
         try:
             wallets_parquet = pd.read_parquet(f'{self.full_desired_path}/wallets.parquet')
             wallets_df = pd.DataFrame(wallets_parquet)
+            if username != None:
+                username = str(username)
+                wallets_df = wallets_df[wallets_df['user_name'] == username]
             print('Setup configuration: \n', wallets_df)
         except:
             wallets_df = None

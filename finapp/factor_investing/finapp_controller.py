@@ -108,12 +108,20 @@ class FinappController:
 
         return parsed_premium_files_name
 
-    def prepare_data_for_rate_premiuns_risks(self, indicators_dict):
+    def prepare_data_for_rate_premiuns_risks(self, indicators_dict, single_combinations, double_combinations, triple_combinations):
         
+        finapp = FinappController()
+
+        single_combinations = bool(single_combinations)
+        double_combinations = bool(double_combinations)
+        triple_combinations = bool(triple_combinations)
+
         premium_name = indicators_dict.keys()
         len_premium_name = len(premium_name)
 
-        list_combinations = finapp.calculate_combinations(premium_name, len_premium_name, single_combinations, double_combinations, triple_combinations)
+        list_combinations = finapp.calculate_combinations(premium_name, len_premium_name, single_combinations=single_combinations, double_combinations=double_combinations,
+                                                          triple_combinations=triple_combinations)
+        # print('\nlist_combinations: \n', list_combinations)
 
         print('Number of combinations: ', len(list_combinations))
 
@@ -125,10 +133,12 @@ class FinappController:
 
         return premium_name_dict
 
-    def create_automatic_wallet(self, ranking_indicator):
+    def create_automatic_wallet(self, ranking_indicator, indicators_dict):
         
-        print(ranking_indicator)
+        # print(ranking_indicator)
+        # print(indicators_dict)
 
+        number_of_top_indicators = 2
         best_indicators_list = []
 
         best_indicators_list = list(ranking_indicator['nome_indicador'].head(number_of_top_indicators))
@@ -371,7 +381,9 @@ class FinappController:
         
         print(".\n.\n=== CALCULATIONS COMPLETE! ===")
 
-    def run_rate_risk_premius(self, indicators_dict, final_analysis_date, rating_premiuns_file_name, create_rating_pdf, number_of_top_comb_indicators):
+    def run_rate_risk_premius(self, indicators_dict, final_analysis_date, rating_premiuns_file_name, number_of_top_comb_indicators, 
+                              single_combinations, double_combinations, triple_combinations,
+                              create_rating_pdf):
         
         print(".\n..\n...\nRating Risk Premiuns!\n...\n..\n.")
         
@@ -380,7 +392,12 @@ class FinappController:
         indicators_dict = dict(indicators_dict)
         print('\nindicators_dict: \n', indicators_dict)
 
-        premium_name_dict = finapp.prepare_data_for_rate_premiuns_risks(indicators_dict)
+        single_combinations = bool(single_combinations)
+        double_combinations = bool(double_combinations)
+        triple_combinations = bool(triple_combinations)
+
+        premium_name_dict = finapp.prepare_data_for_rate_premiuns_risks(indicators_dict, single_combinations, double_combinations, triple_combinations)
+        # print('.\n.\npremium_name_dict: \n', premium_name_dict)
 
         rating_premiuns = rrp.MakeResultsPremium(final_analysis_date = final_analysis_date, factors_dict = premium_name_dict, file_name = rating_premiuns_file_name)
         
@@ -769,17 +786,18 @@ if __name__ == "__main__":
     if(rate_risk_premiuns):
 
         distribution_indicadors, ranking_indicator, top_indicators = finapp.run_rate_risk_premius(
-                                                                            finapp,
-                                                                            indicators_dict=indicators_dict,
+                                                                            finapp, indicators_dict=indicators_dict,
                                                                             final_analysis_date=final_analysis_date, 
                                                                             rating_premiuns_file_name=rating_premiuns_file_name,
                                                                             number_of_top_comb_indicators=number_of_top_comb_indicators,
-                                                                            create_rating_pdf=create_rating_pdf)
+                                                                            create_rating_pdf=create_rating_pdf,
+                                                                            single_combinations=single_combinations, double_combinations=double_combinations,
+                                                                            triple_combinations=triple_combinations)
 
         ##
         # CREATE AUTOMATIC PONDERATED WALLET
         ##
-        setup_dict = finapp.create_automatic_wallet(ranking_indicator)
+        setup_dict = finapp.create_automatic_wallet(ranking_indicator, indicators_dict)
 
         ##
         # exibindo resultado do melhor indicador combinado
@@ -853,7 +871,7 @@ if __name__ == "__main__":
 
         if(close_setup):
 
-            wallet_manager.close_setup(wallet_id='first-shot', user_name='pacient-zero', close_date = '2023-11-22')
+            wallet_manager.close_setup(wallet_id='first-shot', user_name='pacient-zero', close_date = '2099-18-12')
 
         if(delete_setup):
 

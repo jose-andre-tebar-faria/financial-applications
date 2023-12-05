@@ -92,7 +92,6 @@ class TelegramUserManager:
 
         return telegram_user_df
 
-
     def delete_telegram_user(self, username = None, user_id = None):
         
         if(username == None):
@@ -197,4 +196,4 @@ if __name__ == "__main__":
     # telegram_users_df = telegram_user_manager.prepare_telegram_user(user_id='1',username='aaa')
     # telegram_user_manager.verify_telegram_user(telegram_users_df)
 
-    telegram_user_manager.delete_telegram_user(username = 'jandretebarf', user_id = '6013346178')
+    # telegram_user_manager.delete_telegram_user(username = 'jandretebarf', user_id = '6013346178')
