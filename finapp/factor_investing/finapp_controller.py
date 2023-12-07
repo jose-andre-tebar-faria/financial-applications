@@ -31,30 +31,27 @@ class FinappController:
 
     def calculate_combinations(self, premium_name, len_premium_name, single_combinations = False, double_combinations = False, triple_combinations = False):
 
-        self.premium_name = premium_name
+        # self.premium_name = premium_name
         all_combinations = []
         self.list_combinations = []
 
-        self.triple_combinations = triple_combinations
-        self.double_combinations = double_combinations
-        self.single_combinations = single_combinations
+        # self.triple_combinations = triple_combinations
+        # self.double_combinations = double_combinations
+        # self.single_combinations = single_combinations
 
         if(len_premium_name >= 3 and triple_combinations):
-            
             all_combinations = list(combinations(premium_name, 3))
 
             for combination in all_combinations:
                 self.list_combinations.append(combination)
 
         if(len_premium_name >= 2 and double_combinations):
-
             all_combinations = list(combinations(premium_name, 2))
 
             for combination in all_combinations:
                 self.list_combinations.append(combination)
         
         if(len_premium_name >= 1 and single_combinations):
-
             all_combinations = list(combinations(premium_name, 1))
 
             for combination in all_combinations:
@@ -112,16 +109,19 @@ class FinappController:
         
         finapp = FinappController()
 
-        single_combinations = bool(single_combinations)
-        double_combinations = bool(double_combinations)
-        triple_combinations = bool(triple_combinations)
+        # single_combinations = bool(single_combinations)
+        # double_combinations = bool(double_combinations)
+        # triple_combinations = bool(triple_combinations)
 
         premium_name = indicators_dict.keys()
+        premium_name = list(premium_name)
+        # print(premium_name)
         len_premium_name = len(premium_name)
+        # print(len_premium_name)
 
-        list_combinations = finapp.calculate_combinations(premium_name, len_premium_name, single_combinations=single_combinations, double_combinations=double_combinations,
-                                                          triple_combinations=triple_combinations)
-        # print('\nlist_combinations: \n', list_combinations)
+        list_combinations = finapp.calculate_combinations(premium_name, len_premium_name, single_combinations, double_combinations,
+                                                          triple_combinations)
+        print('\nlist_combinations: \n', list_combinations)
 
         print('Number of combinations: ', len(list_combinations))
 
@@ -320,9 +320,11 @@ class FinappController:
         else:
             print(".\n.\n=== UPDATE COMPLETE! ===")
 
-    def run_calculate_risk_premius(self, indicators_dict, single_combinations, double_combinations, triple_combinations, update_existing_file):
+    def run_calculate_risk_premiuns(self, indicators_dict, single_combinations, double_combinations, triple_combinations, update_existing_file):
 
         finapp = FinappController()
+        
+        premium_dataframe = pd.DataFrame()
 
         print(".\n..\n...\nCalculating Risk Premiuns!\n...\n..\n.")
         beta = mp.MarketPremium()
@@ -381,12 +383,23 @@ class FinappController:
         
         print(".\n.\n=== CALCULATIONS COMPLETE! ===")
 
+        return list_combinations, premium_dataframe
+
     def run_rate_risk_premius(self, indicators_dict, final_analysis_date, rating_premiuns_file_name, number_of_top_comb_indicators, 
-                              single_combinations, double_combinations, triple_combinations,
-                              create_rating_pdf):
+                              single_combinations, double_combinations, triple_combinations, create_rating_pdf):
         
         print(".\n..\n...\nRating Risk Premiuns!\n...\n..\n.")
         
+        fail_to_execute = False
+
+        dataframe_columns = ['ranking_single_indicators', 'contagem', 'nome_indicador']
+        distribution_indicadors = pd.DataFrame(columns = dataframe_columns)
+        
+        dataframe_columns = ['acum_primeiro_quartil', 'acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil', 'nome_indicador', 'ranking_indicators']
+        ranking_indicator = pd.DataFrame(columns=dataframe_columns)
+
+        top_indicators = pd.DataFrame()
+
         finapp = FinappController()
 
         indicators_dict = dict(indicators_dict)
@@ -401,63 +414,65 @@ class FinappController:
 
         rating_premiuns = rrp.MakeResultsPremium(final_analysis_date = final_analysis_date, factors_dict = premium_name_dict, file_name = rating_premiuns_file_name)
         
-        rating_premiuns.getting_premiuns()
+        file_not_found = rating_premiuns.getting_premiuns()
         
-        dataframe_columns = ['acum_primeiro_quartil', 'acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil', 'nome_indicador', 'ranking_indicators']
-        ranking_indicator = pd.DataFrame(columns=dataframe_columns)
+        if file_not_found == False:
+            dataframe_columns = ['acum_primeiro_quartil', 'acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil', 'nome_indicador', 'ranking_indicators']
+            ranking_indicator = pd.DataFrame(columns=dataframe_columns)
 
-        ranking_indicator = rating_premiuns.retorno_quartis()
-        print('.\n.\nIndicators ranking: \n', ranking_indicator[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
+            ranking_indicator = rating_premiuns.retorno_quartis()
+            print('.\n.\nIndicators ranking: \n', ranking_indicator[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
 
-        ranking_indicator = pd.DataFrame(ranking_indicator)
+            list_premium_name = {especitif_key: valor['file_name'] for especitif_key, valor in indicators_dict.items() if 'file_name' in valor}
+            list_premium_name = list(list_premium_name.values())
 
-        list_premium_name = {especitif_key: valor['file_name'] for especitif_key, valor in indicators_dict.items() if 'file_name' in valor}
-        list_premium_name = list(list_premium_name.values())
+            top_indicators = ranking_indicator.head(number_of_top_comb_indicators)
 
-        top_indicators = ranking_indicator.head(number_of_top_comb_indicators)
+            for premium_to_match in list_premium_name:
 
-        for premium_to_match in list_premium_name:
+                for indicator in top_indicators['nome_indicador']:
 
-            for indicator in top_indicators['nome_indicador']:
+                    top_indicators[premium_to_match+'_Contido'] = top_indicators['nome_indicador'].apply(lambda x: premium_to_match in x)
 
-                top_indicators[premium_to_match+'_Contido'] = top_indicators['nome_indicador'].apply(lambda x: premium_to_match in x)
+            top_indicators['Pure'] = top_indicators['nome_indicador'].isin(list_premium_name)
 
-        top_indicators['Pure'] = top_indicators['nome_indicador'].isin(list_premium_name)
-
-        print('.\n.\ntop_indicators', number_of_top_comb_indicators, 'combinated: \n', top_indicators[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
+            print('.\n.\ntop_indicators', number_of_top_comb_indicators, 'combinated: \n', top_indicators[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
 
 
-        dataframe_columns = ['ranking_single_indicators', 'contagem', 'nome_indicador']
-        distribution_indicadors = pd.DataFrame(columns = dataframe_columns)
+            dataframe_columns = ['ranking_single_indicators', 'contagem', 'nome_indicador']
+            distribution_indicadors = pd.DataFrame(columns = dataframe_columns)
 
-        distribution_indicadors['nome_indicador'] = list_premium_name
-        distribution_indicadors['contagem'] = 0
+            distribution_indicadors['nome_indicador'] = list_premium_name
+            distribution_indicadors['contagem'] = 0
 
-        distribution_indicadors = pd.merge(distribution_indicadors, ranking_indicator, on = 'nome_indicador', how = 'left')
-        distribution_indicadors = distribution_indicadors.drop(columns=['acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil',  'ranking_indicators'])
-        # print(distribution_indicadors)
+            distribution_indicadors = pd.merge(distribution_indicadors, ranking_indicator, on = 'nome_indicador', how = 'left')
+            distribution_indicadors = distribution_indicadors.drop(columns=['acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil',  'ranking_indicators'])
+            # print(distribution_indicadors)
 
-        for i, indicator in enumerate(distribution_indicadors['nome_indicador']):
-            indicator_presence = top_indicators[indicator+'_Contido'].sum()
-            distribution_indicadors.loc[i, 'contagem'] = indicator_presence
+            for i, indicator in enumerate(distribution_indicadors['nome_indicador']):
+                indicator_presence = top_indicators[indicator+'_Contido'].sum()
+                distribution_indicadors.loc[i, 'contagem'] = indicator_presence
 
-        distribution_indicadors = distribution_indicadors.sort_values(by=['contagem','acum_primeiro_quartil'], ascending = [False, False])
+            distribution_indicadors = distribution_indicadors.sort_values(by=['contagem','acum_primeiro_quartil'], ascending = [False, False])
 
-        distribution_indicadors['ranking_single_indicators'] = distribution_indicadors['contagem'].rank(ascending=False)
-        
-        print('.\n.\ndistribution_indicadors: \n', distribution_indicadors)
+            distribution_indicadors['ranking_single_indicators'] = distribution_indicadors['contagem'].rank(ascending=False)
+            
+            print('.\n.\ndistribution_indicadors: \n', distribution_indicadors)
 
-        #
-        ##
-        # CREATING PDF
-        ##
-        #
-        if(create_rating_pdf):
-            list_premiuns_to_pdf = list(top_indicators['nome_indicador'])
-            rating_premiuns.create_pdf_images(list_premiuns_to_pdf)
-            rating_premiuns.fazer_pdf(list_premiuns_to_pdf)
+            #
+            ##
+            # CREATING PDF
+            ##
+            #
+            if(create_rating_pdf):
+                list_premiuns_to_pdf = list(top_indicators['nome_indicador'])
+                rating_premiuns.create_pdf_images(list_premiuns_to_pdf)
+                rating_premiuns.fazer_pdf(list_premiuns_to_pdf)
 
-        return distribution_indicadors, ranking_indicator, top_indicators
+            return distribution_indicadors, ranking_indicator, top_indicators, fail_to_execute
+        else:
+            fail_to_execute = True
+            return distribution_indicadors, ranking_indicator, top_indicators, fail_to_execute
 
     def run_generate_wallets(self, setup_dict, create_wallets_pfd):
 
@@ -539,6 +554,178 @@ class FinappController:
 
         return wallets, returns, wallet_to_database
 
+    def run_rebalance_setups(self, rebalance_wallet_id, rebalance_calc_end_date, indicators_dict_database, factor_calc_initial_date, liquidity_filter):
+
+        wallet_manager = wm.WalletManager()
+
+        wallet_to_database = pd.DataFrame()
+        #
+        ## READING SETUP
+        #
+        file_not_found, setup_df = wallet_manager.read_setups()
+        print(f'\nsetup database: \n', setup_df)
+
+        setup = setup_df[setup_df['wallet_id'] == str(rebalance_wallet_id)]
+        print(f'\nsetup {rebalance_wallet_id}: \n', setup)
+
+
+        if setup.empty:
+            print('vazio!!!!!!')
+        
+            return wallet_to_database
+        else:
+            print('tem coisa++++++++')
+
+            #
+            ## CAPTURING REBALANCE PERIODS AND NUMBER OF ASSETS PER WALLET
+            #
+            rebalance_periods_setup = int(setup['rebalance_periods'].iloc[0])
+            print('\nrebalance_periods_setup: \n', rebalance_periods_setup)
+            asset_quantity_setup = int(setup['number_of_assets'].iloc[0])
+            print('\nasset_quantity_setup: \n', asset_quantity_setup)
+
+            #
+            ## CREATE DICT PONDERATED WALLET
+            #
+            dataframe_columns = ['wallet_name', 'number_of_assets', 'proportion', 'indicator_1', 'indicator_2', 'indicator_3']
+            setup_dict_df = pd.DataFrame(columns=dataframe_columns)
+            
+            setup_to_dict_df = setup[dataframe_columns]
+            print('\nsetup_to_dict_df: \n', setup_to_dict_df)
+
+            setup_dict = {}
+
+            for index, row in setup_to_dict_df.iterrows():
+                wallet_name = row['wallet_name']
+                indicators_dict = {}
+
+                for indicator_col in ['indicator_1', 'indicator_2', 'indicator_3']:
+                    indicator_name = row[indicator_col]
+                    
+                    if indicator_name is not None and indicator_name in indicators_dict_database:
+                        indicators_dict[indicator_name] = {'caracteristica': indicators_dict_database[indicator_name]['order']}
+
+                setup_dict[wallet_name] = {'indicadores': indicators_dict, 'peso': row['proportion']}
+
+            print('\nsetup_dict: \n', setup_dict)
+
+            #
+            ## CALCULATE BACKTEST TO VERIFY REBALANCE POSSIBILITY
+            #
+            pdf_name = 'tteesstt'
+
+            backtest = fc.MakeBacktest(data_final = rebalance_calc_end_date, data_inicial = factor_calc_initial_date, 
+                                    filtro_liquidez=(liquidity_filter * 1000000), balanceamento = rebalance_periods_setup, 
+                                    numero_ativos = asset_quantity_setup, corretagem = 0.01, nome_arquivo = pdf_name, **setup_dict)
+
+            backtest.pegando_dados()
+            backtest.filtrando_datas()
+            backtest.criando_carteiras()
+            wallets, returns = backtest.calculando_retorno_diario()
+            # print(wallets)
+            # print(returns)
+
+            #
+            ## FINDING LAST WALLET
+            #
+            last_calculated_wallet = wallets.loc[wallets.index[-1]]
+            last_calculated_wallet = last_calculated_wallet.reset_index()
+            last_calculated_wallet.rename(columns={'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
+            last_calculated_wallet['rebalance_date'] = pd.to_datetime(last_calculated_wallet['rebalance_date'])
+            last_calculated_wallet['ticker'] = last_calculated_wallet['ticker'].astype(str)
+            last_calculated_wallet['wallet_proportion'] = last_calculated_wallet['wallet_proportion'].astype(float)
+            print('\nCalculated wallet defined below: \n', last_calculated_wallet)
+            
+            last_calculated_rebalance_date = last_calculated_wallet.loc[last_calculated_wallet.index[-1], 'rebalance_date']
+            last_calculated_rebalance_date = pd.to_datetime(last_calculated_rebalance_date)
+            print('\ncalculation_rebalance_date: ', last_calculated_rebalance_date)
+
+            #
+            ## FINDING PREVIOUS WALLET
+            #
+            # previous_calculated_wallet = wallets.loc[wallets.index[-2]]
+            # previous_calculated_wallet = previous_calculated_wallet.reset_index()
+            # previous_calculated_wallet.rename(columns={'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
+            # previous_calculated_wallet['rebalance_date'] = pd.to_datetime(previous_calculated_wallet['rebalance_date'])
+            # previous_calculated_wallet['ticker'] = previous_calculated_wallet['ticker'].astype(str)
+            # previous_calculated_wallet['wallet_proportion'] = previous_calculated_wallet['wallet_proportion'].astype(float)
+            # print('\nprevious_calculated_wallet: \n', previous_calculated_wallet)
+            
+            # previous_calculated_rebalance_date = previous_calculated_wallet.loc[previous_calculated_wallet.index[-1], 'rebalance_date']
+            # previous_calculated_rebalance_date = pd.to_datetime(previous_calculated_rebalance_date)
+            # print('\nprevious_calculated_wallet: ', previous_calculated_rebalance_date)
+
+            #
+            ## READING WALLET COMPOSITION DATABASE
+            #
+            file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
+
+            if(file_not_found == False):
+            
+                wallet_composition = compositions_df[compositions_df['wallet_id'] == str(rebalance_wallet_id)]
+                print(f'\ncomposition of wallet_id {rebalance_wallet_id}: \n', wallet_composition)
+                
+                #verificar se o df está vazio
+                if wallet_composition.empty:
+                    print('\nnew composition!')
+
+                    wallet_to_database = last_calculated_wallet
+
+                    print('\nWallet to database: \n', wallet_to_database)
+
+                    wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+
+                else:
+                    last_rebalance_date = wallet_composition.loc[wallet_composition.index[-1], 'rebalance_date']
+                    last_rebalance_date = pd.to_datetime(last_rebalance_date)
+                    print('\nlast_rebalance_date: ', last_rebalance_date)
+
+                    last_wallet_composition =  wallet_composition[wallet_composition['rebalance_date'] == last_rebalance_date]
+                    # print('\nlast_wallet_composition: \n', last_wallet_composition)
+                    last_wallet_composition_to_compare = last_wallet_composition[['rebalance_date', 'ticker', 'wallet_proportion']]
+                    last_wallet_composition_to_compare = last_wallet_composition_to_compare.reset_index(drop=True)
+                    last_wallet_composition_to_compare['rebalance_date'] = pd.to_datetime(last_wallet_composition_to_compare['rebalance_date'])
+                    last_wallet_composition_to_compare['ticker'] = last_wallet_composition_to_compare['ticker'].astype(str)
+                    last_wallet_composition_to_compare['wallet_proportion'] = last_wallet_composition_to_compare['wallet_proportion'].astype(float)
+                    print('\nwallet_composition_to_compare: \n', last_wallet_composition_to_compare)
+                    
+                    wallet_to_database = last_wallet_composition_to_compare
+
+                    #
+                    ## COMPARE DATES AND WALLET COMPOSITION (CALCULATED with LAST DATABASE COMPOSITION)
+                    #
+                    are_equal = last_wallet_composition_to_compare.equals(last_calculated_wallet)
+
+                    if(are_equal):
+                        print('\nequals!')
+                    else:
+                        print('\ndiff!')
+
+                    if(last_rebalance_date == last_calculated_rebalance_date):
+                        print('\nup-to-date!')
+                        wallet_to_database = last_calculated_wallet
+                    else:
+                        print('\nneed to update composition!')
+
+                        wallet_to_database = last_wallet_composition_to_compare
+
+                        print('\nWallet to database: \n', wallet_to_database)
+
+                        wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+                        
+                        print('\nUPDATED!')
+
+                    if((last_rebalance_date == last_calculated_rebalance_date) and are_equal):
+                        print('\nboth!')
+            else:
+                wallet_to_database = last_calculated_wallet
+
+                print('\nWallet to database: \n', wallet_to_database)
+
+                wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+                
+            return wallet_to_database
+
 if __name__ == "__main__":
 
     init_time_execution = time.time()
@@ -567,17 +754,17 @@ if __name__ == "__main__":
     # enable calculate risk premiuns database update
     calculate_risk_premiuns         = False
     # choose de indicators combinations to rate
-    single_combinations             = False
-    double_combinations             = False
-    triple_combinations             = True
+    single_combinations             = True
+    double_combinations             = True
+    triple_combinations             = False
     # true if you want to update a existing file
     update_existing_file            = False
 
 
     # enable rating risks
-    rate_risk_premiuns              = True
+    rate_risk_premiuns              = False
     # final_analysis_date             = '2022-12-31'
-    final_analysis_date             = '2023-11-15'
+    final_analysis_date             = '2023-11-06'
     rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
     create_rating_pdf               = False
     
@@ -606,9 +793,9 @@ if __name__ == "__main__":
 
     # enable generation of wallet
     generate_wallets                = False
-    factor_calc_initial_date        = '2019-12-31'
-    factor_calc_end_date            = '2023-11-09'
-    create_wallets_pfd              = False
+    factor_calc_initial_date        = '2013-12-31'
+    factor_calc_end_date            = '2023-12-02'
+    create_wallets_pfd              = True
     
 
     # enable configure wallet composition database
@@ -616,6 +803,9 @@ if __name__ == "__main__":
     read_wallet_composition         = False
     save_wallet_composion           = False
 
+
+    # enable requirements.txt update
+    optimize_setup_txt              = True
 
     # enable requirements.txt update
     update_requirements_txt         = False
@@ -734,7 +924,7 @@ if __name__ == "__main__":
                         'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
                         'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
                         # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
-                        'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
+                        # 'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
                         # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
                         # 'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
                         'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
@@ -771,8 +961,7 @@ if __name__ == "__main__":
 
     if(calculate_risk_premiuns):
 
-        finapp.run_calculate_risk_premius(finapp,
-                                          indicators_dict, 
+        finapp.run_calculate_risk_premius(indicators_dict, 
                                           single_combinations, double_combinations, triple_combinations, 
                                           update_existing_file)
 
@@ -785,14 +974,17 @@ if __name__ == "__main__":
 
     if(rate_risk_premiuns):
 
-        distribution_indicadors, ranking_indicator, top_indicators = finapp.run_rate_risk_premius(
-                                                                            finapp, indicators_dict=indicators_dict,
+        distribution_indicadors, ranking_indicator, top_indicators, fail_to_execute = finapp.run_rate_risk_premius(
+                                                                            indicators_dict=indicators_dict,
                                                                             final_analysis_date=final_analysis_date, 
                                                                             rating_premiuns_file_name=rating_premiuns_file_name,
                                                                             number_of_top_comb_indicators=number_of_top_comb_indicators,
                                                                             create_rating_pdf=create_rating_pdf,
-                                                                            single_combinations=single_combinations, double_combinations=double_combinations,
+                                                                            single_combinations=single_combinations,
+                                                                            double_combinations=double_combinations,
                                                                             triple_combinations=triple_combinations)
+        
+        
 
         ##
         # CREATE AUTOMATIC PONDERATED WALLET
@@ -887,147 +1079,161 @@ if __name__ == "__main__":
 
         print(".\n..\n...\nRebalancing Wallet(s)!\n...\n..\n.")
 
-        rebalance_wallet_id = '6904'
+        rebalance_wallet_id = '5879'
         # print('\nrebalance_wallet_id: \n', rebalance_wallet_id)
 
         rebalance_calc_end_date = '2023-12-02'
+        factor_calc_initial_date = '2019-12-31'
 
-        wallet_manager = wm.WalletManager()
+        wallet_to_database = finapp.run_rebalance_setups(rebalance_wallet_id, rebalance_calc_end_date, indicators_dict_database, factor_calc_initial_date,
+                                                        liquidity_filter)
+        # wallet_manager = wm.WalletManager()
 
-        #
-        ## READING SETUP
-        #
-        file_not_found, setup_df = wallet_manager.read_setups()
-        print(f'\nsetup database: \n', setup_df)
+        # #
+        # ## READING SETUP
+        # #
+        # file_not_found, setup_df = wallet_manager.read_setups()
+        # print(f'\nsetup database: \n', setup_df)
 
-        setup = setup_df[setup_df['wallet_id'] == rebalance_wallet_id]
-        print(f'\nsetup {rebalance_wallet_id}: \n', setup)
+        # setup = setup_df[setup_df['wallet_id'] == rebalance_wallet_id]
+        # print(f'\nsetup {rebalance_wallet_id}: \n', setup)
 
-        #
-        ## CAPTURING REBALANCE PERIODS AND NUMBER OF ASSETS PER WALLET
-        #
-        rebalance_periods_setup = int(setup['rebalance_periods'].iloc[0])
-        print('\nrebalance_periods_setup: \n', rebalance_periods_setup)
-        asset_quantity_setup = int(setup['number_of_assets'].iloc[0])
-        print('\nasset_quantity_setup: \n', asset_quantity_setup)
+        # #
+        # ## CAPTURING REBALANCE PERIODS AND NUMBER OF ASSETS PER WALLET
+        # #
+        # rebalance_periods_setup = int(setup['rebalance_periods'].iloc[0])
+        # print('\nrebalance_periods_setup: \n', rebalance_periods_setup)
+        # asset_quantity_setup = int(setup['number_of_assets'].iloc[0])
+        # print('\nasset_quantity_setup: \n', asset_quantity_setup)
 
-        #
-        ## CREATE DICT PONDERATED WALLET
-        #
-        dataframe_columns = ['wallet_name', 'number_of_assets', 'proportion', 'indicator_1', 'indicator_2', 'indicator_3']
-        setup_dict_df = pd.DataFrame(columns=dataframe_columns)
+        # #
+        # ## CREATE DICT PONDERATED WALLET
+        # #
+        # dataframe_columns = ['wallet_name', 'number_of_assets', 'proportion', 'indicator_1', 'indicator_2', 'indicator_3']
+        # setup_dict_df = pd.DataFrame(columns=dataframe_columns)
         
-        setup_to_dict_df = setup[dataframe_columns]
-        print('\nsetup_to_dict_df: \n', setup_to_dict_df)
+        # setup_to_dict_df = setup[dataframe_columns]
+        # print('\nsetup_to_dict_df: \n', setup_to_dict_df)
 
-        setup_dict = {}
+        # setup_dict = {}
 
-        for index, row in setup_to_dict_df.iterrows():
-            wallet_name = row['wallet_name']
-            indicators_dict = {}
+        # for index, row in setup_to_dict_df.iterrows():
+        #     wallet_name = row['wallet_name']
+        #     indicators_dict = {}
 
-            for indicator_col in ['indicator_1', 'indicator_2', 'indicator_3']:
-                indicator_name = row[indicator_col]
+        #     for indicator_col in ['indicator_1', 'indicator_2', 'indicator_3']:
+        #         indicator_name = row[indicator_col]
                 
-                if indicator_name is not None and indicator_name in indicators_dict_database:
-                    indicators_dict[indicator_name] = {'caracteristica': indicators_dict_database[indicator_name]['order']}
+        #         if indicator_name is not None and indicator_name in indicators_dict_database:
+        #             indicators_dict[indicator_name] = {'caracteristica': indicators_dict_database[indicator_name]['order']}
 
-            setup_dict[wallet_name] = {'indicadores': indicators_dict, 'peso': row['proportion']}
+        #     setup_dict[wallet_name] = {'indicadores': indicators_dict, 'peso': row['proportion']}
 
-        print('\nsetup_dict: \n', setup_dict)
+        # print('\nsetup_dict: \n', setup_dict)
 
-        #
-        ## CALCULATE BACKTEST TO VERIFY REBALANCE POSSIBILITY
-        #
-        pdf_name = 'tteesstt'
+        # #
+        # ## CALCULATE BACKTEST TO VERIFY REBALANCE POSSIBILITY
+        # #
+        # pdf_name = 'tteesstt'
 
-        backtest = fc.MakeBacktest(data_final = rebalance_calc_end_date, data_inicial = factor_calc_initial_date, 
-                                   filtro_liquidez=(liquidity_filter * 1000000), balanceamento = rebalance_periods_setup, 
-                                   numero_ativos = asset_quantity_setup, corretagem = 0.01, nome_arquivo = pdf_name, **setup_dict)
+        # backtest = fc.MakeBacktest(data_final = rebalance_calc_end_date, data_inicial = factor_calc_initial_date, 
+        #                            filtro_liquidez=(liquidity_filter * 1000000), balanceamento = rebalance_periods_setup, 
+        #                            numero_ativos = asset_quantity_setup, corretagem = 0.01, nome_arquivo = pdf_name, **setup_dict)
 
-        backtest.pegando_dados()
-        backtest.filtrando_datas()
-        backtest.criando_carteiras()
-        wallets, returns = backtest.calculando_retorno_diario()
-        # print(wallets)
-        # print(returns)
+        # backtest.pegando_dados()
+        # backtest.filtrando_datas()
+        # backtest.criando_carteiras()
+        # wallets, returns = backtest.calculando_retorno_diario()
+        # # print(wallets)
+        # # print(returns)
 
-        #
-        ## FINDING LAST WALLET
-        #
-        last_calculated_wallet = wallets.loc[wallets.index[-1]]
-        last_calculated_wallet = last_calculated_wallet.reset_index()
-        last_calculated_wallet.rename(columns={'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
-        last_calculated_wallet['rebalance_date'] = pd.to_datetime(last_calculated_wallet['rebalance_date'])
-        last_calculated_wallet['ticker'] = last_calculated_wallet['ticker'].astype(str)
-        last_calculated_wallet['wallet_proportion'] = last_calculated_wallet['wallet_proportion'].astype(float)
-        print('\nCalculated wallet defined below: \n', last_calculated_wallet)
+        # #
+        # ## FINDING LAST WALLET
+        # #
+        # last_calculated_wallet = wallets.loc[wallets.index[-1]]
+        # last_calculated_wallet = last_calculated_wallet.reset_index()
+        # last_calculated_wallet.rename(columns={'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
+        # last_calculated_wallet['rebalance_date'] = pd.to_datetime(last_calculated_wallet['rebalance_date'])
+        # last_calculated_wallet['ticker'] = last_calculated_wallet['ticker'].astype(str)
+        # last_calculated_wallet['wallet_proportion'] = last_calculated_wallet['wallet_proportion'].astype(float)
+        # print('\nCalculated wallet defined below: \n', last_calculated_wallet)
         
-        last_calculated_rebalance_date = last_calculated_wallet.loc[last_calculated_wallet.index[-1], 'rebalance_date']
-        last_calculated_rebalance_date = pd.to_datetime(last_calculated_rebalance_date)
-        print('\ncalculation_rebalance_date: ', last_calculated_rebalance_date)
+        # last_calculated_rebalance_date = last_calculated_wallet.loc[last_calculated_wallet.index[-1], 'rebalance_date']
+        # last_calculated_rebalance_date = pd.to_datetime(last_calculated_rebalance_date)
+        # print('\ncalculation_rebalance_date: ', last_calculated_rebalance_date)
 
-        #
-        ## FINDING PREVIOUS WALLET
-        #
-        # previous_calculated_wallet = wallets.loc[wallets.index[-2]]
-        # previous_calculated_wallet = previous_calculated_wallet.reset_index()
-        # previous_calculated_wallet.rename(columns={'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
-        # previous_calculated_wallet['rebalance_date'] = pd.to_datetime(previous_calculated_wallet['rebalance_date'])
-        # previous_calculated_wallet['ticker'] = previous_calculated_wallet['ticker'].astype(str)
-        # previous_calculated_wallet['wallet_proportion'] = previous_calculated_wallet['wallet_proportion'].astype(float)
-        # print('\nprevious_calculated_wallet: \n', previous_calculated_wallet)
+        # #
+        # ## FINDING PREVIOUS WALLET
+        # #
+        # # previous_calculated_wallet = wallets.loc[wallets.index[-2]]
+        # # previous_calculated_wallet = previous_calculated_wallet.reset_index()
+        # # previous_calculated_wallet.rename(columns={'data': 'rebalance_date', 'peso': 'wallet_proportion'}, inplace=True)
+        # # previous_calculated_wallet['rebalance_date'] = pd.to_datetime(previous_calculated_wallet['rebalance_date'])
+        # # previous_calculated_wallet['ticker'] = previous_calculated_wallet['ticker'].astype(str)
+        # # previous_calculated_wallet['wallet_proportion'] = previous_calculated_wallet['wallet_proportion'].astype(float)
+        # # print('\nprevious_calculated_wallet: \n', previous_calculated_wallet)
         
-        # previous_calculated_rebalance_date = previous_calculated_wallet.loc[previous_calculated_wallet.index[-1], 'rebalance_date']
-        # previous_calculated_rebalance_date = pd.to_datetime(previous_calculated_rebalance_date)
-        # print('\nprevious_calculated_wallet: ', previous_calculated_rebalance_date)
+        # # previous_calculated_rebalance_date = previous_calculated_wallet.loc[previous_calculated_wallet.index[-1], 'rebalance_date']
+        # # previous_calculated_rebalance_date = pd.to_datetime(previous_calculated_rebalance_date)
+        # # print('\nprevious_calculated_wallet: ', previous_calculated_rebalance_date)
 
-        #
-        ## READING WALLET COMPOSITION DATABASE
-        #
-        file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
+        # #
+        # ## READING WALLET COMPOSITION DATABASE
+        # #
+        # file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
 
-        wallet_composition = compositions_df[compositions_df['wallet_id'] == rebalance_wallet_id]
-        print(f'\ncomposition of wallet_id {rebalance_wallet_id}: \n', wallet_composition)
+        # wallet_composition = compositions_df[compositions_df['wallet_id'] == rebalance_wallet_id]
+        # print(f'\ncomposition of wallet_id {rebalance_wallet_id}: \n', wallet_composition)
         
-        last_rebalance_date = wallet_composition.loc[wallet_composition.index[-1], 'rebalance_date']
-        last_rebalance_date = pd.to_datetime(last_rebalance_date)
-        print('\nlast_rebalance_date: ', last_rebalance_date)
+        # #verificar se o df está vazio
+        # if wallet_composition.empty:
+        #     print('\nnew composition!')
 
-        last_wallet_composition =  wallet_composition[wallet_composition['rebalance_date'] == last_rebalance_date]
-        # print('\nlast_wallet_composition: \n', last_wallet_composition)
-        last_wallet_composition_to_compare = last_wallet_composition[['rebalance_date', 'ticker', 'wallet_proportion']]
-        last_wallet_composition_to_compare = last_wallet_composition_to_compare.reset_index(drop=True)
-        last_wallet_composition_to_compare['rebalance_date'] = pd.to_datetime(last_wallet_composition_to_compare['rebalance_date'])
-        last_wallet_composition_to_compare['ticker'] = last_wallet_composition_to_compare['ticker'].astype(str)
-        last_wallet_composition_to_compare['wallet_proportion'] = last_wallet_composition_to_compare['wallet_proportion'].astype(float)
-        print('\nwallet_composition_to_compare: \n', last_wallet_composition_to_compare)
+        #     wallet_to_database = last_calculated_wallet
 
-        #
-        ## COMPARE DATES AND WALLET COMPOSITION (CALCULATED with LAST DATABASE COMPOSITION)
-        #
-        are_equal = last_wallet_composition_to_compare.equals(last_calculated_wallet)
+        #     print('\nWallet to database: \n', wallet_to_database)
 
-        if(are_equal):
-            print('\nequals!')
-        else:
-            print('\ndiff!')
+        #     wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
 
-        if(last_rebalance_date == last_calculated_rebalance_date):
-            print('\nup-to-date!')
-        else:
-            print('\nneed to update composition!')
+        # else:
+        #     last_rebalance_date = wallet_composition.loc[wallet_composition.index[-1], 'rebalance_date']
+        #     last_rebalance_date = pd.to_datetime(last_rebalance_date)
+        #     print('\nlast_rebalance_date: ', last_rebalance_date)
 
-            wallet_to_database = last_calculated_wallet
+        #     last_wallet_composition =  wallet_composition[wallet_composition['rebalance_date'] == last_rebalance_date]
+        #     # print('\nlast_wallet_composition: \n', last_wallet_composition)
+        #     last_wallet_composition_to_compare = last_wallet_composition[['rebalance_date', 'ticker', 'wallet_proportion']]
+        #     last_wallet_composition_to_compare = last_wallet_composition_to_compare.reset_index(drop=True)
+        #     last_wallet_composition_to_compare['rebalance_date'] = pd.to_datetime(last_wallet_composition_to_compare['rebalance_date'])
+        #     last_wallet_composition_to_compare['ticker'] = last_wallet_composition_to_compare['ticker'].astype(str)
+        #     last_wallet_composition_to_compare['wallet_proportion'] = last_wallet_composition_to_compare['wallet_proportion'].astype(float)
+        #     print('\nwallet_composition_to_compare: \n', last_wallet_composition_to_compare)
 
-            print('\nWallet to database: \n', wallet_to_database)
+        #     #
+        #     ## COMPARE DATES AND WALLET COMPOSITION (CALCULATED with LAST DATABASE COMPOSITION)
+        #     #
+        #     are_equal = last_wallet_composition_to_compare.equals(last_calculated_wallet)
 
-            wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
-            
-            print('\nUPDATED!')
+        #     if(are_equal):
+        #         print('\nequals!')
+        #     else:
+        #         print('\ndiff!')
 
-        if((last_rebalance_date == last_calculated_rebalance_date) and are_equal):
-            print('\nboth!')
+        #     if(last_rebalance_date == last_calculated_rebalance_date):
+        #         print('\nup-to-date!')
+        #     else:
+        #         print('\nneed to update composition!')
+
+        #         wallet_to_database = last_calculated_wallet
+
+        #         print('\nWallet to database: \n', wallet_to_database)
+
+        #         wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+                
+        #         print('\nUPDATED!')
+
+        #     if((last_rebalance_date == last_calculated_rebalance_date) and are_equal):
+        #         print('\nboth!')
 
 
     ###

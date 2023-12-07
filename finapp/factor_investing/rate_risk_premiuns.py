@@ -37,6 +37,8 @@ class MakeResultsPremium:
 
         lista_dfs = []
         data_inicial = []
+        file_not_found = False
+        df = pd.DataFrame()
         
         self.current_folder = os.getcwd()
 
@@ -48,8 +50,13 @@ class MakeResultsPremium:
             os.chdir(self.full_desired_path)
 
         for i, nome_premio in enumerate(self.lista_nome_fatores):
-
-            df = pd.read_parquet(f'{self.full_desired_path}/{nome_premio}_{self.liquidez[i]}.parquet')
+            
+            try:
+                df = pd.read_parquet(f'{self.full_desired_path}/{nome_premio}_{self.liquidez[i]}.parquet')
+            except FileNotFoundError:
+                file_not_found = True
+                return file_not_found
+            
             df['data'] = pd.to_datetime(df['data']).dt.date
 
             lista_dfs.append(df)
@@ -68,7 +75,9 @@ class MakeResultsPremium:
         self.premios_de_risco['segundo_quartil'] = 1 + self.premios_de_risco['segundo_quartil'] 
         self.premios_de_risco['terceiro_quartil'] = 1 + self.premios_de_risco['terceiro_quartil'] 
         self.premios_de_risco['quarto_quartil'] = 1 + self.premios_de_risco['quarto_quartil'] 
-        self.premios_de_risco['universo'] = 1 + self.premios_de_risco['universo'] 
+        self.premios_de_risco['universo'] = 1 + self.premios_de_risco['universo']
+
+        return file_not_found
 
     def retorno_quartis(self):
 
@@ -113,8 +122,26 @@ class MakeResultsPremium:
                 ranking_indicator['ranking_indicators'] = ranking_indicator['acum_primeiro_quartil'].rank(ascending=False)
                 ranking_indicator.sort_values('ranking_indicators', ascending=True, inplace=True)
 
-                df_primeiro_quartis.loc[:, f"{nome_premio}"] = (fator['primeiro_quartil'].cumprod() - 1).values
-                df_premios_de_risco.loc[:, f"{nome_premio}"] = (fator['premio_fator'].cumprod() - 1).values
+                ## caso a data de execução seja maior que a data máxima do prêmios - dá erro
+                # print(fator.tail(1))
+                # print(df_primeiro_quartis.tail(1))
+                
+                #   d:\Program Files\Github\financial-applications\finapp\factor_investing\rate_risk_premiuns.py:129: PerformanceWarning: DataFrame is highly fragmented.  This is usually the result of calling `frame.insert` many times, which has poor performance.  Consider joining all columns at once using pd.concat(axis=1) instead. To get a de-fragmented frame, use `newframe = frame.copy()`
+                #   df_primeiro_quartis.loc[:, f"{nome_premio}"] = (fator['primeiro_quartil'].cumprod() - 1).values
+                ## LOW PERFORMANCE BELOW
+
+                # df_premios_de_risco = df_premios_de_risco.copy()
+                # df_premios_de_risco.loc[:, f"{nome_premio}"] = (fator['premio_fator'].cumprod() - 1).values
+
+                new_columns = (fator['premio_fator'].cumprod() - 1).values
+                df_premios_de_risco = pd.concat([df_premios_de_risco, pd.DataFrame({nome_premio: new_columns})], axis=1)
+
+                # df_primeiro_quartis = df_primeiro_quartis.copy()
+
+                new_columns = (fator['primeiro_quartil'].cumprod() - 1).values
+                df_premios_de_risco = pd.concat([df_premios_de_risco, pd.DataFrame({nome_premio: new_columns})], axis=1)
+                # df_primeiro_quartis.loc[:, f"{nome_premio}"] = (fator['primeiro_quartil'].cumprod() - 1).values
+                # df_premios_de_risco.loc[:, f"{nome_premio}"] = (fator['premio_fator'].cumprod() - 1).values
         
         return ranking_indicator
 

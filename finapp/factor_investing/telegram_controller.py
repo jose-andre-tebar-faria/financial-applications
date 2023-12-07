@@ -64,6 +64,8 @@ class TelegramManager:
                     return '✏ calculation complete! ✏'
                 if 'rate_risk_premiuns' in processed_text:
                     return f'🏆 rating complete! 🏆\n\n {answer_text}'
+                if 'rebalance_setup' in processed_text:
+                    return '🤠🤠🤠'
             else:
                 return '🍰 command only for adms! 🍰'
             
@@ -128,15 +130,20 @@ class TelegramManager:
     ###
     def calculate_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, update_existing_file):
         
+        list_combinations = []
+        premium_dataframe = pd.DataFrame()
+
         finapp = fc.FinappController()
         
-        finapp.run_calculate_risk_premius(indicators_dict=indicators_dict, 
-                                          single_combinations=single_combinations, double_combinations=double_combinations, triple_combinations=triple_combinations, 
-                                          update_existing_file=update_existing_file)
+        list_combinations, premium_dataframe = finapp.run_calculate_risk_premiuns(indicators_dict=indicators_dict, 
+                                                    single_combinations=single_combinations, double_combinations=double_combinations, triple_combinations=triple_combinations, 
+                                                    update_existing_file=update_existing_file)
+        
+        return list_combinations, premium_dataframe
 
     ###
     ##
-    #rate_risk_premiuns   
+    # rate_risk_premiuns   
     ##
     ###
     def rate_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, create_rating_pdf, final_analysis_date):
@@ -144,6 +151,7 @@ class TelegramManager:
         # final_analysis_date             = '2022-12-31'
         rating_premiuns_file_name       = r'..\\PDFs\rating-INDICATORS.pdf'
         # create_rating_pdf               = False
+        distribution_indicadors = pd.DataFrame()
         
         number_of_top_comb_indicators = 5
     
@@ -153,7 +161,7 @@ class TelegramManager:
 
         finapp = fc.FinappController()
         
-        distribution_indicadors, ranking_indicator, top_indicators = finapp.run_rate_risk_premius(
+        distribution_indicadors, ranking_indicator, top_indicators, fail_to_execute = finapp.run_rate_risk_premius(
                                                         indicators_dict=indicators_dict,
                                                         final_analysis_date=final_analysis_date, 
                                                         rating_premiuns_file_name=rating_premiuns_file_name,
@@ -162,14 +170,47 @@ class TelegramManager:
                                                         single_combinations=single_combinations, double_combinations=double_combinations,
                                                         triple_combinations=triple_combinations
                                                         )
-        
+                
         ##
         # CREATE AUTOMATIC PONDERATED WALLET
         ##
         setup_dict = finapp.create_automatic_wallet(ranking_indicator, indicators_dict)
 
-        return distribution_indicadors, ranking_indicator, top_indicators, setup_dict
+        return distribution_indicadors, ranking_indicator, top_indicators, setup_dict, fail_to_execute
 
+    ###
+    ##
+    # rebalance_setups
+    ##
+    ###
+    def rebalance_setup_command(rebalance_wallet_id, rebalance_calc_end_date, indicators_dict_database, factor_calc_initial_date, liquidity_filter):
+        
+        finapp = fc.FinappController()
+
+        wallet_to_database = pd.DataFrame()
+
+        print(rebalance_wallet_id)
+        print(rebalance_calc_end_date)
+        print(indicators_dict_database)
+        print(factor_calc_initial_date)
+        print(liquidity_filter)
+        print(wallet_to_database)
+
+        wallet_to_database = finapp.run_rebalance_setups(rebalance_wallet_id=rebalance_wallet_id, 
+                                                         rebalance_calc_end_date=rebalance_calc_end_date, 
+                                                         indicators_dict_database=indicators_dict_database,
+                                                         factor_calc_initial_date=factor_calc_initial_date,
+                                                         liquidity_filter=liquidity_filter)
+        
+        print(wallet_to_database)
+
+        return wallet_to_database
+                
+    ###
+    ##
+    # tools
+    ##
+    ###
     def extract_elements_from_command(match):
 
         indicators_list = []
@@ -202,6 +243,7 @@ class TelegramManager:
         read_setups_pattern = re.compile(r'read_setups')
         calculate_risk_premiuns_pattern = re.compile(r'calculate_risk_premiuns\s*\(([^)]+)\)')
         rate_risk_premiuns_pattern = re.compile(r'rate_risk_premiuns\s*\(([^)]+)\)')
+        rebalance_setup_pattern = re.compile(r'rebalance_setup\s*\(([^)]+)\)')
 
         if save_username_pattern.match(command_string):
 
@@ -209,6 +251,13 @@ class TelegramManager:
         elif update_fintz_database_pattern.match(command_string):
 
             return {'command': 'update_database'}, indicators_list, variables_list
+        elif rebalance_setup_pattern.match(command_string):
+
+            match = rebalance_setup_pattern.match(command_string)
+
+            indicators_list, variables_list = TelegramManager.extract_elements_from_command(match)
+
+            return {'command': 'rebalance_setup'}, indicators_list, variables_list
         elif calculate_risk_premiuns_pattern.match(command_string):
 
             match = calculate_risk_premiuns_pattern.match(command_string)
@@ -229,7 +278,7 @@ class TelegramManager:
         else:
             return {'command': 'unknown'}, indicators_list, variables_list
 
-    def create_rating_answer(distribution_indicadors, ranking_indicator, top_indicators, setup_dict, indicators_dict_database):
+    def create_rating_answer(distribution_indicadors, ranking_indicator, top_indicators, setup_dict, indicators_dict_database, save_setup, wallet_id, wallet_existent, wallets_df):
 
 
         distribution_indicadors['acum_primeiro_quartil'] = distribution_indicadors['acum_primeiro_quartil'].astype(float)
@@ -280,11 +329,26 @@ class TelegramManager:
 
             markdown_text += f"{key}:\n{spaces}{row['acum_primeiro_quartil']}% / count: {row['contagem']}\n"
 
+
+        if save_setup:
+            markdown_text += f"\n Carteira já cadastrada! iD: {wallet_id}\n"
+        # print('wallet_existent: ',wallet_existent)
+        # print('wallet_id', wallet_id)
+        # print('wallets_df', wallets_df)
+
         return markdown_text
     
     def is_valid_date(date_str):
         try:
             final_analysis_date = pd.to_datetime(date_str)
+            # final_analysis_date = final_analysis_date.strftime('%Y-%m-%d')
+            return True
+        except ValueError:
+            return False
+        
+    def is_valid_integer(str):
+        try:
+            integer = int(str)
             # final_analysis_date = final_analysis_date.strftime('%Y-%m-%d')
             return True
         except ValueError:
@@ -326,12 +390,13 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     **Acceptable Commands:**
     😃 `hello`: I can respond this!
-    💾 `save_username`: To start your journey.
+    💾 `save_username`: To start your journey you must configure your First Name, Last Name and username at Telegram Settings.
 
     **Admin Commands:**
     📦 `update_database`: To update_database fintz.
     📖 `calculate_risk_premiuns()`: Calculate premiuns risks of indicators alone, 2/2, and 3/3.
     🏗 `rate_risk_premiuns()`: Rank selected indicators.
+    ⚖ `rebalance_setup(wallet_id=XXX)`: Rank selected indicators.
     '''
     response_text = response_text.replace('_', r'\_')
     response_text = response_text.replace('!', r'\!')
@@ -456,30 +521,99 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # verifying commands
     if(decoded_command == 'save_username'):
         fail_to_execute = False
+        await update.message.reply_text("Ok.")
         if(new_user and enable_interaction):
             username_existent = username
             telegram_user_manager.insert_telegram_user(new_user_df)
 
     if(decoded_command == 'update_database' and adm_interaction):
         fail_to_execute = False
-        TelegramManager.update_database_command()
+        await update.message.reply_text("Ok.")
+        TelegramManager.update_database_command()    
+    
+    if(decoded_command == 'rebalance_setup' and adm_interaction and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
+        fail_to_execute = False
+        await update.message.reply_text("Ok.")
+
+        rebalance_wallet_id = '5879'
+        rebalance_calc_end_date = '2023-12-02'
+        factor_calc_initial_date = '2019-12-31'
+        liquidity_filter = 1
+        wallet_to_database = pd.DataFrame()
+
+        #verificar se as variaveis estão corretas
+        decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
+        # print(decoded_variables_split_list)
+
+        for variable, value in decoded_variables_split_list:
+            print(f"Variable: {variable}, Value: {value}")
+            if variable == 'wallet_id':
+                possib_int = value
+                if TelegramManager.is_valid_integer(possib_int):
+                    rebalance_wallet_id = str(possib_int)
+                    print(f"{possib_int} integer.")
+                else:
+                    print(f"{possib_int} não é integer.")
+                    fail_to_execute = True
+            else:
+                fail_to_execute = True
+
+        if fail_to_execute == False: 
+        
+            wallet_to_database = TelegramManager.rebalance_setup_command(rebalance_wallet_id=rebalance_wallet_id, 
+                                                    rebalance_calc_end_date=rebalance_calc_end_date, 
+                                                    indicators_dict_database=indicators_dict_database,
+                                                    factor_calc_initial_date=factor_calc_initial_date,
+                                                    liquidity_filter=liquidity_filter)
+            
+            if wallet_to_database.empty:
+                assets_txt = f""
+                fail_to_execute = True
+            else:
+                assets_txt = f"{wallet_to_database}"
+                print(assets_txt)
+
+                await update.message.reply_text(assets_txt)
     
     single_combinations     = True
     double_combinations     = True
     triple_combinations     = True
+    list_combinations = []
+    premium_dataframe = pd.DataFrame()
 
     if(decoded_command == 'calculate_risk_premiuns' and adm_interaction and all_indicators_existents):
+
+        await update.message.reply_text("Ok.")
 
         update_existing_file    = False
 
         indicators_dict = {chave: indicators_dict_database[chave] for chave in decoded_indicators_list if chave in indicators_dict_database}
         # print(indicators_dict)
 
-        TelegramManager.calculate_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, 
+        ## rule to execute calculation of risk premiuns
+        if ((len(indicators_dict) == len(decoded_indicators_list)) and len(decoded_variables_list) == 0):
+            
+            list_combinations, premium_dataframe = TelegramManager.calculate_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, 
                                                         update_existing_file)
+            
+            
+            # if rating_failed:
+            #     fail_to_execute = True
+            # else:
+            print(list_combinations)
+            
+            number_of_combinations = len(list_combinations)
+            calculation_txt = f"✏ Foram calculadas {number_of_combinations} prêmios de risco atrealado as combinações montadas a partir dos indicadores presentes no comando.\n\n🗯 Lembrando que os cálculos são feitos considerando combinações tomadas 1a1, 2a2 e 3a3. Exemplo: {list_combinations[0]}"
+            await update.message.reply_text(calculation_txt)
 
+        else:
+            fail_to_execute = True
+
+    print('\nall_indicators_existents: ', all_indicators_existents)
     if(decoded_command == 'rate_risk_premiuns' and adm_interaction and all_indicators_existents):
         
+        await update.message.reply_text("Ok.")
+
         rating_premiuns_file_name       = r'..\\PDFs\rating-INDICATORS.pdf'
 
         save_setup = False
@@ -506,7 +640,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     final_analysis_date = final_analysis_date.strftime('%Y-%m-%d')
                     print(f"{final_analysis_date} DATA VÁLIDA.")
                 else:
-                    print(f"{final_analysis_date} não é uma data válida no formato esperado.")
+                    validation_txt = f"({final_analysis_date}) não é uma data válida no formato esperado."
+                    print(validation_txt)
+                    await update.message.reply_text(validation_txt)
                     fail_to_execute = True
             elif variable == 'create_pdf':
                 if value.lower() == 'true':
@@ -522,45 +658,55 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             indicators_dict = {chave: indicators_dict_database[chave] for chave in decoded_indicators_list if chave in indicators_dict_database}
 
-            distribution_indicadors, ranking_indicator, top_indicators, setup_dict = TelegramManager.rate_risk_premiuns_command(indicators_dict, single_combinations=single_combinations, double_combinations=double_combinations,
-                                                    triple_combinations=triple_combinations, create_rating_pdf=create_pdf, final_analysis_date=final_analysis_date)
-            print('\nsetup_dict: ', setup_dict)
-            print('\ndistribution_indicadors: \n', distribution_indicadors)
-            print('\nranking_indicator: \n', ranking_indicator)
-            print('\ntop_indicators: \n', top_indicators)
+            distribution_indicadors, ranking_indicator, top_indicators, setup_dict, fail_to_execute = TelegramManager.rate_risk_premiuns_command(indicators_dict, 
+                                                                                single_combinations=single_combinations, double_combinations=double_combinations, triple_combinations=triple_combinations, 
+                                                                                create_rating_pdf=create_pdf, 
+                                                                                final_analysis_date=final_analysis_date)
+            if fail_to_execute == False:
+                print('\nsetup_dict: ', setup_dict)
+                print('\ndistribution_indicadors: \n', distribution_indicadors)
+                print('\nranking_indicator: \n', ranking_indicator)
+                print('\ntop_indicators: \n', top_indicators)
 
-            # save_setup = bool(save_setup)
-            print('\nsave_setup: ', save_setup)
-            if save_setup:
-                print('\nPODE SALVAR!!\n')
+                # save_setup = bool(save_setup)
+                print('\nsave_setup: ', save_setup)
+                wallet_id = None
+                wallet_existent = None 
+                wallets_df = None
+                if save_setup:
+                    print('\nPODE SALVAR!!\n')
 
-                wallet_manager = wm.WalletManager()
+                    wallet_manager = wm.WalletManager()
 
-                # file_not_found, wallets_df = wallet_manager.read_setups(username_existent)
+                    file_not_found, wallets_df = wallet_manager.read_setups(username_existent)
 
-                create_date_auto = datetime.now()
-                create_date_auto = create_date_auto.strftime('%Y-%m-%d')
+                    create_date_auto = datetime.now()
+                    create_date_auto = create_date_auto.strftime('%Y-%m-%d')
 
-                new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, number_of_assets = 99, rebalance_periods = 63, user_name = username_existent, create_date = create_date_auto)
+                    new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, number_of_assets = 3, rebalance_periods = 33, user_name = username_existent, create_date = create_date_auto)
 
-                wallet_id, wallet_existent = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
+                    wallet_id, wallet_existent = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
+                else:
+                    print('\nNÃO PODE SALVAR!!\n')
+                
+                # create_pdf = bool(create_pdf)
+                print('\ncreate_pdf: ', create_pdf)
+                if create_pdf:
+                    print('\nPODE CRIAR O PDF!!\n')
+                else:
+                    print('\nNÃO PODE CRIAR O PDF!!\n')
+                
 
+                # answer_text = str(setup_dict)
+                answer_text = TelegramManager.create_rating_answer(distribution_indicadors, ranking_indicator, top_indicators, setup_dict, indicators_dict_database,
+                                                                save_setup, wallet_id, wallet_existent, wallets_df)
+                # print('\nanswer_text: \n', answer_text)
             else:
-                print('\nNÃO PODE SALVAR!!\n')
-            
-            # create_pdf = bool(create_pdf)
-            print('\ncreate_pdf: ', create_pdf)
-            if create_pdf:
-                print('\nPODE CRIAR O PDF!!\n')
-            else:
-                print('\nNÃO PODE CRIAR O PDF!!\n')
-            
-
-            # answer_text = str(setup_dict)
-            answer_text = TelegramManager.create_rating_answer(distribution_indicadors, ranking_indicator, top_indicators, setup_dict, indicators_dict_database)
-            # print('\nanswer_text: \n', answer_text)
+                await update.message.reply_text("🚧 tente calcular os prêmios antes de avaliá-los.")
 
     if(decoded_command == 'read_setups' and adm_interaction):
+
+        await update.message.reply_text("Ok.")
 
         wallet_manager = wm.WalletManager()
         file_not_found, wallets_df = wallet_manager.read_setups(username_existent)

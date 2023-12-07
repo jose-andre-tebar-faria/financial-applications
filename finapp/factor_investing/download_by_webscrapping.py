@@ -325,6 +325,8 @@ if __name__ == "__main__":
 
     asset_logos = DownloadByWebscrapping()
     
-    asset_logos.getting_asset_logos_google_by_site()
+    # asset_logos.getting_asset_logos_google_by_site()
+
+    # asset_logos.getting_b3_assets_sector_by_site()
 
 
