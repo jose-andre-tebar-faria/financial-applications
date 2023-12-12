@@ -4,3 +4,6 @@ finapp/files/
 finapp/factor_investing/__pycache__/
 finapp/analise_tecnica/__pycache__/
 finapp/__pycache__/
+finapp/factor_investing/build/
+finapp/factor_investing/dist/
+finapp/factor_investing/telegram_controller.spec

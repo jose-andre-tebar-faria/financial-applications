@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from itertools import groupby
 from datetime import datetime
-import mplcyberpunk 
+# import mplcyberpunk 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import matplotlib.dates as mdate
@@ -55,7 +55,7 @@ class MakeReportResult():
         self.ibov = self.ibov[(self.ibov['data'] >= self.df_trades['data'].iloc[0]) &
                             (self.ibov['data'] <= self.df_trades['data'].iloc[-1])]
         
-        plt.style.use('cyberpunk')
+        plt.style.use('seaborn')
 
         self.make_report()
         
@@ -426,7 +426,7 @@ class MakeReportResult():
         
     def grafico_retorno_movel(self, df, periodo, coluna):
 
-        plt.style.use('cyberpunk')
+        plt.style.use('seaborn')
         
         #janela movel de retorno
 

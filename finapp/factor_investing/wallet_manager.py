@@ -22,13 +22,11 @@ class WalletManager:
         if(current_folder != self.full_desired_path):
             os.chdir(self.full_desired_path)
 
-#
-##
-###
-# PREPARANDO DADOS
-###
-##
-#
+    #
+    ##
+    # PREPARANDO DADOS
+    ##
+    #
     def preparing_setup_data(self, setups_dict, rebalance_periods, number_of_assets, user_name, create_date):
         
         self.setups_dict = setups_dict
@@ -69,13 +67,11 @@ class WalletManager:
             
         return setups_dataframe
 
-#
-##
-###
-# LENDO SETUPS
-###
-##
-#
+    #
+    ##
+    # LENDO SETUPS
+    ##
+    #
     def read_setups(self, username = None):
 
         file_not_found = False
@@ -86,7 +82,7 @@ class WalletManager:
             if username != None:
                 username = str(username)
                 wallets_df = wallets_df[wallets_df['user_name'] == username]
-            print('Setup configuration: \n', wallets_df)
+            print('\nSetup configuration: \n', wallets_df)
         except:
             wallets_df = None
             file_not_found = True
@@ -94,13 +90,11 @@ class WalletManager:
 
         return file_not_found, wallets_df
         
-#
-##
-###
-# VERIFICANDO EXISTÊNCIA DO SETUP NO DATABASE
-###
-##
-#
+    #
+    ##
+    # VERIFICANDO EXISTÊNCIA DO SETUP NO DATABASE
+    ##
+    #
     def verify_setup_existence(self, wallet_manager, wallet_id):
 
         setup_existent = False
@@ -121,13 +115,11 @@ class WalletManager:
 
         return setup_existent
 
-#
-##
-###
-# INSERINDO SETUP NO DATABASE
-###
-##
-#
+    #
+    ##
+    # INSERINDO SETUP NO DATABASE
+    ##
+    #
     def insert_setup(self, wallet_manager, new_setup):
 
         wallet_id_existent = None
@@ -209,13 +201,11 @@ class WalletManager:
         return wallet_id, wallet_existent
         # return wallet_id_existent, new_wallet_id
 
-#
-##
-###
-# APAGANDO SETUPS
-###
-##
-#
+    #
+    ##
+    # APAGANDO SETUPS
+    ##
+    #
     def delete_setup(self, wallet_manager, wallet_id, user_name):
 
         file_not_found, setups_df = wallet_manager.read_setups()
@@ -236,13 +226,11 @@ class WalletManager:
                 
                 new_setup.to_parquet(f'{self.full_desired_path}/wallets.parquet', index = True)
 
-#
-##
-###
-# FECHANDO SETUPS
-###
-##
-#
+    #
+    ##
+    # FECHANDO SETUPS
+    ##
+    #
     def close_setup(self, wallet_id, user_name, close_date):
 
         file_not_found, setups_df = wallet_manager.read_setups()
@@ -280,13 +268,11 @@ class WalletManager:
 
 
 
-#
-##
-###
-# LENDO AS COMPOSIÇÕES DAS CARTEIRAS
-###
-##
-#
+    #
+    ##
+    # LENDO AS COMPOSIÇÕES DAS CARTEIRAS
+    ##
+    #
     def read_portifolios_composition(self):
 
         file_not_found = False
@@ -294,7 +280,7 @@ class WalletManager:
         try:
             compositions_parquet = pd.read_parquet(f'{self.full_desired_path}/wallets_composition.parquet')
             compositions_df = pd.DataFrame(compositions_parquet)
-            print('\nWallet composition configuration: \n', compositions_df)
+            # print('\nWallet composition configuration: \n', compositions_df)
         except:
             compositions_df = None
             file_not_found = True
@@ -311,14 +297,11 @@ class WalletManager:
 
         return file_not_found, compositions_df
 
-
-#
-##
-###
-# VALIDANDO A COMPOSIÇÃO DA CARTEIRA
-###
-##
-#
+    #
+    ##
+    # VALIDANDO A COMPOSIÇÃO DA CARTEIRA
+    ##
+    #
 
     def validate_portifolio_composition(self, wallet_defined):
         
@@ -335,14 +318,11 @@ class WalletManager:
 
         return validation_result
 
-#
-##
-###
-# ATUALIZANDO A COMPOSIÇÃO DA CARTEIRA
-###
-##
-#
-
+    #
+    ##
+    # ATUALIZANDO A COMPOSIÇÃO DA CARTEIRA
+    ##
+    #
     def update_portifolio_composition(self, wallet_manager, wallet_id, wallet_defined):
 
         self.wallet_id = wallet_id
@@ -385,14 +365,14 @@ class WalletManager:
 
                 wallet_id_database_list = list(compositions_df['wallet_id'])
                 wallet_id_database_list = list(set(wallet_id_database_list))
-                print(wallet_id_database_list)
+                # print(wallet_id_database_list)
 
                 for wallet_id_database in wallet_id_database_list:
-                    print(compositions_df)
-                    print(wallet_id_database)
+                    # print(compositions_df)
+                    # print(wallet_id_database)
                     setup_to_verify = compositions_df[compositions_df['wallet_id'] == str(wallet_id_database)]
-                    print(setup_to_verify)
-                    print(self.wallet_defined)
+                    # print(setup_to_verify)
+                    # print(self.wallet_defined)
                     df_merge = pd.merge(setup_to_verify, self.wallet_defined, on=['wallet_id', 'ticker', 'rebalance_date', 'executed', 'execution_date'], how='left', indicator=True)
                     # print(df_merge)
                     found_in_database = (df_merge['_merge'] == 'both').all()
@@ -401,7 +381,7 @@ class WalletManager:
                         esta_contido = True
                         # wallet_id_existent = (setups_df[['wallet_id']][setups_df['wallet_name'] == df_merge['wallet_name']]).at[0,'wallet_id']
                         wallet_id_existent = setup_to_verify['wallet_id'].iloc[0]
-                        print('wallet_id_existent', wallet_id_existent)
+                        print('\nwallet_id_existent: ', wallet_id_existent)
 
                 if(esta_contido):
                     print('\nWallet composition duplicated!')
@@ -433,13 +413,11 @@ class WalletManager:
                     print('Wallet validation FAILED.\n')
 
 
-#
-##
-###
-# APAGANDO SETUPS
-###
-##
-#
+    #
+    ##
+    # APAGANDO SETUPS
+    ##
+    #
     def delete_portifolio_composition(self, wallet_id, rebalance_date):
 
         file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
@@ -459,15 +437,34 @@ class WalletManager:
                 print('New setup: \n', new_setup)
                 
                 new_setup.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
+    
+    
+    
+    #
+    ##
+    # VERIFICANDO NECESSIDADE DE REBALANCEAMENTO
+    ##
+    #
+    def verify_compositions_to_execute(self, wallet_manager, wallet_id = None):
 
+        file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
 
-#
-##
-###
-# LENDO UM TIPO TRANSAÇÃO
-###
-##
-#
+        if(file_not_found):
+
+            print('\t --- file wallets_composition.parquet does not exists!')
+            
+        else:
+            compostion_to_execute = compositions_df[compositions_df['executed'] == False]
+            compostion_to_execute.sort_values(['rebalance_date', 'ticker'], inplace=True)
+            print('Wallets composition not executed: \n', compostion_to_execute)
+
+            return compostion_to_execute
+
+    #
+    ##
+    # LENDO UM TIPO TRANSAÇÃO
+    ##
+    #
     def read_type_transaction(self, operation_type = None, operation_code = None, operation_name = None):
         
         file_not_found = False
@@ -483,13 +480,11 @@ class WalletManager:
 
         return file_not_found, type_transaction_df
 
-#
-##
-###
-# GERANDO UM TIPO TRANSAÇÃO
-###
-##
-#
+    #
+    ##
+    # GERANDO UM TIPO TRANSAÇÃO
+    ##
+    #
     def create_type_transaction(self, operation_type, operation_code, operation_name):
 
         file_not_found, type_transaction_df = wallet_manager.read_type_transaction()
@@ -539,13 +534,11 @@ class WalletManager:
 
                 updated_transaction_type.to_parquet(f'{self.full_desired_path}/type_transaction.parquet', index = True)
 
-#
-##
-###
-# REMOVENDO UM TIPO TRANSAÇÃO
-###
-##
-#
+    #
+    ##
+    # REMOVENDO UM TIPO TRANSAÇÃO
+    ##
+    #
     def delete_type_transaction(self, operation_code):
 
         file_not_found, type_transaction_df = wallet_manager.read_type_transaction()
@@ -569,39 +562,11 @@ class WalletManager:
 
 
 
-#
-##
-###
-# VERIFICANDO NECESSIDADE DE REBALANCEAMENTO
-###
-##
-#
-    def verify_compositions_to_execute(self, wallet_manager, wallet_id = None):
-
-        file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
-
-        if(file_not_found):
-
-            print('\t --- file wallets_composition.parquet does not exists!')
-            
-        else:
-            compostion_to_execute = compositions_df[compositions_df['executed'] == False]
-            compostion_to_execute.sort_values(['rebalance_date', 'ticker'], inplace=True)
-            print('Wallets composition not executed: \n', compostion_to_execute)
-
-            return compostion_to_execute
-
-
- 
-
-
-#
-##
-###
-# GERANDO UMA TRANSAÇÃO
-###
-##
-#
+    #
+    ##
+    # GERANDO UMA TRANSAÇÃO
+    ##
+    #
     def create_transaction(self, ticker, operation_type, transaction_date, wallet_id):
 
         self.ticker = ticker
@@ -646,7 +611,7 @@ if __name__ == "__main__":
     # SETUP CONFIGURATION
     ##############
 
-    file_not_found, wallets_df = wallet_manager.read_setups()
+    # file_not_found, wallets_df = wallet_manager.read_setups()
 
     # print(wallets_df[['wallet_id', 'wallet_name', 'number_of_assets', 'user_name', 'proportion', 'close_date', 'rebalance_periods', 'last_rebalance_date']])
 
@@ -660,7 +625,7 @@ if __name__ == "__main__":
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='first-shot', user_name='error')
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='9178', user_name='andre-tebar')
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='5380', user_name='tebinha')
-    # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='3453', user_name='heitor_tebar')
+    wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='8816', user_name='jandretebarf')
 
 
     ##############
@@ -696,7 +661,7 @@ if __name__ == "__main__":
     #     save_wallet_composion = False
     # print('wallet_id', wallet_id)
 
-    wallet_manager.read_portifolios_composition()
+    # wallet_manager.read_portifolios_composition()
     # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = last_wallet_defined)
     # wallet_manager.delete_portifolio_composition(wallet_id = '4235', rebalance_date = '2023-11-20')
 
