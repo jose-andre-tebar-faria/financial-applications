@@ -68,7 +68,7 @@ class TelegramManager:
                 if 'calculate_risk_premiuns' in processed_text:
                     return '✏ calculation complete! ✏'  
                 if 'nightvision' in processed_text:
-                    return '🏳🏳🏳'
+                    return answer_text
             else:
                 return '🍰 command only for adms! 🍰'    
             return 'invalid command'
@@ -218,15 +218,14 @@ class TelegramManager:
         
         wallet_manager = wm.WalletManager()
 
-        mean_last_period_variation=None
-        wallet_to_database=None
-        last_period_variation=None
+        weighted_average_returns=None
         last_analysis_date=None
         final_analysis=None
 
         file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
+        # print('compositions_df: \n', compositions_df)
 
-        compositions_df = compositions_df[compositions_df['wallet_id'] == str(wallet_id)]
+        compositions_df = compositions_df[compositions_df['wallet_id'] == wallet_id]
         compositions_df = compositions_df[['rebalance_date','ticker','wallet_proportion']]
         compositions_df.rename(columns={'rebalance_date': 'data', 'wallet_proportion': 'peso'}, inplace=True)
         compositions_df = compositions_df.set_index('data', drop=True)
@@ -234,9 +233,9 @@ class TelegramManager:
 
         finapp = fc.FinappController()
 
-        final_analysis, last_analysis_date, mean_last_period_variation = finapp.run_last_generated_wallet(compositions_df)
+        final_analysis, last_analysis_date, weighted_average_returns = finapp.run_last_generated_wallet(compositions_df)
 
-        return final_analysis, last_analysis_date, mean_last_period_variation
+        return final_analysis, last_analysis_date, weighted_average_returns
         
     ###
     ##
@@ -466,6 +465,53 @@ class TelegramManager:
 
         return answer_text
 
+    def create_nightvision_answer(wallet_id, final_analysis, last_analysis_date, weighted_average_returns):
+        
+        markdown_text = ''
+        
+        rebalance_date = final_analysis['data'].iloc[0]
+        rebalance_date = rebalance_date.strftime('%Y-%m-%d')
+
+        markdown_text += f"👓👓👓 NIGHTISION! 👓👓👓\n\n"
+        markdown_text += f"💼 wallet_id: {wallet_id} - data: {rebalance_date}\n"
+
+        for _, row in final_analysis.iterrows():
+
+            asset = row['asset']
+            wallet_proportion = row['peso']
+            sector = row['sector']
+            subsector = row['subsector']
+            last_period_variation = row['last_period_variation']
+            last_period_variation = round(last_period_variation,2)
+            last_growth_rate = row['last_growth_rate']
+            last_growth_rate = round(last_growth_rate * 100,1)
+            wallet_proportion = round(wallet_proportion * 100,2)
+            initial_price = row['initial_price']
+            max_update_price = row['max_update_price']
+            
+            markdown_text += f"---------------------------------------------\n"
+            if last_period_variation > 0:
+                markdown_text += f"    🟢 {asset}, rend: {last_period_variation}%\n"
+            else:
+                markdown_text += f"    🔴 {asset}, rend: {last_period_variation}%\n"
+            markdown_text += f"        ▪ Ramo: {sector} - {subsector}\n"
+            markdown_text += f"        ▪ Peso do ativo na carteira: {wallet_proportion}%\n"
+            markdown_text += f"        ▪ Crescimento da companhia no último ano: {last_growth_rate}%\n"
+            markdown_text += f"        ▪ Preço dia {rebalance_date}: R$ {initial_price}\n"
+            markdown_text += f"        ▪ Preço dia {last_analysis_date}: R$ {max_update_price}\n"
+
+        if weighted_average_returns > 0:
+            markdown_text += f"\n✅✅✅✅ GREEEEEN ✅✅✅✅\n\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}."
+        else:
+        
+            markdown_text += f"\n❗❗❗❗ MANTÉM A ESTRATÉGIA ❗❗❗❗\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}."
+        
+        answer_text = markdown_text
+
+        return answer_text
+
+
+
     def is_valid_date(date_str):
         
         try:
@@ -596,6 +642,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     📦 `update_database`: To update Finapp database.\n
     🧩 `make_indicators`: Update indicators database.\n
     📖 `calculate_risk_premiuns()`: Calculate premiuns risks of indicators alone, 2/2, and 3/3. You can use /indicators command to guide you.\n
+    👓 `nightvision(wallet_id=XXXX)`: Details each asset in wallet.
 
     '''
     response_text = response_text.replace('_', r'\_')
@@ -860,11 +907,17 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 fail_to_execute = True
 
-        final_analysis, last_analysis_date, mean_last_period_variation = TelegramManager.nightvision_command(wallet_id)
+        final_analysis, last_analysis_date, weighted_average_returns = TelegramManager.nightvision_command(wallet_id)
+
+        weighted_average_returns = round(weighted_average_returns,2)
+
+        last_analysis_date = last_analysis_date.strftime('%Y-%m-%d')
         
-        print('\n\nfinal_analysis: \n',final_analysis)
-        print('\n\nlast_analysis_date: \n',last_analysis_date)
-        print('\n\nmean_last_period_variation: \n',mean_last_period_variation)
+        answer_text = TelegramManager.create_nightvision_answer(wallet_id, final_analysis, last_analysis_date, weighted_average_returns)
+
+        print('\nfinal_analysis: \n',final_analysis)
+        print('\nlast_analysis_date: ',last_analysis_date)
+        print('\nweighted_average_returns: ',weighted_average_returns)
 
     if(decoded_command == 'calculate_risk_premiuns' and adm_interaction and all_indicators_existents):
 

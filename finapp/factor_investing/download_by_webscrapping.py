@@ -80,7 +80,7 @@ class DownloadByWebscrapping:
         subsectors_dropdown = list(range(0, 20))
         segments_index_max = list(range(0, 20))
 
-        assets_database = pd.DataFrame(columns=['asset', 'sector', 'subsector', 'segment'])
+        assets_database = pd.DataFrame(columns=['asset', 'sector', 'subsector', 'segment', 'ticker', 'cnpj', 'mai_activiity', 'company_name', 'trading_name'])
         assets_database.set_index('asset', inplace=True)
 
         while True:
@@ -176,7 +176,15 @@ class DownloadByWebscrapping:
                                                         content_list = []
 
                                                         asset_selector = '#nav-bloco > div > div:nth-child(' + str(index) + ') > div > div > h5'
-                                                        asset_code = data.find_element(By.CSS_SELECTOR, asset_selector)
+                                                        # print('asset_selector: ', asset_selector)
+                                                        
+                                                        # asset_code = data.find_element(By.CSS_SELECTOR, asset_selector)
+                                                        
+                                                        asset_code = driver.find_element(By.CSS_SELECTOR, asset_selector)
+
+                                                        # asset_code = WebDriverWait(driver, 10).until(
+                                                        #     EC.visibility_of_element_located((By.CSS_SELECTOR, asset_selector))
+                                                        # )
                                                         print('\t\t\t\t', asset_code.text)
 
                                                         ## INSERIR NO DICIONÁRIO
@@ -191,12 +199,123 @@ class DownloadByWebscrapping:
                                                         # print(segment_to_dict)
                                                         content_list.append(segment_to_dict)
                                                         # print(content_list)
+
+
+
+
+
+
+                                                        # descobrindo o número de seguimentos
+                                                        assets_selector = '/html/body/app-root/app-companies-search/div/form/div[2]/div[1]/div'
+                                                        # print('', segments_selector)
+                                                        number_of_assets = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, assets_selector)))
+                                                        # print('\t\t\t', segments.text)
+                                                        elementos_filhos = number_of_assets.find_elements(By.XPATH, '*')
+                                                        numero_de_elementos = len(elementos_filhos)
+                                                        print('numero_de_elementos: ', numero_de_elementos)
+
+                                                        if numero_de_elementos > 1:
+                                                            asset_details_selector = '/html/body/app-root/app-companies-search/div/form/div[2]/div[1]/div/div[' + str(index) + ']'
+                                                            print('assets_selector: ', asset_details_selector)
+                                                        else:
+                                                            asset_details_selector = '/html/body/app-root/app-companies-search/div/form/div[2]/div[1]/div/div/div/div'
+                                                            
+                                                            print('assets_selector: ', asset_details_selector)
+
+                                                        # ACESSO DETALHADOS AOS TICKERS
+                                                        button_asset_details = WebDriverWait(driver, 10).until(
+                                                            EC.visibility_of_element_located((By.XPATH, asset_details_selector))
+                                                        )
+                                                        button_asset_details.click()
                                                         
+                                                        time.sleep(1)
+
+                                                        company_name_selector = '/html/body/app-root/app-companies-menu-select/div/div/div[1]/h2' 
+                                                        # print('company_name_selector: ', company_name_selector)
+                                                        trading_name_selector = '/html/body/app-root/app-companies-menu-select/div/app-companies-overview/div/div[1]/div/div/p[2]'
+                                                        # print('trading_name_selector: ', trading_name_selector)
+                                                        
+                                                        ticker_selector = '/html/body/app-root/app-companies-menu-select/div/app-companies-overview/div/div[1]/div/div/p[4]/a'
+                                                        
+                                                        # print('ticker_selector: ', ticker_selector)
+                                                        
+                                                        ticker_exisitent = False
+
+                                                        try:
+
+                                                            time.sleep(0.5)
+                                                            ticker = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, ticker_selector)))
+                                                            ticker_to_dict = ticker.text
+                                                            print('\t\t\t\t\t', ticker_to_dict)
+
+                                                            ticker_exisitent = True
+                                                        except:
+                                                            print('\t\t\t\t\t\tNão existe ticker!!')
+
+                                                        if ticker_exisitent:
+                                                            main_activity_selector = '/html/body/app-root/app-companies-menu-select/div/app-companies-overview/div/div[1]/div/div/div[3]/p[2]'
+                                                            # print('main_activity_selector: ', main_activity_selector)
+                                                            cnpj_selector = '/html/body/app-root/app-companies-menu-select/div/app-companies-overview/div/div[1]/div/div/div[2]/p[2]'
+                                                            # print('cnpj_selector: ', cnpj_selector)
+                                                            
+                                                            content_list.append(ticker_to_dict)
+                                                            # print(content_list)
+                                                        else:
+                                                            main_activity_selector = '/html/body/app-root/app-companies-menu-select/div/app-companies-overview/div/div[1]/div/div/div[2]/p[2]'
+                                                            # print('main_activity_selector: ', main_activity_selector)
+                                                            cnpj_selector = '/html/body/app-root/app-companies-menu-select/div/app-companies-overview/div/div[1]/div/div/div[1]/p[2]'
+                                                            # print('cnpj_selector: ', cnpj_selector)
+                                                            
+                                                            content_list.append('')
+                                                            # print(content_list)
+
+                                                        time.sleep(0.5)
+                                                        cnpj = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, cnpj_selector)))
+                                                        cnpj_to_dict = cnpj.text
+                                                        print('\t\t\t\t\t', cnpj_to_dict)
+
+                                                        content_list.append(cnpj_to_dict)
+                                                        # print(content_list)
+
+                                                        time.sleep(0.5)
+                                                        main_activity = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, main_activity_selector)))
+                                                        main_activity_to_dict = main_activity.text
+                                                        print('\t\t\t\t\t', main_activity_to_dict)
+
+                                                        content_list.append(main_activity_to_dict)
+                                                        # print(content_list)
+
+                                                        time.sleep(0.5)
+                                                        company_name = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, company_name_selector)))
+                                                        company_name_to_dict = company_name.text
+                                                        print('\t\t\t\t\t', company_name_to_dict)
+
+                                                        content_list.append(company_name_to_dict)
+                                                        # print(content_list)
+
+                                                        time.sleep(0.5)
+                                                        trading_name = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, trading_name_selector)))
+                                                        trading_name_to_dict = trading_name.text
+                                                        print('\t\t\t\t\t', trading_name_to_dict)
+
+                                                        content_list.append(trading_name_to_dict)
+                                                        # print(content_list)
+
+                                                        driver.back()
+                                                        time.sleep(0.5)
+
+
+
+
+
+
+
                                                         assets_database.loc[asset_to_dict] = content_list
-                                                        # print(assets_database)
+                                                        print(assets_database)
                                                     break
                                                 except Exception as e:
                                                     # acabou
+                                                    # print(e)
                                                     break
 
                                             back_button = WebDriverWait(driver, 10).until(
@@ -327,4 +446,4 @@ if __name__ == "__main__":
     
     # asset_logos.getting_asset_logos_google_by_site()
 
-    # asset_logos.getting_b3_assets_sector_by_site()
+    asset_logos.getting_b3_assets_sector_by_site()

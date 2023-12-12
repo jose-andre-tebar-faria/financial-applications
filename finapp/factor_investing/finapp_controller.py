@@ -254,24 +254,47 @@ class FinappController:
 
         last_analysis_date = quotations_database.loc[quotations_database.index[-1], 'data']
         last_analysis_date = pd.to_datetime(last_analysis_date)
-        print('\nLast analysis date: ', last_analysis_date)
+        print('\nlast_analysis_date: ', last_analysis_date)
+        print('\nlast_wallet_rebalance_date: ', last_wallet_rebalance_date)
 
         #
         ## corrigir para encontrar o número de PERÍODOS até a data do último rebalanceamento
         #
-        days_since_last_periods = (last_analysis_date - last_wallet_rebalance_date).days
+        periods_since_rebalance = quotations_database[quotations_database['data'] >= last_wallet_rebalance_date]
+        
+        ## CAPTURAR PREÇOS
+        # print('\nperiods_since_rebalance: \n', periods_since_rebalance)
+        print('\nperiods_since_rebalance: \n', periods_since_rebalance[periods_since_rebalance['ticker']=='AZEV3'])
+        assets_prices = periods_since_rebalance.groupby('ticker')['preco_fechamento_ajustado'].agg(['first', 'last']).reset_index()
+        assets_prices.columns = ['ticker', 'initial_price', 'max_update_price']
+        print('\nassets_prices: \n', assets_prices)
 
-        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = days_since_last_periods) * 100
 
-        last_period_variation = quotations_database.groupby('ticker')['last_period_variation'].last()
+        periods_since_rebalance = periods_since_rebalance.groupby('ticker').count()
+        periods_since_rebalance = int(periods_since_rebalance.iloc[0,0])
+        periods_since_rebalance = periods_since_rebalance - 1
+        print('\nperiods_since_rebalance: ', periods_since_rebalance)
+
+        quotations_database['last_period_variation'] = quotations_database.groupby('ticker')['preco_fechamento_ajustado'].pct_change(periods = periods_since_rebalance) * 100
+
+        last_period_variation = quotations_database.groupby(['ticker'])['last_period_variation'].last()
         print('\nAssets perc_change in rebalance_periods: \n', last_period_variation)
 
         print('\nNumber of assets in final wallet: ', len(analysis_assets_list))
 
-        mean_last_period_variation = last_period_variation.mean()
-        print(f'\nAvarage wallet rentability past {days_since_last_periods} periods: ', round(mean_last_period_variation,2) , '%')
+        # mean_last_period_variation = last_period_variation.mean()
+        # print(f'\nAvarage wallet rentability past {periods_since_rebalance} periods: ', round(mean_last_period_variation,2) , '%')
 
-        return last_analysis_date, last_period_variation, mean_last_period_variation
+        last_period_variation = pd.DataFrame(last_period_variation)
+        
+        last_period_variation = pd.merge(last_period_variation, assets_prices, on = 'ticker', how = 'left')
+        
+        last_period_variation = last_period_variation.reset_index(drop=False)
+        last_period_variation.rename(columns={'ticker': 'asset'}, inplace=True)
+        last_period_variation['asset'] = last_period_variation['asset'].str[:-1]
+
+        
+        return last_analysis_date, last_period_variation, periods_since_rebalance
 
     def create_factor_file_names(self, setup_dict):
         
@@ -646,27 +669,25 @@ class FinappController:
         ## une a matrix BCG (bcg_matrix) aos últimos resultados da carteira
         #
         analysis_assets_list, final_analysis = finapp.compose_last_wallet_with_bcg_matrix(last_wallet, bcg_dimensions_list)
+
+        final_analysis = final_analysis.reset_index(drop=False)
         
         #
         ## calcula o rendimento de cada ativo e médio desde o último rebalanciamento da carteira
         #
-        last_analysis_date, last_period_variation, mean_last_period_variation = finapp.calculate_wallet_returns_since_last_rebalance(analysis_assets_list, last_wallet_rebalance_date)
+        last_analysis_date, last_period_variation, periods_since_rebalance = finapp.calculate_wallet_returns_since_last_rebalance(analysis_assets_list, last_wallet_rebalance_date)
 
-        final_analysis = final_analysis.reset_index(drop=False)
-
-        last_period_variation = pd.DataFrame(last_period_variation)
-        last_period_variation = last_period_variation.reset_index(drop=False)
-        last_period_variation.rename(columns={'ticker': 'asset'}, inplace=True)
-        last_period_variation['asset'] = last_period_variation['asset'].str[:-1]
-        
         # print('\n\nfinal_analysis: \n',final_analysis)
         # print('\n\nlast_period_variation: \n',last_period_variation)
 
         final_analysis = pd.merge(final_analysis, last_period_variation, on='asset')
+        
+        weighted_average_returns = (final_analysis['last_period_variation'] * final_analysis['peso']).sum() / final_analysis['peso'].sum()
+        print(f'\nweighted_average wallet rentability past {periods_since_rebalance} periods: ', round(weighted_average_returns,2) , '%')
 
         print(".\n.\n=== GENERATION COMPLETE! ===")
 
-        return final_analysis, last_analysis_date, mean_last_period_variation
+        return final_analysis, last_analysis_date, weighted_average_returns
 
     def run_rebalance_setups(self, rebalance_wallet_id, rebalance_calc_end_date, indicators_dict_database, factor_calc_initial_date, liquidity_filter, create_wallets_pfd):
 

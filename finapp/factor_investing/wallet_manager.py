@@ -625,7 +625,7 @@ if __name__ == "__main__":
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='first-shot', user_name='error')
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='9178', user_name='andre-tebar')
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='5380', user_name='tebinha')
-    wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='8816', user_name='jandretebarf')
+    # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='2504', user_name='jandretebarf')
 
 
     ##############
