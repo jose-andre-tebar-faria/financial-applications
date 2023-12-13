@@ -208,6 +208,8 @@ class WalletManager:
     #
     def delete_setup(self, wallet_manager, wallet_id, user_name):
 
+        setup_to_delete = pd.DataFrame()
+        
         file_not_found, setups_df = wallet_manager.read_setups()
         # print('Setup database: \n', setups_df)
 
@@ -225,6 +227,8 @@ class WalletManager:
                 print('New setup: \n', new_setup)
                 
                 new_setup.to_parquet(f'{self.full_desired_path}/wallets.parquet', index = True)
+
+        return setup_to_delete
 
     #
     ##

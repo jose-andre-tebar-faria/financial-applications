@@ -55,10 +55,14 @@ class TelegramManager:
                 else:
                     return f'🔑 you already made a setup with us. thank you!!\n.\n😄 username: {username}'
             if 'rate_risk_premiuns' in processed_text:
-                return f'🏆 rating complete! 🏆\n\n {answer_text}'
+                return answer_text
             if 'rebalance_setup' in processed_text:
                 return answer_text
             if 'read_setups' in processed_text:
+                return answer_text  
+            if 'nightvision' in processed_text:
+                return answer_text
+            if 'delete_setup' in processed_text:
                 return answer_text
             if adm_interaction:
                 if 'update_database' in processed_text:
@@ -66,27 +70,24 @@ class TelegramManager:
                 if 'make_indicators' in processed_text:
                     return '🧩 indicators updated! 🧩'
                 if 'calculate_risk_premiuns' in processed_text:
-                    return '✏ calculation complete! ✏'  
-                if 'nightvision' in processed_text:
-                    return answer_text
+                    return '✏ calculation complete! ✏'
             else:
-                return '🍰 command only for adms! 🍰'    
-            return 'invalid command'
+                return '💬 command only for adms! 🍰'    
+            return '💬 invalid command 😟'
         elif(is_command and fail_to_execute == True):
             return '💬 execution error! verify command... 🤨'
 
         if 'hello' in processed_text:
-            return 'i see you!!'
+            return '💬 i see you!!'
         else:
-            return 'Use o comando /help para te guiar quais os tipos de mensagens eu respondo.'
+            return '💬 Use o comando /help para te guiar quais os tipos de mensagens eu respondo.'
     
     ###
     ##
     # COMMANDS
     ##
     ###
-    
-    #update_database
+
     def update_database_command():
         
         finapp = fc.FinappController()
@@ -126,14 +127,12 @@ class TelegramManager:
                                     fintz_indicators_list = fintz_indicators_list, fintz_demonstration_list = fintz_demonstration_list,
                                     bc_dict = bc_dict)
 
-    #make_indicators
     def make_indicators_command():
         
         finapp = fc.FinappController()
 
         finapp.run_make_indicators()
 
-    #calculate_risk_premiuns
     def calculate_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, update_existing_file):
         
         list_combinations = []
@@ -147,7 +146,6 @@ class TelegramManager:
         
         return list_combinations, premium_dataframe
 
-    # rate_risk_premiuns
     def rate_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, create_rating_pdf, final_analysis_date):
                 
         # final_analysis_date             = '2022-12-31'
@@ -180,7 +178,6 @@ class TelegramManager:
 
         return distribution_indicadors, ranking_indicator, top_indicators, setup_dict, fail_to_execute
 
-    # rebalance_setups
     def rebalance_setup_command(rebalance_wallet_id, rebalance_calc_end_date, indicators_dict_database, factor_calc_initial_date, liquidity_filter, create_wallets_pfd):
         
         finapp = fc.FinappController()
@@ -205,7 +202,6 @@ class TelegramManager:
 
         return wallet_to_database
 
-    # read_setups
     def read_setups_command(username_existent):
 
         wallet_manager = wm.WalletManager()
@@ -213,7 +209,6 @@ class TelegramManager:
 
         return wallets_df
 
-    # nightvision
     def nightvision_command(wallet_id):
         
         wallet_manager = wm.WalletManager()
@@ -236,7 +231,17 @@ class TelegramManager:
         final_analysis, last_analysis_date, weighted_average_returns = finapp.run_last_generated_wallet(compositions_df)
 
         return final_analysis, last_analysis_date, weighted_average_returns
+
+    def delete_setup_command(wallet_id, username_existent):
+
+        setup_to_delete = pd.DataFrame()
+
+        wallet_manager = wm.WalletManager()
         
+        setup_to_delete = wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id = wallet_id, user_name=username_existent)
+
+        return setup_to_delete
+    
     ###
     ##
     # TOOLS
@@ -277,6 +282,7 @@ class TelegramManager:
         rate_risk_premiuns_pattern = re.compile(r'rate_risk_premiuns\s*\(([^)]+)\)')
         rebalance_setup_pattern = re.compile(r'rebalance_setup\s*\(([^)]+)\)')
         nightvision_pattern = re.compile(r'nightvision\s*\(([^)]+)\)')
+        delete_setup_pattern = re.compile(r'delete_setup\s*\(([^)]+)\)')
 
         if save_username_pattern.match(command_string):
 
@@ -315,6 +321,13 @@ class TelegramManager:
             indicators_list, variables_list = TelegramManager.extract_elements_from_command(match)
             
             return {'command': 'rate_risk_premiuns'}, indicators_list, variables_list
+        elif delete_setup_pattern.match(command_string):
+
+            match = delete_setup_pattern.match(command_string)
+
+            indicators_list, variables_list = TelegramManager.extract_elements_from_command(match)
+            
+            return {'command': 'delete_setup'}, indicators_list, variables_list
         elif read_setups_pattern.match(command_string):
             
             return {'command': 'read_setups'}, indicators_list, variables_list
@@ -323,6 +336,7 @@ class TelegramManager:
 
     def create_rating_answer(distribution_indicadors, ranking_indicator, top_indicators, setup_dict, indicators_dict_database, save_setup, wallet_id, wallet_existent, wallets_df):
 
+        markdown_text = f'🏆 rating complete! 🏆\n\n'
 
         distribution_indicadors['acum_primeiro_quartil'] = distribution_indicadors['acum_primeiro_quartil'].astype(float)
         distribution_indicadors['acum_primeiro_quartil'] = distribution_indicadors['acum_primeiro_quartil'] * 100
@@ -335,7 +349,7 @@ class TelegramManager:
         len_top_indicators = len(top_indicators)
         len_ranking_indicator = len(ranking_indicator)
 
-        markdown_text = f"Foram avaliados {len_ranking_indicator} combinações dos prêmios de risco atrelado aos indicadores e a está abaixo o rank{len_top_indicators}!! O ranking final foi feito por percentual de rentabilidade, no final é mostrado o ranking dos indicadores puros mostrando o número de vezes que o indicador apareceu no rank final.\n"
+        markdown_text += f"Foram avaliados {len_ranking_indicator} combinações dos prêmios de risco atrelado aos indicadores e a está abaixo o rank{len_top_indicators}!! O ranking final foi feito por percentual de rentabilidade, no final é mostrado o ranking dos indicadores puros mostrando o número de vezes que o indicador apareceu no rank final.\n"
         markdown_text += f"\nrank{len_top_indicators}: \n\n"
 
         # print(indicators_dict_database)
@@ -489,7 +503,7 @@ class TelegramManager:
             initial_price = row['initial_price']
             max_update_price = row['max_update_price']
             
-            markdown_text += f"---------------------------------------------\n"
+            markdown_text += f"----------------------------------------\n"
             if last_period_variation > 0:
                 markdown_text += f"    🟢 {asset}, rend: {last_period_variation}%\n"
             else:
@@ -510,7 +524,56 @@ class TelegramManager:
 
         return answer_text
 
+    def create_delete_setup_answer(username_existent, setup_to_delete):
 
+        if setup_to_delete.empty:
+
+            answer_text = '💬 no setup to delete... 🤨'
+            return answer_text
+        else:
+        
+            markdown_text = ''
+            wallet_id = setup_to_delete['wallet_id'].iloc[0]
+
+            markdown_text += f"📢 O usuário {username_existent} solicitou a deleção do setup wallet_id= {wallet_id}. Configuração excluída abaixo: \n\n"
+            # await update.message.reply_text(read_setups_txt)
+
+            
+            for _, group in setup_to_delete.groupby('wallet_id'):
+
+                wallet_id = group['wallet_id'].iloc[0]
+                rebalance_periods = group['rebalance_periods'].iloc[0]
+                number_of_assets = group['number_of_assets'].iloc[0]
+                create_date = group['create_date'].iloc[0]
+                create_date = create_date.strftime('%Y-%m-%d')
+
+                markdown_text += f"💼 wallet_id: {wallet_id}\n"
+                markdown_text += f"---------------------------------------------\n"
+
+                markdown_text += f"          ⚙ rebalance_periods: {rebalance_periods}\n          ⚙ number_of_assets: {number_of_assets}\n          ⚙ create_date: {create_date}\n"
+
+                print(f"wallet_id: {wallet_id}")
+                print(f"          rebalance_periods: {rebalance_periods}")
+                print(f"          number_of_assets: {number_of_assets}")
+                print(f"          create_date: {create_date}")
+
+                for _, row in group.iterrows():
+
+                    wallet_name = row['wallet_name']
+                    indicators = [indicator for indicator in row[['indicator_1', 'indicator_2', 'indicator_3']] if pd.notna(indicator)]
+                    
+                    markdown_text += f"          🔶 {wallet_name}:\n"
+
+                    print(f"          {wallet_name}:")
+                    for indicator in indicators:
+                        print(f"                             {indicator}")
+                        markdown_text += f"                             🔹 {indicator}\n"
+                    
+                markdown_text += f"\n"
+
+            answer_text = markdown_text
+
+            return answer_text
 
     def is_valid_date(date_str):
         
@@ -633,16 +696,17 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🔐 **Acceptable Commands:** 🔐
 
     💾 `save_username`: To start your journey you must configure your First Name, Last Name and username at Telegram Settings.\n
-    🏗 `rate_risk_premiuns()`: Rank selected indicators. You can send an optional attribut to save your setup with 'save_setup=True'. If you choose to save, Finapp will select the rank2 of combinations to create a setup with 2 wallets. Rebalance periods will be 21 and assets per wallet 5 (if the same asset is present in both wallets, it will receive more wallet proportion). You can use /indicators command to guide you.\n
-    ⚔ `read_setups`: Read setups database.\n
-    ⚖ `rebalance_setup(wallet_id=XXXX)`: Rebalance wallet_id creatirng a wallet composition until max_date possible.
+    ⚜ `rate_risk_premiuns()`: Rank selected indicators. You can send an optional attribut to save your setup with 'save_setup=True'. If you choose to save, Finapp will select the rank2 of combinations to create a setup with 2 wallets. Rebalance periods will be 21 and assets per wallet 5 (if the same asset is present in both wallets, it will receive more wallet proportion). You can use /indicators command to guide you.\n
+    📝 `read_setups`: Read setups database.\n
+    ⚖ `rebalance_setup(wallet_id=XXXX)`: Rebalance wallet_id creatirng a wallet composition until max_date possible.\n
+    👓 `nightvision(wallet_id=XXXX)`: Details each asset in wallet.\n
+    ❌ `delete_setup(wallet_id=XXXX)`: Delete a specific setup.
 
 🔒🔒🔒 **Admin Commands:** 🔒🔒🔒
 
     📦 `update_database`: To update Finapp database.\n
     🧩 `make_indicators`: Update indicators database.\n
     📖 `calculate_risk_premiuns()`: Calculate premiuns risks of indicators alone, 2/2, and 3/3. You can use /indicators command to guide you.\n
-    👓 `nightvision(wallet_id=XXXX)`: Details each asset in wallet.
 
     '''
     response_text = response_text.replace('_', r'\_')
@@ -833,92 +897,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         TelegramManager.make_indicators_command()    
 
-    if(decoded_command == 'rebalance_setup' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
-        fail_to_execute = False
-
-        if message_type == 'supergroup':
-            if answer_in_group:
-                await update.message.reply_text("Ok.")
-        else:
-            await update.message.reply_text("Ok.")
-
-        rebalance_wallet_id = '0000'
-        rebalance_calc_end_date = '2023-12-02'
-        factor_calc_initial_date = '2019-12-31'
-        liquidity_filter = 1
-        wallet_to_database = pd.DataFrame()
-
-        #verificar se as variaveis estão corretas
-        decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
-        # print(decoded_variables_split_list)
-
-        for variable, value in decoded_variables_split_list:
-            print(f"Variable: {variable}, Value: {value}")
-            if variable == 'wallet_id':
-                possib_int = value
-                if TelegramManager.is_valid_integer(possib_int):
-                    rebalance_wallet_id = str(possib_int)
-                    print(f"{possib_int} integer.")
-                else:
-                    print(f"{possib_int} não é integer.")
-                    fail_to_execute = True
-            else:
-                fail_to_execute = True
-
-        if fail_to_execute == False: 
-        
-            wallet_to_database = TelegramManager.rebalance_setup_command(rebalance_wallet_id=rebalance_wallet_id, 
-                                                    rebalance_calc_end_date=rebalance_calc_end_date, 
-                                                    indicators_dict_database=indicators_dict_database,
-                                                    factor_calc_initial_date=factor_calc_initial_date,
-                                                    liquidity_filter=liquidity_filter,
-                                                    create_wallets_pfd=create_wallets_pfd)
-            
-            if wallet_to_database.empty:
-                answer_text = f"❌ Setup inexistente! ❌"
-            else:
-                answer_text = TelegramManager.create_rebalance_setup_answer(username_existent, rebalance_wallet_id, wallet_to_database)
-
-    if(decoded_command == 'nightvision' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
-        fail_to_execute = False
-
-        if message_type == 'supergroup':
-            if answer_in_group:
-                await update.message.reply_text("Ok.")
-        else:
-            await update.message.reply_text("Ok.")
-
-        wallet_id = '0000'
-
-        #verificar se as variaveis estão corretas
-        decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
-        # print(decoded_variables_split_list)
-
-        for variable, value in decoded_variables_split_list:
-            print(f"Variable: {variable}, Value: {value}")
-            if variable == 'wallet_id':
-                possib_int = value
-                if TelegramManager.is_valid_integer(possib_int):
-                    wallet_id = str(possib_int)
-                    print(f"{possib_int} integer.")
-                else:
-                    print(f"{possib_int} não é integer.")
-                    fail_to_execute = True
-            else:
-                fail_to_execute = True
-
-        final_analysis, last_analysis_date, weighted_average_returns = TelegramManager.nightvision_command(wallet_id)
-
-        weighted_average_returns = round(weighted_average_returns,2)
-
-        last_analysis_date = last_analysis_date.strftime('%Y-%m-%d')
-        
-        answer_text = TelegramManager.create_nightvision_answer(wallet_id, final_analysis, last_analysis_date, weighted_average_returns)
-
-        print('\nfinal_analysis: \n',final_analysis)
-        print('\nlast_analysis_date: ',last_analysis_date)
-        print('\nweighted_average_returns: ',weighted_average_returns)
-
     if(decoded_command == 'calculate_risk_premiuns' and adm_interaction and all_indicators_existents):
 
         if message_type == 'supergroup':
@@ -1025,13 +1003,28 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
                     file_not_found, wallets_df = wallet_manager.read_setups(username_existent)
 
-                    create_date_auto = datetime.now()
-                    create_date_auto = create_date_auto.strftime('%Y-%m-%d')
+                    print('\nwallets_df: ', wallets_df)
+                    
+                    number_of_wallets = wallets_df['wallet_id'].nunique()
+                    number_of_wallets = int(number_of_wallets)
+                    
+                    print('\nnumber_of_wallets: ', number_of_wallets)
 
-                    # receber os parametros number_of_assets & rebalance_periods do comando!!!
-                    new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, number_of_assets = 5, rebalance_periods = 21, user_name = username_existent, create_date = create_date_auto)
+                    if number_of_wallets < 3:
+                        create_date_auto = datetime.now()
+                        create_date_auto = create_date_auto.strftime('%Y-%m-%d')
 
-                    wallet_id, wallet_existent = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
+                        # receber os parametros number_of_assets & rebalance_periods do comando!!!
+                        new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, number_of_assets = 5, rebalance_periods = 21, user_name = username_existent, create_date = create_date_auto)
+
+                        wallet_id, wallet_existent = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
+                        
+                        answer_text = TelegramManager.create_rating_answer(distribution_indicadors, ranking_indicator, top_indicators, setup_dict, indicators_dict_database,
+                                                                save_setup, wallet_id, wallet_existent, wallets_df)
+                        # print('\nanswer_text: \n', answer_text)
+                    else:
+                        answer_text = '💬 setup limit exceed... 🤨'
+
                 else:
                     print('\nNÃO PODE SALVAR!!\n')
                 
@@ -1043,10 +1036,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     print('\nNÃO PODE CRIAR O PDF!!\n')
                 
 
-                # answer_text = str(setup_dict)
-                answer_text = TelegramManager.create_rating_answer(distribution_indicadors, ranking_indicator, top_indicators, setup_dict, indicators_dict_database,
-                                                                save_setup, wallet_id, wallet_existent, wallets_df)
-                # print('\nanswer_text: \n', answer_text)
+                
             else:
                 await update.message.reply_text("🚧 tente calcular os prêmios antes de avaliá-los.")
 
@@ -1060,9 +1050,130 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         wallets_df = TelegramManager.read_setups_command(username_existent)
         
-        answer_text = TelegramManager.create_read_setups_answer(username_existent, wallets_df)
+        if wallets_df.empty:
+            answer_text = '💬 inexistent wallets setup... 🤨'
+        else:
+            answer_text = TelegramManager.create_read_setups_answer(username_existent, wallets_df)
 
+    if(decoded_command == 'rebalance_setup' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
+        fail_to_execute = False
+
+        if message_type == 'supergroup':
+            if answer_in_group:
+                await update.message.reply_text("Ok.")
+        else:
+            await update.message.reply_text("Ok.")
+
+        rebalance_wallet_id = '0000'
+        rebalance_calc_end_date = '2023-12-02'
+        factor_calc_initial_date = '2019-12-31'
+        liquidity_filter = 1
+        wallet_to_database = pd.DataFrame()
+
+        #verificar se as variaveis estão corretas
+        decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
+        # print(decoded_variables_split_list)
+
+        for variable, value in decoded_variables_split_list:
+            print(f"Variable: {variable}, Value: {value}")
+            if variable == 'wallet_id':
+                possib_int = value
+                if TelegramManager.is_valid_integer(possib_int):
+                    rebalance_wallet_id = str(possib_int)
+                    print(f"{possib_int} integer.")
+                else:
+                    print(f"{possib_int} não é integer.")
+                    fail_to_execute = True
+            else:
+                fail_to_execute = True
+
+        if fail_to_execute == False: 
         
+            wallet_to_database = TelegramManager.rebalance_setup_command(rebalance_wallet_id=rebalance_wallet_id, 
+                                                    rebalance_calc_end_date=rebalance_calc_end_date, 
+                                                    indicators_dict_database=indicators_dict_database,
+                                                    factor_calc_initial_date=factor_calc_initial_date,
+                                                    liquidity_filter=liquidity_filter,
+                                                    create_wallets_pfd=create_wallets_pfd)
+            
+            if wallet_to_database.empty:
+                answer_text = f"❌ Setup inexistente! ❌"
+            else:
+                answer_text = TelegramManager.create_rebalance_setup_answer(username_existent, rebalance_wallet_id, wallet_to_database)
+
+    if(decoded_command == 'nightvision' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
+        fail_to_execute = False
+
+        if message_type == 'supergroup':
+            if answer_in_group:
+                await update.message.reply_text("Ok.")
+        else:
+            await update.message.reply_text("Ok.")
+
+        wallet_id = '0000'
+
+        #verificar se as variaveis estão corretas
+        decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
+        # print(decoded_variables_split_list)
+
+        for variable, value in decoded_variables_split_list:
+            print(f"Variable: {variable}, Value: {value}")
+            if variable == 'wallet_id':
+                possib_int = value
+                if TelegramManager.is_valid_integer(possib_int):
+                    wallet_id = str(possib_int)
+                    print(f"{possib_int} integer.")
+                else:
+                    print(f"{possib_int} não é integer.")
+                    fail_to_execute = True
+            else:
+                fail_to_execute = True
+
+        final_analysis, last_analysis_date, weighted_average_returns = TelegramManager.nightvision_command(wallet_id)
+
+        weighted_average_returns = round(weighted_average_returns,2)
+
+        last_analysis_date = last_analysis_date.strftime('%Y-%m-%d')
+        
+        answer_text = TelegramManager.create_nightvision_answer(wallet_id, final_analysis, last_analysis_date, weighted_average_returns)
+
+        print('\nfinal_analysis: \n',final_analysis)
+        print('\nlast_analysis_date: ',last_analysis_date)
+        print('\nweighted_average_returns: ',weighted_average_returns)
+
+    if(decoded_command == 'delete_setup' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
+        fail_to_execute = False
+
+        if message_type == 'supergroup':
+            if answer_in_group:
+                await update.message.reply_text("Ok.")
+        else:
+            await update.message.reply_text("Ok.")
+
+        wallet_id = '0000'
+        setup_to_delete = pd.DataFrame()
+
+        #verificar se as variaveis estão corretas
+        decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
+        # print(decoded_variables_split_list)
+
+        for variable, value in decoded_variables_split_list:
+            print(f"Variable: {variable}, Value: {value}")
+            if variable == 'wallet_id':
+                possib_int = value
+                if TelegramManager.is_valid_integer(possib_int):
+                    wallet_id = str(possib_int)
+                    print(f"{possib_int} integer.")
+                else:
+                    print(f"{possib_int} não é integer.")
+                    fail_to_execute = True
+            else:
+                fail_to_execute = True
+
+        setup_to_delete = TelegramManager.delete_setup_command(wallet_id, username_existent)
+
+        answer_text = TelegramManager.create_delete_setup_answer(username_existent, setup_to_delete)
+
     # defining when bot aswer
     if old_message == False:
         if message_type == 'supergroup':
