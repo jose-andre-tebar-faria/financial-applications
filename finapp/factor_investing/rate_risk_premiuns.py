@@ -49,12 +49,15 @@ class MakeResultsPremium:
         if(self.current_folder != self.full_desired_path):
             os.chdir(self.full_desired_path)
 
+        print(self.lista_nome_fatores)
+
         for i, nome_premio in enumerate(self.lista_nome_fatores):
             
             try:
                 df = pd.read_parquet(f'{self.full_desired_path}/{nome_premio}_{self.liquidez[i]}.parquet')
             except FileNotFoundError:
                 file_not_found = True
+                print(f'\t--- risk_premium file not found: {nome_premio}')
                 return file_not_found
             
             df['data'] = pd.to_datetime(df['data']).dt.date
@@ -77,7 +80,9 @@ class MakeResultsPremium:
         self.premios_de_risco['quarto_quartil'] = 1 + self.premios_de_risco['quarto_quartil'] 
         self.premios_de_risco['universo'] = 1 + self.premios_de_risco['universo']
 
-        return file_not_found
+        premios_de_risco = self.premios_de_risco
+
+        return file_not_found, premios_de_risco
 
     def retorno_quartis(self):
 

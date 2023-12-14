@@ -133,6 +133,87 @@ class FinappController:
 
         return premium_name_dict
 
+
+
+    def create_wallet_dict(self, indicators_dict, premiuns_statistics_to_show, premiuns_to_dict):
+        
+        # print(indicators_dict)
+
+        indicators_comb_list = list(premiuns_statistics_to_show['premium_name'])
+        print(f'\nindicators_comb_list: \n', indicators_comb_list)
+
+        marker = '-with-'
+        auto_wallet_dict = {}
+        # number_of_wallets = len(best_indicators_list)
+        number_of_wallets = len(premiuns_to_dict)
+        wallet_proportion = 1/number_of_wallets
+        print(f'\nwallet_proportion: \n', wallet_proportion)
+
+        default_wallet = {
+                        'wallet-1': {'indicadores': {}, 'peso': 1}, 
+                        'wallet-2': {'indicadores': {}, 'peso': 1},
+                        'wallet-3': {'indicadores': {}, 'peso': 1},
+                        'wallet-4': {'indicadores': {}, 'peso': 1},
+                        'wallet-5': {'indicadores': {}, 'peso': 1},
+                        }
+
+        wallet_number = 1
+        existing_wallets_list = []
+        
+        print(f'\npremiuns_to_dict: \n', premiuns_to_dict)
+        indicators_comb_list = [indicators_comb_list[position - 1] for position in premiuns_to_dict]
+        print(f'\nindicators_comb_list: \n', indicators_comb_list)
+
+
+        for indicators_comb in indicators_comb_list:
+            split_indicator = indicators_comb.split(marker)
+            # print(split_indicator)
+
+            indicators_list = []
+
+            for file_name in split_indicator:
+
+                chave_encontrada = None
+
+                for chave, subdicionario in indicators_dict.items():
+                    if 'file_name' in subdicionario and subdicionario['file_name'] == file_name:
+                        chave_encontrada = chave
+                        indicators_list.append(chave)
+                        break
+            print(f'\nindicators_list for wallet-{wallet_number}: ', indicators_list)
+
+            for file_name in indicators_list:
+                # print(file_name)
+                # print(indicators_dict)
+
+                if file_name in indicators_dict:
+                    
+                    order_value = indicators_dict[file_name]['order']
+                    # print(order_value)
+
+                    wallet_name = 'wallet-' + str(wallet_number)
+                    # print(wallet_name)
+                    default_wallet[wallet_name]['indicadores'][file_name] = {'caracteristica': order_value}
+                    default_wallet[wallet_name]['peso'] = wallet_proportion
+                    # print(auto_wallet_dict)
+                    # print('\nWallet dict to append: \n', default_wallet)
+
+                auto_wallet_dict.update(default_wallet)
+                # print('\nAutomatic wallet dict created: \n', auto_wallet_dict)
+
+            existing_wallets_list.append(wallet_name)
+            # print(existing_wallets_list)
+            wallet_number+=1
+
+        print('\nExisting wallets in dict created: ', existing_wallets_list)
+
+        setup_dict = {wallet: auto_wallet_dict[wallet] for wallet in existing_wallets_list}
+        # print('\nAutomatic wallet dict created: \n', setup_dict)
+
+        return setup_dict
+
+
+
     def create_automatic_wallet(self, ranking_indicator, indicators_dict):
         
         # print(ranking_indicator)
@@ -388,11 +469,14 @@ class FinappController:
 
         current_date = pd.to_datetime(end_date)
         start_date = pd.to_datetime(start_date)
-        one_year_offset = pd.DateOffset(months=step_months)
+        months_window_size = pd.DateOffset(months=step_months)
+        months_offset = 3
+
+
 
         while current_date > start_date:
             window_end = current_date
-            window_start = current_date - one_year_offset
+            window_start = current_date - months_window_size
 
             # Verifica se a data da primeira janela ultrapassa o start_date
             if window_start < start_date:
@@ -400,7 +484,8 @@ class FinappController:
 
             yield window_start, window_end
 
-            current_date -= pd.DateOffset(months=step_months)
+            # current_date -= pd.DateOffset(months=step_months/2)
+            current_date -= pd.DateOffset(months=months_offset)
 
 
 
@@ -550,14 +635,17 @@ class FinappController:
 
         rating_premiuns = rrp.MakeResultsPremium(final_analysis_date = final_analysis_date, factors_dict = premium_name_dict, file_name = rating_premiuns_file_name)
         
-        file_not_found = rating_premiuns.getting_premiuns()
+        file_not_found, premios_de_risco = rating_premiuns.getting_premiuns()
+        # print('.\n.\npremios_de_risco: \n', premios_de_risco)
+        print('.\n.\npremios_de_risco: \n', premios_de_risco[premios_de_risco['nome_premio'] == 'MOMENTO_MM_7_40-with-P_VP_INVERT'])
         
         if file_not_found == False:
             dataframe_columns = ['acum_primeiro_quartil', 'acum_segundo_quartil', 'acum_terceiro_quartil', 'acum_quarto_quartil', 'nome_indicador', 'ranking_indicators']
             ranking_indicator = pd.DataFrame(columns=dataframe_columns)
 
             ranking_indicator = rating_premiuns.retorno_quartis()
-            print('.\n.\nIndicators ranking: \n', ranking_indicator[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
+            # print('.\n.\nranking_indicator: \n', ranking_indicator[['ranking_indicators', 'nome_indicador', 'acum_primeiro_quartil']])
+            print('.\n.\nranking_indicator: \n', ranking_indicator)
 
             list_premium_name = {especitif_key: valor['file_name'] for especitif_key, valor in indicators_dict.items() if 'file_name' in valor}
             list_premium_name = list(list_premium_name.values())
@@ -608,7 +696,307 @@ class FinappController:
             return distribution_indicadors, ranking_indicator, top_indicators, fail_to_execute
         else:
             fail_to_execute = True
+            print('fail')
             return distribution_indicadors, ranking_indicator, top_indicators, fail_to_execute
+
+    def run_rank_risk_premiuns(self, indicators_dict, final_analysis_date, rating_premiuns_file_name, 
+                              single_combinations, double_combinations, triple_combinations, create_rating_pdf,
+                              step_months_rank_list, columns_rank_list,
+                              premiuns_to_dict, premiuns_to_show):
+        
+        print(".\n..\n...\nRanking Risk Premiuns!\n...\n..\n.")
+        
+        # finapp = FinappController()
+
+        fail_to_execute = False
+
+        factor_calc_initial_date    = '2012-01-31'
+        factor_calc_end_date        = '2023-12-31'
+        
+        all_variables_present           = False
+        all_selected_premiuns_present   = False
+        enable_to_create_dict           = False
+
+        include_max_window              = False
+
+        step_months_list = step_months_rank_list
+        
+        setup_dict = {}
+        
+        columns_rank_database_list = ['profit_perc', 'anual_mean_acum_returns', 'anual_high_acum_returns', 'anual_low_acum_returns']
+
+        if step_months_rank_list is None or step_months_list is None or columns_rank_list is None:
+            all_variables_present = False
+            print('\nall_variables_present: \n', all_variables_present)
+        else:
+            all_variables_present = True
+            # print('\nall_variables_present: \n', all_variables_present)
+
+        if columns_rank_list != None:
+            all_variables_present = all(elem in columns_rank_database_list for elem in columns_rank_list)
+            # print('\nall_variables_present: \n', all_variables_present)
+
+        if step_months_rank_list != None:
+            existent_in_analysis = all(isinstance(elemento, int) for elemento in step_months_rank_list)
+            # print('\nexistent_in_analysis: \n', existent_in_analysis)
+        else:
+            existent_in_analysis = False
+            print('\nexistent_in_analysis: \n', existent_in_analysis)
+
+        if premiuns_to_show == None or premiuns_to_show > 15:
+            #caso não sejá passado quantidade de premios para exibir ou for muito grande, força os 5 primeiros
+            premiuns_to_show = 5
+            enable_to_create_dict = False
+        else:
+            enable_to_create_dict = True
+            
+        if premiuns_to_dict != None:
+            all_selected_premiuns_present = all(premiuns_to_show >= elemento for elemento in premiuns_to_dict)
+            # print('\nall_selected_premiuns_present: \n', all_selected_premiuns_present)
+
+            if len(premiuns_to_dict) > 5:
+                enable_to_create_dict = False
+        else:
+            all_selected_premiuns_present = False
+            print('\nall_selected_premiuns_present: \n', all_selected_premiuns_present)
+
+        # condições de execução
+        if existent_in_analysis and (len(step_months_rank_list) > 0) and all_variables_present:
+
+            finapp = FinappController()
+
+            dataframe_columns = ['premium_name', 'liquidity', 'months_window_size', 'analyzed_windows', 'profit_perc', 'mean_acum_returns' , 'anual_mean_acum_returns', 'anual_high_acum_returns', 'anual_low_acum_returns']
+            premiuns_statistics = pd.DataFrame(columns=dataframe_columns)
+
+            print(".\n..\n...\nExtracting Statistics from Risk Premiuns!\n...\n..\n.")
+
+            indicators_dict = dict(indicators_dict)
+            print('\nindicators_dict: \n', indicators_dict)
+
+            single_combinations = bool(single_combinations)
+            double_combinations = bool(double_combinations)
+            triple_combinations = bool(triple_combinations)
+            
+            premium_name_dict = finapp.prepare_data_for_rate_premiuns_risks(indicators_dict, single_combinations, double_combinations, triple_combinations)
+            print('.\n.\npremium_name_dict: \n', premium_name_dict)
+
+            rating_premiuns = rrp.MakeResultsPremium(final_analysis_date = factor_calc_end_date, factors_dict = premium_name_dict, file_name = rating_premiuns_file_name)
+
+            file_not_found, premios_de_risco = rating_premiuns.getting_premiuns()
+            # print('.\n.\npremios_de_risco: \n', premios_de_risco)
+
+            premios_de_risco['data'] = pd.to_datetime(premios_de_risco['data'])
+
+            index = 0
+
+            number_of_executions = 0
+
+            profit_count = 0
+            loss_count = 0
+
+            if include_max_window:
+
+                initial_date = pd.to_datetime(factor_calc_initial_date)
+                end_date = pd.to_datetime(factor_calc_end_date)
+
+                max_months = (end_date.year - initial_date.year) * 12 + (end_date.month - initial_date.month)
+                max_months = int(max_months)
+                max_months+=1
+                # print('\nmax_months: \n', max_months)
+
+                if max_months not in step_months_list:
+
+                    step_months_list.append(max_months)
+                    # print('\nstep_months_list: \n', step_months_list)
+
+            days_in_window = None
+
+            for chave, valor in premium_name_dict.items():
+
+                # print('\nchave: \n', chave)
+
+                for step_months in step_months_list:
+
+                    # print('\nstep_month: ', step_months)
+
+                    profit_count = 0
+                    loss_count = 0
+
+                    window_size_threshold = (step_months*30) * (5 / 6)
+                    # print('\nwindow_size_threshold: ', window_size_threshold)
+
+                    mean_acum_returns = 0
+                    acum_primeiro_quartil_list = []
+
+                    high_acum_returns = 0
+                    low_acum_returns = 0
+
+                    analyzed_windows = 0
+
+                    for window_start, window_end  in finapp.sliding_window(start_date=factor_calc_initial_date, end_date=factor_calc_end_date, step_months=step_months):
+                        
+                        window_start = pd.to_datetime(window_start)
+                        window_end = pd.to_datetime(window_end)
+
+                        days_in_window = (window_end - window_start).days
+                        days_in_window = float(days_in_window)
+
+                        if days_in_window > window_size_threshold:
+
+                            # print(f"\nWindow: {window_start} to {window_end}")
+                            # print('\ndays_in_window: ', days_in_window)
+
+                            recorte_premios_de_risco = premios_de_risco[premios_de_risco['data'] >= window_start]
+                            recorte_premios_de_risco = recorte_premios_de_risco[recorte_premios_de_risco['data'] <= window_end]
+                            # print('\nrecorte_premios_de_risco: \n', recorte_premios_de_risco)
+
+                            fator = recorte_premios_de_risco[(recorte_premios_de_risco['nome_premio'] == chave) &
+                                                                (recorte_premios_de_risco['liquidez'] == valor)]
+                            # print('\nfator: \n', fator)
+                            # print('\nfator[nome_premio]: \n', fator[fator['nome_premio'] == 'MOMENTO_MM_7_40-with-P_VP_INVERT'])
+
+                            acum_primeiro_quartil = (fator['primeiro_quartil'].cumprod() - 1).iloc[-1]
+                            # print('\nacum_primeiro_quartil: \n', acum_primeiro_quartil)
+
+                            acum_primeiro_quartil = float(acum_primeiro_quartil)
+                            acum_primeiro_quartil_list.append(acum_primeiro_quartil)
+                            # print('\nacum_primeiro_quartil_list: \n', acum_primeiro_quartil_list)
+                            
+                            if acum_primeiro_quartil > 0:
+                                profit_count+=1
+                            else:
+                                loss_count+=1
+                            
+                            analyzed_windows+=1
+                            number_of_executions+=1
+                    
+                    if len(acum_primeiro_quartil_list) > 0:
+                        mean_acum_returns = sum(acum_primeiro_quartil_list) / len(acum_primeiro_quartil_list)
+                        # print('\nmean_acum_returns: \n', mean_acum_returns)
+
+                        anual_mean_acum_returns = ((1 + mean_acum_returns) ** (12 / step_months)) - 1
+                        # print('\nanual_mean_acum_returns: \n', anual_mean_acum_returns)
+
+                        high_acum_returns = max(acum_primeiro_quartil_list)
+                        anual_high_acum_returns = ((1 + high_acum_returns) ** (12 / step_months)) - 1
+
+                        low_acum_returns = min(acum_primeiro_quartil_list)
+                        anual_low_acum_returns = ((1 + low_acum_returns) ** (12 / step_months)) - 1
+
+                        total_count = profit_count + loss_count
+                        # print('\ntotal_count: \n', total_count)
+
+                        profit_perc = (profit_count / total_count ) * 100
+                        # print('\nprofit_perc: \n', profit_perc)
+
+                        premiuns_statistics.loc[index, 'premium_name'] = chave
+                        premiuns_statistics.loc[index, 'liquidity'] = valor
+                        premiuns_statistics.loc[index, 'months_window_size'] = step_months
+                        premiuns_statistics.loc[index, 'analyzed_windows'] = analyzed_windows
+                        premiuns_statistics.loc[index, 'profit_perc'] = profit_perc
+                        premiuns_statistics.loc[index, 'mean_acum_returns'] = mean_acum_returns
+                        premiuns_statistics.loc[index, 'anual_mean_acum_returns'] = anual_mean_acum_returns
+                        premiuns_statistics.loc[index, 'anual_high_acum_returns'] = anual_high_acum_returns
+                        premiuns_statistics.loc[index, 'anual_low_acum_returns'] = anual_low_acum_returns
+
+                        premiuns_statistics = premiuns_statistics.sort_values('anual_mean_acum_returns', ascending = False)
+
+                        index+=1
+
+            print('\npremiuns_statistics: \n', premiuns_statistics)
+            analyzed_windows_df = pd.DataFrame(columns=['months_window_size','analyzed_windows'])
+            premiuns_statistics = premiuns_statistics.sort_values('months_window_size', ascending = True)
+            analyzed_windows_df = premiuns_statistics.loc[:, ['months_window_size','analyzed_windows']].copy()
+            print('\nanalyzed_windows: \n', analyzed_windows)
+
+            premiuns_statistics = premiuns_statistics.sort_values('anual_mean_acum_returns', ascending = False)
+            # print('\npremiuns_statistics: \n', premiuns_statistics)
+
+            number_of_combinations = index / len(step_months_list)
+            number_of_combinations = int(number_of_combinations)
+            # print('\nnumber_of_combinations: \n', number_of_combinations)
+
+            number_of_analysed_windows = number_of_executions / number_of_combinations
+            number_of_analysed_windows = int(number_of_analysed_windows)
+            # print('\nnumber_of_analysed_windows: \n', number_of_analysed_windows)
+
+            # print('\nnumber_of_executions: \n', number_of_executions)
+
+            columns_to_pivot = ['analyzed_windows', 'profit_perc', 'anual_mean_acum_returns', 'anual_high_acum_returns', 'anual_low_acum_returns']
+
+            final_statistics = premiuns_statistics.pivot(index='premium_name', columns='months_window_size', values=columns_to_pivot)
+            final_statistics.reset_index(inplace=True)
+            final_statistics.columns = ['premium_name'] + [f'{col}_{level}_months' for col, level in final_statistics.columns[1:]]
+
+            statistics_columns_name = premiuns_statistics.columns.tolist()
+            remove_columns = ['premium_name', 'mean_acum_returns', 'liquidity', 'months_window_size']
+            statistics_columns_name = [x for x in statistics_columns_name if x not in remove_columns]
+
+            # Prefixo e sufixo desejados
+            prefix = '_'
+            sufix = '_months'
+
+            # Adicionar prefixo e sufixo a cada elemento da lista
+            columns_sufix_list = [prefix + str(item) + sufix for item in step_months_list]
+
+            # print('\npremiuns_statistics: \n', premiuns_statistics)
+            # print('\nfinal_statistics: \n', final_statistics)
+            # print('\nstatistics_columns_name: \n', statistics_columns_name)
+            # print('\nstep_months_list: \n', columns_sufix_list)
+
+            #
+            ##
+            ### RANKING
+            ##
+            #
+            columns_rank_sufix_list = [element for element in columns_sufix_list if any(str(step_month) in element for step_month in step_months_rank_list)]
+            # print('\ncolumns_rank_sufix_list: \n', columns_rank_sufix_list)
+
+            print(".\n..\n...\nRanking Risk Premiuns!\n...\n..\n.")
+
+            columns_to_rank = [item + sufix for item in columns_rank_list for sufix in columns_rank_sufix_list]
+            print('\ncolumns_to_rank: \n', columns_to_rank)
+
+            ranking_premiuns_statistics = final_statistics[columns_to_rank].rank(ascending=False, method='min')
+
+            ranking_premiuns_statistics.columns = ['rank_' + coluna for coluna in columns_to_rank]
+            ranking_premiuns_statistics['rank_final'] = ranking_premiuns_statistics.sum(axis=1).rank(ascending=True, method='min')
+            # print('\nranking_premiuns_statistics: \n', ranking_premiuns_statistics)
+
+            premiuns_statistics = pd.concat([final_statistics, ranking_premiuns_statistics], axis=1)
+            premiuns_statistics = premiuns_statistics.sort_values('rank_final', ascending = True)
+            # print('\npremiuns_statistics: \n', premiuns_statistics)
+
+            columns_to_show = ['premium_name'] + columns_to_rank + ['rank_final']
+
+            # Filtrar colunas com base nos elementos desejados
+            premiuns_statistics_to_show = premiuns_statistics.filter(items=columns_to_show)
+            
+            #
+            #OPTIONAL
+            best_indicators_list = []
+            best_indicators_list = list(premiuns_statistics_to_show['premium_name'].head(premiuns_to_show))
+            print(f'\nOs {premiuns_to_show} primeiros indicadores são: \n', best_indicators_list)
+
+            ##
+            # CREATE AUTOMATIC PONDERATED WALLET
+            ##
+            # todos os premius indicados para ir ao dicionário de carteiras devem estar dentro dos premios a serem exibidos
+            if enable_to_create_dict and all_selected_premiuns_present:
+                print('entrou')
+                setup_dict = finapp.create_wallet_dict(indicators_dict, premiuns_statistics_to_show, premiuns_to_dict)
+                # print('\nsetup_dict: \n', setup_dict)
+            else:
+                print('\n\n\t---- não satisfez condições para criação do setup_dict.')
+
+            ##### OUTPUTS #####
+
+            print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
+            print('\nnumber_of_analysed_windows: \n', number_of_analysed_windows)
+
+            ##### OUTPUTS #####
+
+        return premiuns_statistics_to_show, analyzed_windows_df, setup_dict, fail_to_execute
 
     def run_factor_calculator(self, setup_dict, factor_calc_end_date, factor_calc_initial_date, asset_quantity, rebalance_periods, liquidity_filter, create_wallets_pfd):
 
@@ -677,10 +1065,10 @@ class FinappController:
         #
         last_analysis_date, last_period_variation, periods_since_rebalance = finapp.calculate_wallet_returns_since_last_rebalance(analysis_assets_list, last_wallet_rebalance_date)
 
-        # print('\n\nfinal_analysis: \n',final_analysis)
         # print('\n\nlast_period_variation: \n',last_period_variation)
 
         final_analysis = pd.merge(final_analysis, last_period_variation, on='asset')
+        print('\n\nfinal_analysis: \n',final_analysis)
         
         weighted_average_returns = (final_analysis['last_period_variation'] * final_analysis['peso']).sum() / final_analysis['peso'].sum()
         print(f'\nweighted_average wallet rentability past {periods_since_rebalance} periods: ', round(weighted_average_returns,2) , '%')
@@ -905,7 +1293,7 @@ if __name__ == "__main__":
     # choose de indicators combinations to rate
     single_combinations             = True
     double_combinations             = True
-    triple_combinations             = False
+    triple_combinations             = True
     # true if you want to update a existing file
     update_existing_file            = False
 
@@ -913,7 +1301,7 @@ if __name__ == "__main__":
     # enable rating risks
     rate_risk_premiuns              = True
     # final_analysis_date             = '2022-12-31'
-    final_analysis_date             = '2023-11-06'
+    final_analysis_date             = '2023-12-31'
     rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
     create_rating_pdf               = False
     
@@ -942,9 +1330,9 @@ if __name__ == "__main__":
 
 
     # enable generation of wallet
-    generate_wallets                = True
+    generate_wallets                = False
     factor_calc_initial_date        = '2013-12-31'
-    factor_calc_end_date            = '2023-12-02'
+    factor_calc_end_date            = '2023-12-31'
     create_wallets_pfd              = False
     
 
@@ -1051,7 +1439,7 @@ if __name__ == "__main__":
                         # 'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
                         # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
                         # 'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
-                        'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
+                        # 'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
                         # 'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
                         'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
                         # 'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
@@ -1085,7 +1473,7 @@ if __name__ == "__main__":
 
     if(calculate_risk_premiuns):
 
-        finapp.run_calculate_risk_premius(indicators_dict, 
+        finapp.run_calculate_risk_premiuns(indicators_dict, 
                                           single_combinations, double_combinations, triple_combinations, 
                                           update_existing_file)
 

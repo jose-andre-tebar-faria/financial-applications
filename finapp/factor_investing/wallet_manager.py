@@ -126,6 +126,7 @@ class WalletManager:
         new_wallet_id = None
         wallet_existent = False
         esta_contido = False
+        setup_duplicated = False
     
         # print('New setup: \n', new_setup)
 
@@ -158,9 +159,12 @@ class WalletManager:
                     wallet_id_existent = setup_to_verify['wallet_id'].iloc[0]
                     # print('wallet_id_existent', wallet_id_existent)
                     
+            validation_df = pd.DataFrame()
+            
             if(esta_contido):
                 print('Setup duplicated!')                
                 print('\t--- nothing to do!')
+                setup_duplicated = True
             else:
                 print('New setup!')
 
@@ -184,12 +188,24 @@ class WalletManager:
                 # print('new_wallet_id', new_wallet_id)
 
                 updated_setup.to_parquet(f'{self.full_desired_path}/wallets.parquet', index = True)
+
+                file_not_found, setups_df = wallet_manager.read_setups()
+
+                validation_df = setups_df[setups_df['wallet_id'] == new_wallet_id]
+
+                if validation_df.empty:
+                    print('\n\t---falha ao salvar!\n')
+                    new_wallet_id = None
+                    wallet_id_existent = None
+                else:
+                    print('\n\t+++salvo corretamente!!\n')
         
         # print('wallet_id_existent', wallet_id_existent)
         # print('new_wallet_id', new_wallet_id)
         if(wallet_id_existent == None and new_wallet_id == None):
             print('\n ---no wallet defined or found!')
             wallet_existent = False
+            wallet_id = None
         else:
             wallet_existent = True
             if(wallet_id_existent == None):
@@ -198,8 +214,7 @@ class WalletManager:
                 wallet_id = wallet_id_existent
         # print('wallet_id', wallet_id)
 
-        return wallet_id, wallet_existent
-        # return wallet_id_existent, new_wallet_id
+        return wallet_id, wallet_existent, validation_df, setup_duplicated
 
     #
     ##
@@ -621,7 +636,7 @@ if __name__ == "__main__":
 
     # new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, rebalance_periods = 2, user_name = 'pacient-zero', create_date = '1892-10-23')
     # new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, rebalance_periods = rebalance_periods, number_of_assets = asset_quantity, user_name = user_name, create_date = create_date)
-    # wallet_id, wallet_existent = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
+    # wallet_id, wallet_existent, validation_df = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
 
     # wallet_manager.close_setup(wallet_id='first-shot', user_name='pacient-zero', close_date = '2023-11-22')
     # wallet_manager.close_setup(wallet_id='first-shot', user_name='tebinha', close_date = '2023-11-21')
@@ -629,7 +644,7 @@ if __name__ == "__main__":
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='first-shot', user_name='error')
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='9178', user_name='andre-tebar')
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='5380', user_name='tebinha')
-    # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='2504', user_name='jandretebarf')
+    # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='9668', user_name='jandretebarf')
 
 
     ##############
