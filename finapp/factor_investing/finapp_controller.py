@@ -133,8 +133,6 @@ class FinappController:
 
         return premium_name_dict
 
-
-
     def create_wallet_dict(self, indicators_dict, premiuns_statistics_to_show, premiuns_to_dict):
         
         # print(indicators_dict)
@@ -211,8 +209,6 @@ class FinappController:
         # print('\nAutomatic wallet dict created: \n', setup_dict)
 
         return setup_dict
-
-
 
     def create_automatic_wallet(self, ranking_indicator, indicators_dict):
         

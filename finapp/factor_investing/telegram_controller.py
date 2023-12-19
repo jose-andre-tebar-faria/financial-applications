@@ -66,6 +66,8 @@ class TelegramManager:
                 return answer_text
             if 'delete_setup' in processed_text:
                 return answer_text
+            if 'read_portifolio' in processed_text:
+                return answer_text
             if adm_interaction:
                 if 'update_database' in processed_text:
                     return '📥 database updated! 📥'
@@ -265,6 +267,33 @@ class TelegramManager:
 
         return setup_to_delete
     
+    def read_portifolio_command(wallet_id):
+
+        wallet_manager = wm.WalletManager()
+
+        file_not_found, compositions_df = wallet_manager.read_portifolios_composition(wallet_id)
+
+        if file_not_found:
+
+            number_of_compositions = 0
+            last_dates = []
+            compositions_df = pd.DataFrame()
+
+            return number_of_compositions, last_dates, compositions_df
+        else:
+
+            compositions_df['rebalance_date'] = pd.to_datetime(compositions_df['rebalance_date'])
+
+            compositions_df = compositions_df.sort_values(by='rebalance_date', ascending=False)
+
+            last_dates = compositions_df['rebalance_date'].unique()[:3]
+
+            number_of_compositions = len(last_dates)
+
+            compositions_df = compositions_df[compositions_df['rebalance_date'].isin(last_dates)]
+
+        return number_of_compositions, last_dates, compositions_df
+
     ###
     ##
     # TOOLS
@@ -308,6 +337,7 @@ class TelegramManager:
         rebalance_setup_pattern = re.compile(r'rebalance_setup\s*\(([^)]+)\)')
         nightvision_pattern = re.compile(r'nightvision\s*\(([^)]+)\)')
         delete_setup_pattern = re.compile(r'delete_setup\s*\(([^)]+)\)')
+        read_portifolio_pattern = re.compile(r'read_portifolio\s*\(([^)]+)\)')
 
         if save_username_pattern.match(command_string):
 
@@ -360,6 +390,13 @@ class TelegramManager:
             indicators_list, variables_list = TelegramManager.extract_elements_from_command(match)
             
             return {'command': 'delete_setup'}, indicators_list, variables_list
+        elif read_portifolio_pattern.match(command_string):
+
+            match = read_portifolio_pattern.match(command_string)
+
+            indicators_list, variables_list = TelegramManager.extract_elements_from_command(match)
+            
+            return {'command': 'read_portifolio'}, indicators_list, variables_list
         elif read_setups_pattern.match(command_string):
             
             return {'command': 'read_setups'}, indicators_list, variables_list
@@ -749,6 +786,40 @@ class TelegramManager:
 
             return answer_text
 
+    def create_read_portifolio_answer(username_existent, wallet_id, number_of_compositions, last_dates, compositions_df):
+
+        markdown_text = ''
+
+        if compositions_df.empty:
+
+            answer_text = '💬 no portifolio existent... 🤨'
+            return answer_text
+        else:
+
+            markdown_text += f"📢 O usuário {username_existent} solicitou o histórico de composições para o setup wallet_id= {wallet_id}. \n\n----------------------------------------------\n"
+
+            for date in last_dates:
+                
+                number_of_assets = len(compositions_df[compositions_df['rebalance_date'] == date])
+                
+                date = date.strftime('%Y-%m-%d')
+                markdown_text += f"🗓️ rebalance_date: {date}\n"
+
+                for _, row in compositions_df.iterrows():
+
+                    ticker = row['ticker']
+                    wallet_proportion = row['wallet_proportion']
+                    wallet_proportion = round(wallet_proportion * 100, 1)
+                    
+                    print(f"                             {ticker}")
+                    markdown_text += f"        🔹 {ticker} - {wallet_proportion}%\n"
+                        
+                markdown_text += f"➡️ total of assets: {number_of_assets}\n----------------------------------------------"
+
+            answer_text = markdown_text
+
+        return answer_text
+
     def is_valid_date(date_str):
         
         try:
@@ -934,12 +1005,14 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     \n----------------------------------------------
     ⚖ `rebalance_setup(wallet_id=XXXX)`: Rebalance wallet_id creatirng a wallet composition until max_date possible.
     \n----------------------------------------------
-    👓 `nightvision(wallet_id=XXXX)`: Details each asset in wallet.
+    👓 `nightvision(wallet_id=XXXX)`: Show details of each asset in active wallet.
     \n----------------------------------------------
     ❌ `delete_setup(wallet_id=XXXX)`: Delete a specific setup.
     \n----------------------------------------------
-    ⚖ `rate_risk_premiuns()`: Rank indicators using a sliding windows strategy and return differents statistics.\n
+    ⚖ `rank_risk_premiuns()`: Rank indicators using a sliding windows strategy and return differents statistics.\n
     examples:\n       📍`rank_risk_premiuns(momento_1_meses)`\n       📍`rank_risk_premiuns(momento_1_meses, save_setup = true)`\n       📍`rank_risk_premiuns(ROIC, mm_7_40, momento_6_meses, p_vp_invert,  premiuns_to_show=3, step_months_rank_list = [6;24;36], columns_rank_list = [profit_perc; anual_high_acum_returns], premiuns_to_dict=[1;3], save_setup = true)`
+    \n----------------------------------------------
+    🗓️ `read_portifolio(wallet_id=XXXX)`: Show last 3 rebalances of specific wallet_id.
 
 🔒🔒🔒 **Admin Commands:** 🔒🔒🔒
 
@@ -1613,6 +1686,39 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         setup_to_delete = TelegramManager.delete_setup_command(wallet_id, username_existent)
 
         answer_text = TelegramManager.create_delete_setup_answer(username_existent, setup_to_delete)
+
+    if(decoded_command == 'read_portifolio' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
+
+        fail_to_execute = False
+
+        if message_type == 'supergroup':
+            if answer_in_group:
+                await update.message.reply_text("Ok.")
+        else:
+            await update.message.reply_text("Ok.")
+
+        wallet_id = '0000'
+
+        #verificar se as variaveis estão corretas
+        decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
+        # print(decoded_variables_split_list)
+
+        for variable, value in decoded_variables_split_list:
+            print(f"Variable: {variable}, Value: {value}")
+            if variable == 'wallet_id':
+                possib_int = value
+                if TelegramManager.is_valid_integer(possib_int):
+                    wallet_id = str(possib_int)
+                    print(f"{possib_int} integer.")
+                else:
+                    print(f"{possib_int} não é integer.")
+                    fail_to_execute = True
+            else:
+                fail_to_execute = True
+
+        number_of_compositions, last_dates, compositions_df = TelegramManager.read_portifolio_command(wallet_id)
+
+        answer_text = TelegramManager.create_read_portifolio_answer(username_existent, wallet_id, number_of_compositions, last_dates, compositions_df)
 
     # defining when bot aswer
     if old_message == False:

@@ -10,7 +10,7 @@ matplotlib.rcParams.update({'font.size': 9})
 import datetime
 from dotenv import load_dotenv
 
-plt.style.use("seaborn")
+plt.style.use("cyberpunk")
 
 class MakeResultsPremium:
 

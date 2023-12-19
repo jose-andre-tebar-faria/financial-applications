@@ -148,6 +148,8 @@ class DownloadByWebscrapping:
                                                 EC.visibility_of_element_located((By.XPATH, '//*[@id="nav-bloco"]/div'))
                                             )
 
+                                            total_assets = 0
+
                                             ## VERIFICAÇÃO DE NÚMERO DE ITENS NA PÁGINA PARA EXPANDIR SE NECESSÁRIO
                                             while True:
                                                 # print('Verificando mais de uma página por asset!')
@@ -168,6 +170,7 @@ class DownloadByWebscrapping:
                                                 break
 
                                             index_asset_max = list(range(1, 101))
+
 
                                             while True:
                                                 try:
@@ -207,20 +210,21 @@ class DownloadByWebscrapping:
 
                                                         # descobrindo o número de seguimentos
                                                         assets_selector = '/html/body/app-root/app-companies-search/div/form/div[2]/div[1]/div'
-                                                        # print('', segments_selector)
+                                                        # print('segments_selector: ', segments_selector)
                                                         number_of_assets = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, assets_selector)))
-                                                        # print('\t\t\t', segments.text)
                                                         elementos_filhos = number_of_assets.find_elements(By.XPATH, '*')
                                                         numero_de_elementos = len(elementos_filhos)
                                                         print('numero_de_elementos: ', numero_de_elementos)
 
+                                                        total_assets+=numero_de_elementos
+
                                                         if numero_de_elementos > 1:
                                                             asset_details_selector = '/html/body/app-root/app-companies-search/div/form/div[2]/div[1]/div/div[' + str(index) + ']'
-                                                            print('assets_selector: ', asset_details_selector)
+                                                            # print('assets_selector: ', asset_details_selector)
                                                         else:
                                                             asset_details_selector = '/html/body/app-root/app-companies-search/div/form/div[2]/div[1]/div/div/div/div'
                                                             
-                                                            print('assets_selector: ', asset_details_selector)
+                                                            # print('assets_selector: ', asset_details_selector)
 
                                                         # ACESSO DETALHADOS AOS TICKERS
                                                         button_asset_details = WebDriverWait(driver, 10).until(
@@ -243,7 +247,7 @@ class DownloadByWebscrapping:
 
                                                         try:
 
-                                                            time.sleep(0.5)
+                                                            time.sleep(1)
                                                             ticker = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, ticker_selector)))
                                                             ticker_to_dict = ticker.text
                                                             print('\t\t\t\t\t', ticker_to_dict)
@@ -269,7 +273,7 @@ class DownloadByWebscrapping:
                                                             content_list.append('')
                                                             # print(content_list)
 
-                                                        time.sleep(0.5)
+                                                        time.sleep(1)
                                                         cnpj = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, cnpj_selector)))
                                                         cnpj_to_dict = cnpj.text
                                                         print('\t\t\t\t\t', cnpj_to_dict)
@@ -277,15 +281,25 @@ class DownloadByWebscrapping:
                                                         content_list.append(cnpj_to_dict)
                                                         # print(content_list)
 
-                                                        time.sleep(0.5)
-                                                        main_activity = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, main_activity_selector)))
-                                                        main_activity_to_dict = main_activity.text
-                                                        print('\t\t\t\t\t', main_activity_to_dict)
+                                                        main_activity_exisitent = False
 
-                                                        content_list.append(main_activity_to_dict)
-                                                        # print(content_list)
+                                                        try:
+                                                            time.sleep(1)
+                                                            main_activity = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, main_activity_selector)))
+                                                            main_activity_to_dict = main_activity.text
+                                                            print('\t\t\t\t\t', main_activity_to_dict)
 
-                                                        time.sleep(0.5)
+                                                            main_activity_exisitent = True
+                                                        except:
+                                                            print('\t\t\t\t\t\tNão existe atividade principal!!')
+
+                                                        if main_activity_exisitent:
+                                                            content_list.append(main_activity_to_dict)
+                                                            # print(content_list)
+                                                        else:
+                                                            content_list.append('')
+
+                                                        time.sleep(1)
                                                         company_name = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, company_name_selector)))
                                                         company_name_to_dict = company_name.text
                                                         print('\t\t\t\t\t', company_name_to_dict)
@@ -302,7 +316,7 @@ class DownloadByWebscrapping:
                                                         # print(content_list)
 
                                                         driver.back()
-                                                        time.sleep(0.5)
+                                                        time.sleep(1)
 
 
 
@@ -357,7 +371,8 @@ class DownloadByWebscrapping:
         # print('Foram encontrados ', len(assets_database), 'tickers!')
 
         print(assets_database)
-        print('Foram encontrados', len(assets_database), 'tickers!')
+        print('Foram salvos', len(assets_database), 'assets!')
+        print('Foram encontrados', total_assets, 'assets!')
 
         load_dotenv()
 
@@ -371,9 +386,6 @@ class DownloadByWebscrapping:
             os.chdir(full_desired_path)
 
         assets_database.to_parquet(f'{full_desired_path}/sectors_assets_b3_webscraping.parquet', index = True)
-
-
-        # api_key = 'UTBW1G0YXLD6LKJ5'
 
 
     def getting_asset_logos_google_by_site(self):

@@ -292,7 +292,7 @@ class WalletManager:
     # LENDO AS COMPOSIÇÕES DAS CARTEIRAS
     ##
     #
-    def read_portifolios_composition(self):
+    def read_portifolios_composition(self, wallet_id = None):
 
         file_not_found = False
 
@@ -304,15 +304,18 @@ class WalletManager:
             compositions_df = None
             file_not_found = True
 
-            if(file_not_found):
+        if(file_not_found):
 
-                print('\n\t+++creating file wallets_composition.parquet.')
-                
-                empty_composition = pd.DataFrame()
-
-                empty_composition.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
+            print('\n\t+++creating file wallets_composition.parquet.')
             
+            empty_composition = pd.DataFrame()
+
+            empty_composition.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
+        
             print("\nFile not found.")
+        else:
+            if wallet_id != None:
+                compositions_df = compositions_df[compositions_df['wallet_id'] == str(wallet_id)]
 
         return file_not_found, compositions_df
 
