@@ -310,7 +310,7 @@ class WalletManager:
             
             empty_composition = pd.DataFrame()
 
-            empty_composition.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
+            # empty_composition.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
         
             print("\nFile not found.")
         else:
@@ -443,12 +443,12 @@ class WalletManager:
     def delete_portifolio_composition(self, wallet_id, rebalance_date):
 
         file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
-        # print('Setup database: \n', setups_df)
+        # print('compositions_df: \n', compositions_df)
 
         if(file_not_found):
-            print('\twallets.parquet does not exist!')
+            print('\twallets_composition.parquet does not exist!')
         else:
-            condition = (compositions_df['wallet_id'] == wallet_id) & (compositions_df['rebalance_date'] == rebalance_date)
+            condition = (compositions_df['wallet_id'] == str(wallet_id)) & (compositions_df['rebalance_date'] == pd.to_datetime(rebalance_date))
             setup_to_delete = compositions_df[condition]
             print('Setup to delete: \n', setup_to_delete)
 
@@ -458,7 +458,7 @@ class WalletManager:
                 new_setup = compositions_df.drop(compositions_df[condition].index)
                 print('New setup: \n', new_setup)
                 
-                new_setup.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
+                # new_setup.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
     
     
     
@@ -606,26 +606,26 @@ class WalletManager:
 
 if __name__ == "__main__":
 
-    setup_dict =  {
-                    'wallet-momentum': {
-                        'indicadores': {
-                            'momento_6_meses': {'caracteristica': 'decrescente'}
-                            },
-                        'peso': 0.35},
-                    'wallet-mix': {
-                        'indicadores': {
-                            'ValorDeMercado': {'caracteristica': 'crescente'},
-                            # 'EBIT_EV': {'caracteristica': 'decrescente'},
-                            # 'momento_6_meses': {'caracteristica': 'decrescente'}
-                            },
-                        'peso': 0.65}
-                    }
+    # setup_dict =  {
+    #                 'wallet-momentum': {
+    #                     'indicadores': {
+    #                         'momento_6_meses': {'caracteristica': 'decrescente'}
+    #                         },
+    #                     'peso': 0.35},
+    #                 'wallet-mix': {
+    #                     'indicadores': {
+    #                         'ValorDeMercado': {'caracteristica': 'crescente'},
+    #                         # 'EBIT_EV': {'caracteristica': 'decrescente'},
+    #                         # 'momento_6_meses': {'caracteristica': 'decrescente'}
+    #                         },
+    #                     'peso': 0.65}
+    #                 }
 
-    rebalance_periods = 42
-    asset_quantity = 7
+    # rebalance_periods = 42
+    # asset_quantity = 7
 
-    user_name = 'tebinha'
-    create_date = '1992-08-12'
+    # user_name = 'tebinha'
+    # create_date = '1992-08-12'
 
     wallet_manager = WalletManager()
     
@@ -633,8 +633,8 @@ if __name__ == "__main__":
     # SETUP CONFIGURATION
     ##############
 
-    file_not_found, wallets_df = wallet_manager.read_setups()
-    print(wallets_df)
+    # file_not_found, wallets_df = wallet_manager.read_setups()
+    # print(wallets_df)
 
     # print(wallets_df[['wallet_id', 'wallet_name', 'number_of_assets', 'user_name', 'proportion', 'close_date', 'rebalance_periods', 'last_rebalance_date']])
 
@@ -655,22 +655,22 @@ if __name__ == "__main__":
     # WALLET COMPOSITION CONFIGURATION
     ##############
 
-    data0 = """rebalance_date,ticker,wallet_proportion
-            2023-10-16,BRFS3,0.25
-            2023-10-16,CEAB3,0.25
-            2023-10-16,PETR4,0.25
-            2023-10-16,WEGE3,0.25
-            """
-    data1 = """rebalance_date,ticker,wallet_proportion
-            2023-11-16,NINJ3,0.33
-            2023-11-16,TEND3,0.34
-            2023-11-16,CSUD3,0.33
-            """
+    # data0 = """rebalance_date,ticker,wallet_proportion
+    #         2023-10-16,BRFS3,0.25
+    #         2023-10-16,CEAB3,0.25
+    #         2023-10-16,PETR4,0.25
+    #         2023-10-16,WEGE3,0.25
+    #         """
+    # data1 = """rebalance_date,ticker,wallet_proportion
+    #         2023-11-16,NINJ3,0.33
+    #         2023-11-16,TEND3,0.34
+    #         2023-11-16,CSUD3,0.33
+    #         """
     
-    data2 = """rebalance_date,ticker,wallet_proportion
-            2023-12-16,WEGE3,0.5
-            2023-12-16,PETR4,0.5
-            """
+    # data2 = """rebalance_date,ticker,wallet_proportion
+    #         2023-12-16,WEGE3,0.5
+    #         2023-12-16,PETR4,0.5
+    #         """
     
     # last_wallet_csv = pd.read_csv(StringIO(data2))
     # last_wallet_defined = pd.DataFrame(last_wallet_csv)
@@ -684,9 +684,11 @@ if __name__ == "__main__":
     #     save_wallet_composion = False
     # print('wallet_id', wallet_id)
 
-    # wallet_manager.read_portifolios_composition()
+    # file_not_found, compositions_df = wallet_manager.read_portifolios_composition(wallet_id = 3657)
+    # print('compositions_df',compositions_df)
+
     # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = last_wallet_defined)
-    # wallet_manager.delete_portifolio_composition(wallet_id = '4235', rebalance_date = '2023-11-20')
+    # wallet_manager.delete_portifolio_composition(wallet_id = 3657, rebalance_date = '2023-08-17')
 
     ##############
     # OPERATION TYPES CONFIGURATION

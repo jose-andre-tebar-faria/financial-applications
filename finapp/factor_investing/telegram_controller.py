@@ -68,6 +68,8 @@ class TelegramManager:
                 return answer_text
             if 'read_portifolio' in processed_text:
                 return answer_text
+            if 'execute_rebalance' in processed_text:
+                return answer_text
             if adm_interaction:
                 if 'update_database' in processed_text:
                     return '📥 database updated! 📥'
@@ -294,6 +296,16 @@ class TelegramManager:
 
         return number_of_compositions, last_dates, compositions_df
 
+    def execute_rebalance_command(wallet_id, rebalance_date):
+
+        finapp = fc.FinappController()
+
+        orders = pd.DataFrame()
+
+        orders = finapp.run_execute_rebalance(wallet_id, rebalance_date)
+
+        return orders
+
     ###
     ##
     # TOOLS
@@ -338,6 +350,7 @@ class TelegramManager:
         nightvision_pattern = re.compile(r'nightvision\s*\(([^)]+)\)')
         delete_setup_pattern = re.compile(r'delete_setup\s*\(([^)]+)\)')
         read_portifolio_pattern = re.compile(r'read_portifolio\s*\(([^)]+)\)')
+        execute_rebalance_pattern = re.compile(r'execute_rebalance\s*\(([^)]+)\)')
 
         if save_username_pattern.match(command_string):
 
@@ -397,6 +410,13 @@ class TelegramManager:
             indicators_list, variables_list = TelegramManager.extract_elements_from_command(match)
             
             return {'command': 'read_portifolio'}, indicators_list, variables_list
+        elif execute_rebalance_pattern.match(command_string):
+
+            match = execute_rebalance_pattern.match(command_string)
+
+            indicators_list, variables_list = TelegramManager.extract_elements_from_command(match)
+            
+            return {'command': 'execute_rebalance'}, indicators_list, variables_list
         elif read_setups_pattern.match(command_string):
             
             return {'command': 'read_setups'}, indicators_list, variables_list
@@ -556,6 +576,8 @@ class TelegramManager:
 
             for column_name in statistics_columns_name:
 
+                column_name_str = str(column_name)
+                
                 if column_name[:9] != last_column_name[:9]:
                     first_time = True
                     last_column_name = column_name
@@ -565,39 +587,52 @@ class TelegramManager:
                     row[column_name] = round(float(row[column_name]),2)
 
                     if first_time:
-                        markdown_text += f"    _perc_\n"
+                        markdown_text += f"    profit_perc_\n"
                         first_time = False
 
-                    markdown_text += f"      🎰 {column_name} -> {row[column_name]}%\n"
+                    months_to_show = column_name_str.rsplit('_', 2)[1]
+                    months_to_show = column_name_str.rsplit('_', 2)[1]
+                    column_name_to_show = months_to_show + '_months'
+
+                    markdown_text += f"      🎰 {column_name_to_show} -> {row[column_name]}%\n"
 
                 elif '_mean_acum_returns_' in column_name:
 
                     if first_time:
-                        markdown_text += f"    _mean_acum_returns_\n"
+                        markdown_text += f"    anual_mean_acum_returns_\n"
                         first_time = False
 
                     row[column_name] = round(float(row[column_name])*100,2)
 
-                    markdown_text += f"       🟩 {column_name} -> {row[column_name]}%\n"
+                    column_name_to_show = column_name_str.rsplit('_', 2)[1]
+                    column_name_to_show = column_name_to_show + '_months'
+
+                    markdown_text += f"       🟩 {column_name_to_show} -> {row[column_name]}%\n"
 
                 elif '_high_acum_returns_' in column_name:
                     
                     row[column_name] = round(float(row[column_name])*100,2)
 
                     if first_time:
-                        markdown_text += f"    _high_acum_returns_\n"
+                        markdown_text += f"    anual_high_acum_returns_\n"
                         first_time = False
 
-                    markdown_text += f"       🟪 {column_name} -> {row[column_name]}%\n"
+                    column_name_to_show = column_name_str.rsplit('_', 2)[1]
+                    column_name_to_show = column_name_to_show + '_months'
+
+                    markdown_text += f"       🟪 {column_name_to_show} -> {row[column_name]}%\n"
                 elif '_low_acum_returns_' in column_name:
                     
                     row[column_name] = round(float(row[column_name])*100,2)
 
                     if first_time:
-                        markdown_text += f"    _low_acum_returns_\n"
+                        markdown_text += f"    anual_low_acum_returns_\n"
                         first_time = False
 
-                    markdown_text += f"       🟥 {column_name} -> {row[column_name]}%\n"
+                    column_name_to_show = column_name_str.rsplit('_', 2)[1]
+                    column_name_to_show = column_name_to_show + '_months'
+
+                    markdown_text += f"       🟥 {column_name_to_show} -> {row[column_name]}%\n"
             
             rank_position+=1
 
@@ -806,17 +841,79 @@ class TelegramManager:
                 markdown_text += f"🗓️ rebalance_date: {date}\n"
 
                 for _, row in compositions_df.iterrows():
-
-                    ticker = row['ticker']
-                    wallet_proportion = row['wallet_proportion']
-                    wallet_proportion = round(wallet_proportion * 100, 1)
                     
-                    print(f"                             {ticker}")
-                    markdown_text += f"        🔹 {ticker} - {wallet_proportion}%\n"
+                    if row['rebalance_date'].strftime('%Y-%m-%d') == date:
+                        ticker = row['ticker']
+                        wallet_proportion = row['wallet_proportion']
+                        wallet_proportion = round(wallet_proportion * 100, 1)
                         
-                markdown_text += f"➡️ total of assets: {number_of_assets}\n----------------------------------------------"
+                        print(f"                             {ticker}")
+                        markdown_text += f"        🔹 {ticker} - {wallet_proportion}%\n"
+                        
+                markdown_text += f"➡️ total of assets: {number_of_assets}\n----------------------------------------------\n"
 
             answer_text = markdown_text
+
+        return answer_text
+
+    def create_execute_rebalance_answer(wallet_id, rebalance_date, orders):
+        
+        execute_rebalance = True
+
+        if len(orders) < 0:
+            execute_rebalance = False
+
+        markdown_text = ''
+        
+        if execute_rebalance:
+
+            markdown_text = f'🧾🧾🧾 EXECUTION COMPLETE!! 🧾🧾🧾\n\nVocê solicitou o relatório de compra & venda referente a wallet_id = {wallet_id} para a data de rebalanceamento, rebalance_date = {rebalance_date}.\n\n'
+
+            buy_orders = orders[orders['perc_variation'] > 0]
+            sell_orders = orders[orders['perc_variation'] < 0]
+
+            for _, row in orders.iterrows():
+
+                ticker = row['ticker']
+                wallet_proportion_actual = row['wallet_proportion_actual'] * 100
+                perc_variation = row['perc_variation']
+                wallet_proportion_previous = row['wallet_proportion_previous'] * 100
+                perc_returns = row['perc_returns']
+                rebalance_asset_price = row['rebalance_asset_price']
+                previous_asset_price = row['previous_asset_price']
+                previous_rebalance_date = row['previous_rebalance_date']
+
+                markdown_text += f'--------------------\n'
+
+                if ticker in list(buy_orders['ticker']):
+                    print('compra')
+
+                    markdown_text += f'⬅️ COMPRA: {ticker}\n'
+                    markdown_text += f'     🔹 porcentagem de compra: {perc_variation}%\n'
+                    markdown_text += f'     🔹 porcentagem anterior: {wallet_proportion_previous}%\n'
+                    markdown_text += f'     🔹 porcentagem atual: {wallet_proportion_actual}%\n'
+                elif ticker in list(sell_orders['ticker']):
+                    print('venda')
+
+                    markdown_text += f'➡️ VENDA: {ticker}\n'
+                    markdown_text += f'     🔹 porcentagem de venda: {perc_variation}%\n'
+                    markdown_text += f'     🔹 porcentagem anterior: {wallet_proportion_previous}%\n'
+                    markdown_text += f'     🔹 porcentagem remanescente: {wallet_proportion_actual}%\n'
+                    
+                    if previous_asset_price !=0 and rebalance_asset_price != 0:
+                        if perc_returns > 0:
+                            markdown_text += f'     🟢 resultado do trade: {perc_returns}%\n'
+                        else:
+                            markdown_text += f'     🔴 resultado do trade: {perc_returns}%\n'
+                        markdown_text += f'         🔸 preço de compra: R$ {previous_asset_price} ({previous_rebalance_date})\n'
+                        markdown_text += f'         🔸 preço de venda: R$ {rebalance_asset_price}\n'
+                    else:
+                        markdown_text += f'         ⚠️ sem dados para avaliar o trade.\n'
+        else:
+                    
+            markdown_text = f'🚧🚧🚧 Ordem inexistente! 🚧🚧🚧'
+                    
+        answer_text = markdown_text
 
         return answer_text
 
@@ -1028,7 +1125,7 @@ Os comandos mostrados abaixo podem ser executados diretamente na conversa com o 
 ----------------------------------------------
     💾 `save_username`: Realiza o cadastro do usuário na base do FINAPP, necessário para execuçãos dos outros comandos.
 \n----------------------------------------------
-    ⚖ `rank_risk_premiuns()`: Usado para realizar a avaliação de indicadores e/ou suas combinações. O comando trás como output uma mensagem contendo o resultado do rankeamento, gerando informações estatísticas relevantes para avaliação de performance dos indicadores.\n
+    ⚖ `rank_risk_premiuns()`: Usado para realizar a avaliação de indicadores e/ou suas combinações. O comando trás como output uma mensagem contendo o resultado do rankeamento, gerando informações estatísticas relevantes para avaliação de performance dos indicadores. A avaliação é feita usando o método de janelas deslizantes e usamos janelas de 12 e 60 meses para rankeamento.\n
     exemplos:\n       📍`rank_risk_premiuns(momento_1_meses)`\n       📍`rank_risk_premiuns(momento_1_meses, save_setup = true)`\n       📍`rank_risk_premiuns(ROIC, mm_7_40, momento_6_meses, p_vp_invert,  premiuns_to_show=3, step_months_rank_list = [6;24;36], columns_rank_list = [profit_perc; anual_high_acum_returns], premiuns_to_dict=[1;3], save_setup = false)`
 \n----------------------------------------------
     📝 `read_setups`: Usado para visualização dos setups previamente configurados. vale resaltar que é possível salvar no máximo 5 setups diferntes.
@@ -1040,6 +1137,8 @@ Os comandos mostrados abaixo podem ser executados diretamente na conversa com o 
     ❌ `delete_setup(wallet_id=XXXX)`: Usado para excluir um setup especificado (`wallet_id`).
 \n----------------------------------------------
     🗓️ `read_portifolio(wallet_id=XXXX)`: Exibe as três últimas composições do setup especificado (`wallet_id`).
+\n----------------------------------------------
+    🧾 `execute_rebalance(wallet_id=XXXX, rebalance_date=YYYY-MM-DD)`: Exibe as ordens de compra & venda do setup especificado (`wallet_id`) para uma data de rebalanceamento específica (`rebalance_date`).
 
 🔒
 🔒🔒
@@ -1072,6 +1171,33 @@ Comando possíveis de serem executados somente por administradores da plataforma
     response_text = response_text.strip()
 
     await update.message.reply_text(response_text, parse_mode='MarkdownV2')
+
+async def deep_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    
+    print("/deep executed")
+    
+    username: str = update.message.from_user.username
+    first_name: str = update.message.from_user.first_name
+    last_name: str = update.message.from_user.last_name
+    print(f'name: {first_name} {last_name} - username: {username}')
+
+    response_text = '''
+💊
+
+    '''
+    
+    response_text = response_text.replace('_', r'\_')
+    response_text = response_text.replace('!', r'\!')
+    response_text = response_text.replace(':', r'\:')
+    response_text = response_text.replace('.', r'\.')
+    response_text = response_text.replace('-', r'\-')
+    response_text = response_text.replace('=', r'\=')
+    response_text = response_text.replace(')', r'\)')
+    response_text = response_text.replace('(', r'\(')
+    response_text = response_text.strip()
+
+    await update.message.reply_text(response_text, parse_mode='MarkdownV2')
+
 
 ###
 ##
@@ -1416,7 +1542,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         columns_rank_list           = ['anual_mean_acum_returns' , 'profit_perc']
         create_pdf                  = False
         factor_calc_initial_date    = '2012-01-31'
-        factor_calc_end_date        = '2023-12-31'
+        factor_calc_end_date        = '2024-12-31'
         append_text = ''
         
         #verificar se as variaveis estão corretas
@@ -1614,7 +1740,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Ok.")
 
         rebalance_wallet_id = '0000'
-        rebalance_calc_end_date = '2023-12-02'
+        rebalance_calc_end_date = '2023-11-29'
         factor_calc_initial_date = '2019-12-31'
         liquidity_filter = 1
         wallet_to_database = pd.DataFrame()
@@ -1756,6 +1882,55 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         answer_text = TelegramManager.create_read_portifolio_answer(username_existent, wallet_id, number_of_compositions, last_dates, compositions_df)
 
+    if(decoded_command == 'execute_rebalance' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 2) ):
+
+        fail_to_execute = False
+
+        wallet_id = 0000
+        rebalance_date = '1992-08-12'
+        rebalance_date = pd.to_datetime(rebalance_date)
+        rebalance_date = rebalance_date.strftime('%Y-%m-%d')
+
+        #verificar se as variaveis estão corretas
+        decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
+        print('\ndecoded_variables_split_list: \n', decoded_variables_split_list)
+
+        for variable, value in decoded_variables_split_list:
+
+            variable = str(variable)
+
+            print(f"Variable: {variable}, Value: {value}")
+
+            if variable == 'rebalance_date':
+                rebalance_date = value
+                if TelegramManager.is_valid_date(value):
+                    rebalance_date = pd.to_datetime(rebalance_date)
+                    rebalance_date = rebalance_date.strftime('%Y-%m-%d')
+                    print(f"{rebalance_date} DATA VÁLIDA.")
+                else:
+                    validation_txt = f"({rebalance_date}) não é uma data válida no formato esperado."
+                    print(validation_txt)
+                    # await update.message.reply_text(validation_txt)
+                    fail_to_execute = True
+            elif variable == 'wallet_id':
+                possib_int = value
+                if TelegramManager.is_valid_integer(possib_int):
+                    wallet_id = int(possib_int)
+                    print(f"{wallet_id} integer.")
+                else:
+                    print(f"{wallet_id} não é integer.")
+                    fail_to_execute = True
+            else:
+                fail_to_execute = True
+
+        orders = pd.DataFrame()
+        
+        orders = TelegramManager.execute_rebalance_command(wallet_id, rebalance_date)
+        print('orders: \n', orders)
+
+        # answer_text = 'execute_rebalance default answer'
+        answer_text = TelegramManager.create_execute_rebalance_answer(wallet_id, rebalance_date, orders)
+                
     # defining when bot aswer
     if old_message == False:
         if message_type == 'supergroup':

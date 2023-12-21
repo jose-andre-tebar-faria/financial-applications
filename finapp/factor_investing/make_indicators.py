@@ -343,6 +343,12 @@ class MakeIndicator():
         total_number_of_stocks = total_number_of_stocks.sort_values(['data', 'ticker'])
         # print('total_number_of_stocks: \n', total_number_of_stocks)
 
+        total_number_of_stocks['data'] = pd.to_datetime(total_number_of_stocks['data'])
+        patrimonial_value['data'] = pd.to_datetime(patrimonial_value['data'])
+        total_number_of_stocks = total_number_of_stocks.dropna(subset=['ticker', 'data'])
+        patrimonial_value = patrimonial_value.dropna(subset=['ticker', 'data'])
+        quotations = quotations.dropna(subset=['ticker', 'data'])
+
         p_vp = pd.merge(pd.merge(total_number_of_stocks, patrimonial_value, on=['ticker', 'data'], how='outer'), quotations, on=['ticker', 'data'], how='outer')
         p_vp = p_vp.sort_values(['data', 'ticker'])
         p_vp = p_vp.dropna()

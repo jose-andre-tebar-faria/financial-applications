@@ -466,8 +466,10 @@ class FinappController:
         current_date = pd.to_datetime(end_date)
         start_date = pd.to_datetime(start_date)
         months_window_size = pd.DateOffset(months=step_months)
-        months_offset = 3
-
+        if step_months > 6:
+            months_offset = 3
+        else:
+            months_offset = 2
 
 
         while current_date > start_date:
@@ -1003,6 +1005,8 @@ class FinappController:
         if create_wallets_pfd:
             pdf_name = finapp.create_factor_file_names(setup_dict)
 
+        rebalance_periods = int(rebalance_periods)
+
         backtest = fc.MakeBacktest(data_final = factor_calc_end_date, data_inicial = factor_calc_initial_date, 
                                    filtro_liquidez=(liquidity_filter * 1000000), balanceamento = rebalance_periods, 
                                    numero_ativos = asset_quantity, corretagem = 0.01, nome_arquivo = pdf_name, **setup_dict)
@@ -1011,6 +1015,8 @@ class FinappController:
         backtest.filtrando_datas()
         backtest.criando_carteiras()
         wallets, returns = backtest.calculando_retorno_diario()
+
+        print('last 21 wallet days: \n',returns.tail(31))
         # print(returns)
 
         #
@@ -1096,7 +1102,6 @@ class FinappController:
                                                             factor_calc_end_date=rebalance_calc_end_date, factor_calc_initial_date=factor_calc_initial_date, 
                                                             asset_quantity=asset_quantity_setup, rebalance_periods=rebalance_periods_setup, liquidity_filter=liquidity_filter,
                                                             create_wallets_pfd=create_wallets_pfd)
-        
 
             #
             ## FINDING LAST WALLET
@@ -1165,7 +1170,7 @@ class FinappController:
                     else:
                         print('\nneed to update composition!')
 
-                        wallet_to_database = last_wallet_composition_to_compare
+                        wallet_to_database = last_calculated_wallet
 
                         print('\nWallet to database: \n', wallet_to_database)
 
@@ -1233,17 +1238,17 @@ class FinappController:
 
         indicator = mi.MakeIndicator()
 
-        indicator.making_momentum(months = 1)
-        indicator.making_momentum(months = 6)
-        indicator.making_momentum(months = 12)
-        indicator.ratio_moving_mean(mm_curta = 7, mm_longa = 40)
-        indicator.median_volume(months = 1)
-        indicator.beta(years = 1)
-        indicator.volatility(years = 1)
-        indicator.pl_divida_bruta()
-        indicator.ebit_divida_liquida()
+        # indicator.making_momentum(months = 1)
+        # indicator.making_momentum(months = 6)
+        # indicator.making_momentum(months = 12)
+        # indicator.ratio_moving_mean(mm_curta = 7, mm_longa = 40)
+        # indicator.median_volume(months = 1)
+        # indicator.beta(years = 1)
+        # indicator.volatility(years = 1)
+        # indicator.pl_divida_bruta()
+        # indicator.ebit_divida_liquida()
         
-        peg_ratio = indicator.peg_ratio()
+        # peg_ratio = indicator.peg_ratio()
         # print('last 15 peg_ratios: \n', peg_ratio.tail(15)) #[[peg_ratio['ticker'] == 'WEGE3']]
 
         p_vp = indicator.p_vp()
@@ -1256,7 +1261,135 @@ class FinappController:
         # print(net_margin.tail(20))
 
         print(".\n.\n=== UPDATE COMPLETE! ===")
+
+    def run_execute_rebalance(self, wallet_id, rebalance_date):
         
+        wallet_manager = wm.WalletManager()
+
+        current_folder = os.getcwd()
+        
+        orders = pd.DataFrame()
+        
+        project_folder = os.getenv("PROJECT_FOLDER")
+        databse_folder = os.getenv("DATABASE_FOLDER")
+        full_desired_path = os.path.join(project_folder,databse_folder)
+
+        if(current_folder != full_desired_path):
+            os.chdir(full_desired_path)
+
+        quotations_database_parquet = pd.read_parquet(f'{full_desired_path}/cotacoes.parquet')
+        
+        file_not_found, compositions_df = wallet_manager.read_portifolios_composition(wallet_id)
+
+        compositions_df['rebalance_date'] = pd.to_datetime(compositions_df['rebalance_date'])
+        
+        # Filtrar o DataFrame pela wallet_id e a data passada
+        df_filtrado = compositions_df[(compositions_df['wallet_id'] == str(wallet_id)) & (compositions_df['rebalance_date'] == pd.to_datetime(rebalance_date))]
+
+        # Verificar se há registros para a data passada
+        if df_filtrado.empty:
+            print(f"\nNenhum registro encontrado para a wallet_id {wallet_id} na data {rebalance_date}.")
+            return
+
+        # Obter a última data existente no banco para a wallet_id antes da data passada
+        ultima_data_antes_passada = compositions_df[(compositions_df['wallet_id'] == str(wallet_id)) & (compositions_df['rebalance_date'] < pd.to_datetime(rebalance_date))]['rebalance_date'].max()
+
+        if pd.isnull(ultima_data_antes_passada):
+            # Se não houver data anterior, considerar que a variação é toda a quantidade da data passada
+            df_resultado = df_filtrado[['wallet_id', 'rebalance_date', 'ticker', 'wallet_proportion']].copy()
+            # print(df_resultado)
+            df_resultado['perc_variation'] = 100.0  # Variação é 100% quando não há data anterior
+            df_resultado['wallet_proportion_actual'] = df_resultado['wallet_proportion']
+            df_resultado['wallet_proportion_previous'] = 0
+        else:
+            # Filtrar o DataFrame para incluir apenas as linhas correspondentes à última data antes da data passada
+            df_ultima_data_antes_passada = compositions_df[(compositions_df['wallet_id'] == str(wallet_id)) & (compositions_df['rebalance_date'] == ultima_data_antes_passada)]
+
+            # Usar o método merge para obter as proporções para a data passada e a última data antes da data passada
+            df_merge = pd.merge(df_filtrado, df_ultima_data_antes_passada, on=['ticker'], how='outer', suffixes=('_actual', '_previous'))
+
+            # Preencher valores nulos com 0
+            df_merge = df_merge.fillna(0)
+            # print(df_merge)
+
+            # Calcular a variação percentual para cada ticker
+            df_merge['perc_variation'] = ((df_merge['wallet_proportion_actual'] - df_merge['wallet_proportion_previous']) / df_merge['wallet_proportion_previous']).replace([np.inf, -np.inf], 1) * 100
+
+            # Selecionar as colunas necessárias
+            df_resultado = df_merge[['wallet_id_actual', 'rebalance_date_actual', 'ticker', 'perc_variation', 'wallet_proportion_actual', 'wallet_proportion_previous']].drop_duplicates()
+
+        analysis_assets_list = list(df_resultado['ticker'][df_resultado['perc_variation'] < 0])
+        # print('analysis_assets_list: \n',analysis_assets_list)
+
+        quotations_database = pd.DataFrame(quotations_database_parquet[['data', 'ticker', 'preco_fechamento_ajustado']][quotations_database_parquet['ticker'].isin(analysis_assets_list)])
+        quotations_database['data'] = pd.to_datetime(quotations_database['data'])
+        quotations_database.sort_values(['ticker', 'data'], inplace=True)
+
+        # print('quotations_database: \n',quotations_database)
+
+        orders = df_resultado[['ticker', 'perc_variation', 'wallet_proportion_actual', 'wallet_proportion_previous']][df_resultado['perc_variation'] != 0]
+        print('orders: \n',orders)
+       
+        previous_asset_price = 0
+        rebalance_asset_price = 0
+        orders['perc_returns'] = 0
+        
+        # for asset in analysis_assets_list:
+        for index, row in orders.iterrows():
+
+            if row['perc_variation'] < 0:
+                asset = row['ticker']
+                print(asset)
+                print('asset: ', asset)
+                
+                rebalance_date = pd.to_datetime(rebalance_date)
+                print('rebalance_date: ', rebalance_date)
+
+                try:
+                    rebalance_asset_price = quotations_database['preco_fechamento_ajustado'][(quotations_database['data'] == rebalance_date) & (quotations_database['ticker'] == asset)].iloc[0]
+                except:
+                    rebalance_asset_price = 0
+                    print(f'\t---price not found for ticker {asset} at {rebalance_date}')
+
+                print('rebalance_asset_price: ',rebalance_asset_price)
+
+                # Filtrar o DataFrame para incluir apenas as linhas antes da data de saída
+                df_anterior = compositions_df[compositions_df['rebalance_date'] < rebalance_date]
+
+                # Verificar quais ativos estavam presentes na composição anterior à data de saída
+                ativos_anteriores = df_anterior[df_anterior['ticker'] == asset]
+
+                # Se houver registros, a primeira data em que o ativo entrou será o valor mínimo de 'rebalance_date'
+                if not ativos_anteriores.empty:
+                    previous_rebalance_date = ativos_anteriores['rebalance_date'].min()
+                    previous_rebalance_date = previous_rebalance_date.strftime('%Y-%m-%d')
+                    orders.at[index, 'previous_rebalance_date'] = previous_rebalance_date
+                    print('previous_rebalance_date: ', previous_rebalance_date)
+                    # print(f'O ativo {asset} entrou na composição em: {previous_rebalance_date}')
+
+                previous_asset_price = quotations_database['preco_fechamento_ajustado'][(quotations_database['data'] == pd.to_datetime(previous_rebalance_date)) & (quotations_database['ticker'] == str(asset))].iloc[0]
+                
+                # previous_asset_price = quotations_database['preco_fechamento_ajustado'][quotations_database['data'] == previous_rebalance_date]
+
+                print('previous_asset_price: ', previous_asset_price)
+
+                orders.at[index, 'rebalance_asset_price'] = rebalance_asset_price
+                orders.at[index, 'previous_asset_price'] = previous_asset_price
+
+                if previous_asset_price == 0 or rebalance_asset_price == 0:
+                    print('\t---perc_return not calculated!')
+                else:
+                    perc_returns = round(((rebalance_asset_price - previous_asset_price) / rebalance_asset_price) * 100,1)
+                    perc_returns = float(perc_returns)
+                    print('perc_returns: ', perc_returns)
+                    orders.at[index, 'perc_returns'] = perc_returns
+            else:
+                orders.at[index, 'rebalance_asset_price'] = 0
+                orders.at[index, 'previous_asset_price'] = 0
+                orders.at[index, 'previous_rebalance_date'] = 0
+
+        return orders
+
 ###########################EXECUTORS#######################################
 
 if __name__ == "__main__":
@@ -1281,17 +1414,17 @@ if __name__ == "__main__":
 
 
     # enable indicators update
-    update_indicators               = False
+    update_indicators               = True
 
 
     # enable calculate risk premiuns database update
-    calculate_risk_premiuns         = False
+    calculate_risk_premiuns         = True
     # choose de indicators combinations to rate
     single_combinations             = True
     double_combinations             = True
     triple_combinations             = True
     # true if you want to update a existing file
-    update_existing_file            = False
+    update_existing_file            = True
 
 
     # enable rating risks
@@ -1321,7 +1454,7 @@ if __name__ == "__main__":
 
 
     # enable rebalance wallet
-    rebalance_wallets               = True
+    rebalance_wallets               = False
     rebalance_wallet_id             = '5765'
 
 
@@ -1333,9 +1466,9 @@ if __name__ == "__main__":
     
 
     # enable configure wallet composition database
-    config_wallet_composition       = True
+    config_wallet_composition       = False
     read_wallet_composition         = False
-    save_wallet_composion           = True
+    save_wallet_composion           = False
 
 
     # enable requirements.txt update
@@ -1430,7 +1563,7 @@ if __name__ == "__main__":
     ###
     indicators_dict = {
                         'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
-                        'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
+                        # 'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
                         # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
                         # 'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
                         # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
@@ -1439,8 +1572,8 @@ if __name__ == "__main__":
                         # 'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
                         'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
                         # 'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
-                        'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
-                        # 'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
+                        # 'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
+                        'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
                         # 'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
                         'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
                         # 'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
@@ -1591,7 +1724,7 @@ if __name__ == "__main__":
 
         # print('\nrebalance_wallet_id: \n', rebalance_wallet_id)
 
-        rebalance_calc_end_date = '2023-10-02'
+        rebalance_calc_end_date = '2024-12-31'
         factor_calc_initial_date = '2019-12-31'
         create_wallets_pfd = False
 
