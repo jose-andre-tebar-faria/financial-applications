@@ -1295,7 +1295,7 @@ if __name__ == "__main__":
 
 
     # enable rating risks
-    rate_risk_premiuns              = True
+    rate_risk_premiuns              = False
     # final_analysis_date             = '2022-12-31'
     final_analysis_date             = '2023-12-31'
     rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
@@ -1321,21 +1321,21 @@ if __name__ == "__main__":
 
 
     # enable rebalance wallet
-    rebalance_wallets               = False
-    rebalance_wallet_id             = '2504'
+    rebalance_wallets               = True
+    rebalance_wallet_id             = '5765'
 
 
     # enable generation of wallet
     generate_wallets                = False
     factor_calc_initial_date        = '2013-12-31'
-    factor_calc_end_date            = '2023-12-31'
+    factor_calc_end_date            = '2023-11-30'
     create_wallets_pfd              = False
     
 
     # enable configure wallet composition database
-    config_wallet_composition       = False
+    config_wallet_composition       = True
     read_wallet_composition         = False
-    save_wallet_composion           = False
+    save_wallet_composion           = True
 
 
     # enable requirements.txt update
@@ -1566,7 +1566,7 @@ if __name__ == "__main__":
             
             new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, number_of_assets = asset_quantity, rebalance_periods = rebalance_periods, user_name = user_name_adm, create_date = create_date_auto)
 
-            wallet_id, wallet_existent = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
+            wallet_id, wallet_existent, validation_df, setup_duplicated = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
             # print('wallet_id_existent', wallet_id_existent)
             # print('new_wallet_id', new_wallet_id)
 
@@ -1591,7 +1591,7 @@ if __name__ == "__main__":
 
         # print('\nrebalance_wallet_id: \n', rebalance_wallet_id)
 
-        rebalance_calc_end_date = '2023-12-02'
+        rebalance_calc_end_date = '2023-10-02'
         factor_calc_initial_date = '2019-12-31'
         create_wallets_pfd = False
 
@@ -1640,7 +1640,7 @@ if __name__ == "__main__":
 
             print('\nWallet to database: \n', wallet_to_database)
 
-            wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = wallet_to_database)
+            wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
 
 
 

@@ -633,7 +633,8 @@ if __name__ == "__main__":
     # SETUP CONFIGURATION
     ##############
 
-    # file_not_found, wallets_df = wallet_manager.read_setups()
+    file_not_found, wallets_df = wallet_manager.read_setups()
+    print(wallets_df)
 
     # print(wallets_df[['wallet_id', 'wallet_name', 'number_of_assets', 'user_name', 'proportion', 'close_date', 'rebalance_periods', 'last_rebalance_date']])
 
@@ -647,7 +648,7 @@ if __name__ == "__main__":
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='first-shot', user_name='error')
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='9178', user_name='andre-tebar')
     # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='5380', user_name='tebinha')
-    # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='9668', user_name='jandretebarf')
+    # wallet_manager.delete_setup(wallet_manager = wallet_manager, wallet_id='5765', user_name='andre-tebar')
 
 
     ##############

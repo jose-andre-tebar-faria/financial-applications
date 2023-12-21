@@ -899,31 +899,39 @@ class TelegramManager:
 ##
 ###
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    print("/start executed")
     
+    username: str = update.message.from_user.username
+    first_name: str = update.message.from_user.first_name
+    last_name: str = update.message.from_user.last_name
+    print(f'name: {first_name} {last_name} - username: {username}')
+
     response_text = '''
 **BORA COMEÇAR ???**
 
 📣 Este BOT está conectado a aplicação FINAPP e eu sou seu intelocutor.
     
-📈 Será aqui que realizaremos avaliações de indicadores fundamentalistas aplicando a técnica de Factor Investing para construir uma carteira de renda variável rentável!
+📈 Será aqui que realizaremos avaliações de indicadores fundamentalistas aplicando a técnica de Factor Investing para acompanhar a performance de ativos da classe de renda variável rentável mais rentável da história - ações!
 
-🐭 Resumidamente com esse BOT será possível avaliar e comparar a performance de rentabilidade de diferentes indicadores usando dados do mercado de ações brasileiro atualizados e criar assim setups automaticamente.
+🐭 Resumidamente com esse BOT será possível 1) avaliar e comparar a performance de rentabilidade de diferentes indicadores usando dados do mercado de ações brasileiro atualizados e com histórico de 10 anos e 2) salvar e gerir o resultado atual do acompanhamento do resultado de indicadores e/ou suas combinações através de setups.
 
-🌎 **Jornada de Usuário**
+🌎 *Jornada de Usuário*
 
-    É importante deixar claro que todos os comandos aceitados pelo finapp-interlocutor estão contidos no /help, então caso tenha dúvidas não hesite em invocá-lo.
+    É importante deixar claro que todos os comandos aceitos pelo finapp-interlocutor estão contidos no /help, então caso tenha dúvidas não hesite em invocá-lo.
 
-        1º- Necessário cadastro na base de dados Finapp usando o comando `save_username`. É obrigatório a existência (pré-cadastro) de Primeiro Nome, Último Nome e username no Telegram.
+        1º- Necessário cadastro na base de dados Finapp usando o comando `save_username`. É obrigatório realizar o cadastro de Primeiro Nome, Último Nome e username na Aba de Configurações do Telegram.
 
-        2º- Com o cadastro feito é possível avaliar os prêmios de risco dos indicatores existentes do comando /indicators de forma combinada usando o comando `rate_risk_premiuns()`. 
-        Exemplo: `rate_risk_premiuns(ValorDeMercado, momento_6_meses, p_vp_invert)`
+        2º- Com o cadastro feito é possível rankear a performance dos prêmios de risco dos indicatores e/ou suas combinações (1a1, 2a2 e 3a3). Os indicadores que podem estar contidos dentro do parênteses do comando `rank_risk_premiuns()` podem ser vistos no comando /indicators.
+        Você pode montar a estrutura desse comando copiando o comando no início do exemplo no /help e depois copiar os indicadores presentes no comando /indicators. Por exmplo, para avaliar a performance dos últimos 10 anos do indicador 'Momento 6 Meses' usa-se o comando:\n       📍 `rank_risk_premiuns(momento_6_meses)`
 
-        Caso escolha salvar o setup com as 2 melhores combinações rankiadas, deve-se configurar a variável save_setup = True. Assim será criado um setup com rebalanceamento de 21 dias e cada carteira com 5 ativos. Importante notar que no final da mensagem de avaliação, caso seja escolhido salvar, será passado o wallet_id para ser usado no comando de rebalanceamento.
-        Exemplo: `rate_risk_premiuns(ValorDeMercado, momento_6_meses, p_vp_invert, save_setup=true)`
+        Caso queira salvar um setup contendo as combinações que foram rankiadas & exibidas na mensagem, deve-se configurar a variável save_setup = True juntamente com a variável `premiuns_to_dict` que irá indicar quais posições do ranking estarão contidos no setup. Assim será criado um setup com um rebalanceamento de 21 dias e com 5 ativos para cada combinação. Importante notar que no final da mensagem de avaliação, caso seja escolhido salvar, será passado o `wallet_id` para ser usado como referência para próximos comandos.
+        Exemplo para salvar o 1º e 3º lugar no ranking exibido considerando as combinações dos3 indicadores informados:\n       📍 `rate_risk_premiuns(ValorDeMercado, momento_6_meses, p_vp_invert, save_setup=true, premiuns_to_dict=[1;3])`
 
-        3º- Após salvar algum setup. você pode acessar os setups pelo comando `read_setups`.
+        3º- Após salvar algum setup, você pode acessar os setups salvos pelo comando `read_setups`.
 
-        4º- Para gerar um rebalanceamento de algum setup seu, você pode usar o comando `rebalance_setup(wallet_id=XXXX)` trocando o 'XXXX' pelo wallet_id desejado.
+        4º- Para gerar um rebalanceamento de algum setup priamente configurado, você pode usar o comando `rebalance_setup(wallet_id=XXXX)` trocando o 'XXXX' pelo wallet_id desejado.
+
+        5º- Para ter detalhes atualizados de algum setup, é possíval executar o comando `nightvision(wallet_id=XXXX)`. Será possível ver o resultado de cada ativo desde o último rebalanceamento com detalhes de cada ativo, além do resultado de todos os ativos juntos considerando as proporções.
     
     💰💰💰
     '''
@@ -941,6 +949,13 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(response_text, parse_mode='MarkdownV2')
 
 async def indicators_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    print("/indicators executed")
+    
+    username: str = update.message.from_user.username
+    first_name: str = update.message.from_user.first_name
+    last_name: str = update.message.from_user.last_name
+    print(f'name: {first_name} {last_name} - username: {username}')
 
     response_text = '''
     ⚙ **INDICATORS PAGE** ⚙
@@ -990,41 +1005,62 @@ async def indicators_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
+    print("/help executed")
+    
+    username: str = update.message.from_user.username
+    first_name: str = update.message.from_user.first_name
+    last_name: str = update.message.from_user.last_name
+    print(f'name: {first_name} {last_name} - username: {username}')
+
     response_text = '''
-    🧭 **HELP PAGE** 🧭
+💊
+💊💊
+💊💊💊
+**Comandos**
+💊💊💊
+💊💊
+💊
 
-🔐 **Acceptable Commands:** 🔐
+Os comandos mostrados abaixo podem ser executados diretamente na conversa com o bot quanto no grupo que o bot esteja. Para interagir com o bot em grupos, é necessário marcar o bot. 
 
-    ----------------------------------------------
-    💾 `save_username`: To start your journey you must configure your First Name, Last Name and username at Telegram Settings.
-    \n----------------------------------------------
-    ⚜ `rate_risk_premiuns()`: Rank selected indicators. You can send an optional attribut to save your setup with 'save_setup=True'. If you choose to save, Finapp will select the rank2 of combinations to create a setup with 2 wallets. Rebalance periods will be 21 and assets per wallet 5 (if the same asset is present in both wallets, it will receive more wallet proportion). You can use /indicators command to guide you.\n
-    examples:\n       📍`rate_risk_premiuns(momento_1_meses)`\n       📍`rate_risk_premiuns(momento_1_meses, save_setup = true)`
-    \n----------------------------------------------
-    📝 `read_setups`: Read setups database.
-    \n----------------------------------------------
-    ⚖ `rebalance_setup(wallet_id=XXXX)`: Rebalance wallet_id creatirng a wallet composition until max_date possible.
-    \n----------------------------------------------
-    👓 `nightvision(wallet_id=XXXX)`: Show details of each asset in active wallet.
-    \n----------------------------------------------
-    ❌ `delete_setup(wallet_id=XXXX)`: Delete a specific setup.
-    \n----------------------------------------------
-    ⚖ `rank_risk_premiuns()`: Rank indicators using a sliding windows strategy and return differents statistics.\n
-    examples:\n       📍`rank_risk_premiuns(momento_1_meses)`\n       📍`rank_risk_premiuns(momento_1_meses, save_setup = true)`\n       📍`rank_risk_premiuns(ROIC, mm_7_40, momento_6_meses, p_vp_invert,  premiuns_to_show=3, step_months_rank_list = [6;24;36], columns_rank_list = [profit_perc; anual_high_acum_returns], premiuns_to_dict=[1;3], save_setup = true)`
-    \n----------------------------------------------
-    🗓️ `read_portifolio(wallet_id=XXXX)`: Show last 3 rebalances of specific wallet_id.
+✉ Para facilitar sua experiência, os comandos e seus exemplos são 'clicáveis'. Ou seja, clicou, copiou. 🎇 Quando um comando não tem parênteses, ele pode ser usado exatamente como está indicado no exemplo clicável.
 
-🔒🔒🔒 **Admin Commands:** 🔒🔒🔒
+----------------------------------------------
+    💾 `save_username`: Realiza o cadastro do usuário na base do FINAPP, necessário para execuçãos dos outros comandos.
+\n----------------------------------------------
+    ⚖ `rank_risk_premiuns()`: Usado para realizar a avaliação de indicadores e/ou suas combinações. O comando trás como output uma mensagem contendo o resultado do rankeamento, gerando informações estatísticas relevantes para avaliação de performance dos indicadores.\n
+    exemplos:\n       📍`rank_risk_premiuns(momento_1_meses)`\n       📍`rank_risk_premiuns(momento_1_meses, save_setup = true)`\n       📍`rank_risk_premiuns(ROIC, mm_7_40, momento_6_meses, p_vp_invert,  premiuns_to_show=3, step_months_rank_list = [6;24;36], columns_rank_list = [profit_perc; anual_high_acum_returns], premiuns_to_dict=[1;3], save_setup = false)`
+\n----------------------------------------------
+    📝 `read_setups`: Usado para visualização dos setups previamente configurados. vale resaltar que é possível salvar no máximo 5 setups diferntes.
+\n----------------------------------------------
+    ⚖ `rebalance_setup(wallet_id=XXXX)`: Após avaliação e definição do(s) setup(s), pelo comando `rank_risk_premiuns()` é possível gerar a lista de ativos que mais são representados pelos indicadores informado no corpo do comando (`wallet_id`).
+\n----------------------------------------------
+    👓 `nightvision(wallet_id=XXXX)`: Comando retorna uma mensagem contendo detalhes de cada ativo no setup indicada (`wallet_id`), mostrando retornos desde último rebalanceamento de cada ativo e também da carteira toda.
+\n----------------------------------------------
+    ❌ `delete_setup(wallet_id=XXXX)`: Usado para excluir um setup especificado (`wallet_id`).
+\n----------------------------------------------
+    🗓️ `read_portifolio(wallet_id=XXXX)`: Exibe as três últimas composições do setup especificado (`wallet_id`).
 
-    ----------------------------------------------
-    📦 `update_database`: To update Finapp database.
-    \n----------------------------------------------
-    🧩 `make_indicators`: Update indicators database.
-    \n----------------------------------------------
-    📖 `calculate_risk_premiuns()`: Calculate premiuns risks of indicators alone, 2/2, and 3/3. You can use /indicators command to guide you.
+🔒
+🔒🔒
+*Comandos ADM*
+🔒🔒
+🔒
 
-✉ Para facilitar sua experiência, os comandos e seus exemplos são 'clicáveis'. Ou seja, clicou, copiou. 🎇
+Comando possíveis de serem executados somente por administradores da plataforma, que são usados para carregamento de dados, criação de indicadores e cálculo de prêmios de risco.
+----------------------------------------------
+    📦 `update_database`: Usado para atualização da base de dados do FINAPP.
+----------------------------------------------
+    🧩 `make_indicators`: Usado para atualziação da base de dados de parte dos indicadores.
+----------------------------------------------
+    📖 `calculate_risk_premiuns()`: Usado para calcular os prêmios de risco dos indicadores e suas combinações.
+
     '''
+# 💣💣💣 **Depreciado** 💣💣💣
+#     ----------------------------------------------
+#     ⚜ `rate_risk_premiuns()`: Rank selected indicators. You can send an optional attribut to save your setup with 'save_setup=True'. If you choose to save, Finapp will select the rank2 of combinations to create a setup with 2 wallets. Rebalance periods will be 21 and assets per wallet 5 (if the same asset is present in both wallets, it will receive more wallet proportion). You can use /indicators command to guide you.\n
+#     examples:\n       📍`rate_risk_premiuns(momento_1_meses)`\n       📍`rate_risk_premiuns(momento_1_meses, save_setup = true)`
+    
     response_text = response_text.replace('_', r'\_')
     response_text = response_text.replace('!', r'\!')
     response_text = response_text.replace(':', r'\:')
