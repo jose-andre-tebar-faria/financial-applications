@@ -212,7 +212,7 @@ class TelegramManager:
         wallet_to_database = pd.DataFrame()
 
         # print(rebalance_wallet_id)
-        # print(rebalance_calc_end_date)
+        print('rebalance_calc_end_date: ', rebalance_calc_end_date)
         # print(indicators_dict_database)
         # print(factor_calc_initial_date)
         # print(liquidity_filter)
@@ -236,28 +236,29 @@ class TelegramManager:
 
         return wallets_df
 
-    def nightvision_command(wallet_id):
-        
-        wallet_manager = wm.WalletManager()
+    def nightvision_command(wallet_id, rebalance_date):
 
-        weighted_average_returns=None
-        last_analysis_date=None
-        final_analysis=None
-
-        file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
-        # print('compositions_df: \n', compositions_df)
-
-        compositions_df = compositions_df[compositions_df['wallet_id'] == wallet_id]
-        compositions_df = compositions_df[['rebalance_date','ticker','wallet_proportion']]
-        compositions_df.rename(columns={'rebalance_date': 'data', 'wallet_proportion': 'peso'}, inplace=True)
-        compositions_df = compositions_df.set_index('data', drop=True)
-        # print('compositions_df: \n', compositions_df)
+        weighted_average_returns = None
+        last_analysis_date = None
+        final_analysis = pd.DataFrame()
 
         finapp = fc.FinappController()
 
-        final_analysis, last_analysis_date, weighted_average_returns = finapp.run_last_generated_wallet(compositions_df)
+        wallet_manager = wm.WalletManager()
 
-        return final_analysis, last_analysis_date, weighted_average_returns
+        file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
+        
+        compositions_df['wallet_id'] = compositions_df['wallet_id'].astype(int)
+        compositions_df = compositions_df[compositions_df['wallet_id'] == int(wallet_id)]
+
+        print('compositions_df: \n', compositions_df)
+
+        if compositions_df.empty:
+            return final_analysis, last_analysis_date, weighted_average_returns
+        else:
+            final_analysis, last_analysis_date, weighted_average_returns = finapp.run_nightvision_wallet(compositions_df, wallet_id, rebalance_date)
+                
+            return final_analysis, last_analysis_date, weighted_average_returns
 
     def delete_setup_command(wallet_id, username_existent):
 
@@ -700,7 +701,7 @@ class TelegramManager:
 
     def create_rebalance_setup_answer(username_existent, rebalance_wallet_id, wallet_to_database):
 
-        markdown_text = '🏹 rebalance complete! 🏹\n\n'
+        markdown_text = '🏹🏹🏹 REBALANCE COMPLETE! 🏹🏹🏹\n\n'
 
         number_of_assets = wallet_to_database['ticker'].count()
         number_of_assets = int(number_of_assets)
@@ -737,11 +738,11 @@ class TelegramManager:
 
         for _, row in final_analysis.iterrows():
 
-            asset = row['asset']
+            ticker = row['ticker']
             wallet_proportion = row['peso']
             sector = row['sector']
             subsector = row['subsector']
-            last_period_variation = row['last_period_variation']
+            last_period_variation = row['percentual_variation']
             last_period_variation = round(last_period_variation,2)
             last_growth_rate = row['last_growth_rate']
             last_growth_rate = round(last_growth_rate * 100,1)
@@ -751,9 +752,9 @@ class TelegramManager:
             
             markdown_text += f"----------------------------------------\n"
             if last_period_variation > 0:
-                markdown_text += f"    🟢 {asset}, rend: {last_period_variation}%\n"
+                markdown_text += f"    🟢 {ticker}, rend: {last_period_variation}%\n"
             else:
-                markdown_text += f"    🔴 {asset}, rend: {last_period_variation}%\n"
+                markdown_text += f"    🔴 {ticker}, rend: {last_period_variation}%\n"
             markdown_text += f"        ▪ Ramo: {sector} - {subsector}\n"
             markdown_text += f"        ▪ Peso do ativo na carteira: {wallet_proportion}%\n"
             markdown_text += f"        ▪ Crescimento da companhia no último ano: {last_growth_rate}%\n"
@@ -1022,13 +1023,17 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         Você pode montar a estrutura desse comando copiando o comando no início do exemplo no /help e depois copiar os indicadores presentes no comando /indicators. Por exmplo, para avaliar a performance dos últimos 10 anos do indicador 'Momento 6 Meses' usa-se o comando:\n       📍 `rank_risk_premiuns(momento_6_meses)`
 
         Caso queira salvar um setup contendo as combinações que foram rankiadas & exibidas na mensagem, deve-se configurar a variável save_setup = True juntamente com a variável `premiuns_to_dict` que irá indicar quais posições do ranking estarão contidos no setup. Assim será criado um setup com um rebalanceamento de 21 dias e com 5 ativos para cada combinação. Importante notar que no final da mensagem de avaliação, caso seja escolhido salvar, será passado o `wallet_id` para ser usado como referência para próximos comandos.
-        Exemplo para salvar o 1º e 3º lugar no ranking exibido considerando as combinações dos3 indicadores informados:\n       📍 `rate_risk_premiuns(ValorDeMercado, momento_6_meses, p_vp_invert, save_setup=true, premiuns_to_dict=[1;3])`
+        Exemplo para salvar o 1º e 3º lugar no ranking exibido considerando as combinações dos 3 indicadores informados:\n       📍 `rank_risk_premiuns(ValorDeMercado, momento_6_meses, p_vp_invert, save_setup=true, premiuns_to_dict=[1;3])`
 
         3º- Após salvar algum setup, você pode acessar os setups salvos pelo comando `read_setups`.
 
         4º- Para gerar um rebalanceamento de algum setup priamente configurado, você pode usar o comando `rebalance_setup(wallet_id=XXXX)` trocando o 'XXXX' pelo wallet_id desejado.
 
         5º- Para ter detalhes atualizados de algum setup, é possíval executar o comando `nightvision(wallet_id=XXXX)`. Será possível ver o resultado de cada ativo desde o último rebalanceamento com detalhes de cada ativo, além do resultado de todos os ativos juntos considerando as proporções.
+
+        6º- Caso queira visualizar as últimas 3 composições de alguns setup, execute o comando `read_portifolio(wallet_id=XXXX)`.
+
+        7º- Se optar por seguir a lista de ativos que representam algum setup previamente configurado, você pode usar o comando `execute_rebalance(wallet_id=XXXX)` para que o FINAPP te mostre o que precisa ser comprado e vendido para um rebalanceamento específico.
     
     💰💰💰
     '''
@@ -1059,33 +1064,33 @@ async def indicators_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     Abaixo está a lista de todos os indicadores presentes hoje no FINAPP. Cada nome de indicador aparece no texto como copiável (só clicar) e possui uma breve descrição do indicador.
 
-    🔴 `ValorDeMercado`: Usado para se referir ao preço que o mercado está pagando por uma empresa.
+    💠 `ValorDeMercado`: Usado para se referir ao preço que o mercado está pagando por uma empresa.
 
-    🔴 `ROIC`: Mede a rentabilidade de dinheiro o que uma empresa é capaz de gerar em razão de todo o capital investido, incluindo os aportes por meio de dívidas.
+    💠 `ROIC`: Mede a rentabilidade de dinheiro o que uma empresa é capaz de gerar em razão de todo o capital investido, incluindo os aportes por meio de dívidas.
 
-    🔴 `ROE`: Mede a capacidade de agregar valor de uma empresa a partir de seus próprios recursos e do dinheiro de investidores.
+    💠 `ROE`: Mede a capacidade de agregar valor de uma empresa a partir de seus próprios recursos e do dinheiro de investidores.
 
-    🔴 `EBIT_EV`: Este indicador mostra quanto tempo levaria para o valor calculado no EBIT pagar o investimento feito para comprá-la.
+    💠 `EBIT_EV`: Este indicador mostra quanto tempo levaria para o valor calculado no EBIT pagar o investimento feito para comprá-la.
 
-    🔴 `L_P`: Dá uma ideia do quanto o mercado está disposto a pagar pelos lucros da companhia.
+    💠 `L_P`: Dá uma ideia do quanto o mercado está disposto a pagar pelos lucros da companhia.
 
-    🔴 `net_margin`: Margem líquida da empresa.
+    💠 `net_margin`: Margem líquida da empresa.
 
-    🔴 `ebit_dl`: Proporção direta entre o EBIT e a Dívida Líquida da companhia. Quanto mais negativo, melhor.
+    💠 `ebit_dl`: Proporção direta entre o EBIT e a Dívida Líquida da companhia. Quanto mais negativo, melhor.
 
-    🔴 `pl_db`: Proporção direta entre o Patrimônio Líquido e a Dívida Bruta de uma companhia.
+    💠 `pl_db`: Proporção direta entre o Patrimônio Líquido e a Dívida Bruta de uma companhia.
 
-    🔴 `momento_1_meses`: Representa a média móvel do último mês dos retornos para cada ação.
+    💠 `momento_1_meses`: Representa a média móvel do último mês dos retornos para cada ação.
 
-    🔴 `momento_6_meses`: Representa a média móvel dos últimos 6 meses dos retornos para cada ação.
+    💠 `momento_6_meses`: Representa a média móvel dos últimos 6 meses dos retornos para cada ação.
 
-    🔴 `momento_12_meses`: Representa a média móvel dos últimos 12 meses dos retornos para cada ação.
+    💠 `momento_12_meses`: Representa a média móvel dos últimos 12 meses dos retornos para cada ação.
 
-    🔴 `mm_7_40`: Representa a proporção (divisão) entre média móvel curta e média móvel longa.
+    💠 `mm_7_40`: Representa a proporção (divisão) entre média móvel curta e média móvel longa.
 
-    🔴 `p_vp_invert`: Facilita a análise e comparação da relação do preço de negociação de um ativo e seu VPA (Valor Patrimonial por Ação).
+    💠 `p_vp_invert`: Facilita a análise e comparação da relação do preço de negociação de um ativo e seu VPA (Valor Patrimonial por Ação).
 
-    🔴 `p_ebit_invert`: Indica qual é o preço da ação em relação as seu resultado EBIT. O EBIT pode ser considerado uma aproximação do lucro operacional da companhia.
+    💠 `p_ebit_invert`: Indica qual é o preço da ação em relação as seu resultado EBIT. O EBIT pode ser considerado uma aproximação do lucro operacional da companhia.
 
     '''
     response_text = response_text.replace('_', r'\_')
@@ -1740,7 +1745,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("Ok.")
 
         rebalance_wallet_id = '0000'
-        rebalance_calc_end_date = '2023-11-29'
+        rebalance_calc_end_date = '2024-12-31'
         factor_calc_initial_date = '2019-12-31'
         liquidity_filter = 1
         wallet_to_database = pd.DataFrame()
@@ -1776,7 +1781,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 answer_text = TelegramManager.create_rebalance_setup_answer(username_existent, rebalance_wallet_id, wallet_to_database)
 
-    if(decoded_command == 'nightvision' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
+    if(decoded_command == 'nightvision' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 2) ):
         fail_to_execute = False
 
         if message_type == 'supergroup':
@@ -1801,20 +1806,39 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 else:
                     print(f"{possib_int} não é integer.")
                     fail_to_execute = True
+            elif variable == 'rebalance_date':
+                rebalance_date = value
+                if TelegramManager.is_valid_date(value):
+                    rebalance_date = pd.to_datetime(rebalance_date)
+                    rebalance_date = rebalance_date.strftime('%Y-%m-%d')
+                    print(f"{rebalance_date} DATA VÁLIDA.")
+                else:
+                    validation_txt = f"({rebalance_date}) não é uma data válida no formato esperado."
+                    print(validation_txt)
+                    # await update.message.reply_text(validation_txt)
+                    fail_to_execute = True
             else:
                 fail_to_execute = True
 
-        final_analysis, last_analysis_date, weighted_average_returns = TelegramManager.nightvision_command(wallet_id)
+        if fail_to_execute:
+            answer_text = ''
+        else:
 
-        weighted_average_returns = round(weighted_average_returns,2)
+            final_analysis, next_rebalance_date, weighted_average_returns = TelegramManager.nightvision_command(wallet_id, rebalance_date)
 
-        last_analysis_date = last_analysis_date.strftime('%Y-%m-%d')
-        
-        answer_text = TelegramManager.create_nightvision_answer(wallet_id, final_analysis, last_analysis_date, weighted_average_returns)
+            if final_analysis.empty:
+                answer_text = '⚠️ nenhuma composição para essa data de rebalanceamento! '
+            else:
 
-        print('\nfinal_analysis: \n',final_analysis)
-        print('\nlast_analysis_date: ',last_analysis_date)
-        print('\nweighted_average_returns: ',weighted_average_returns)
+                weighted_average_returns = round(weighted_average_returns,2)
+
+                next_rebalance_date = next_rebalance_date.strftime('%Y-%m-%d')
+                
+                answer_text = TelegramManager.create_nightvision_answer(wallet_id, final_analysis, next_rebalance_date, weighted_average_returns)
+
+                print('\nfinal_analysis: \n',final_analysis)
+                print('\nnext_rebalance_date: ',next_rebalance_date)
+                print('\nweighted_average_returns: ',weighted_average_returns)
 
     if(decoded_command == 'delete_setup' and (len(decoded_indicators_list) == 0 and len(decoded_variables_list) == 1) ):
         fail_to_execute = False
