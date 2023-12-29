@@ -55,7 +55,7 @@ class MakeReportResult():
         self.ibov = self.ibov[(self.ibov['data'] >= self.df_trades['data'].iloc[0]) &
                             (self.ibov['data'] <= self.df_trades['data'].iloc[-1])]
         
-        plt.style.use('seaborn')
+        plt.style.use('cyberpunk')
 
         self.make_report()
         
@@ -426,7 +426,7 @@ class MakeReportResult():
         
     def grafico_retorno_movel(self, df, periodo, coluna):
 
-        plt.style.use('seaborn')
+        plt.style.use('cyberpunk')
         
         #janela movel de retorno
 

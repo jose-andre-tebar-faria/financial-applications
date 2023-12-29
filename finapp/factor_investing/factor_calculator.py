@@ -220,6 +220,9 @@ class MakeBacktest():
 
     def calculando_retorno_diario(self):
 
+        # print('self.cotacoes\n',self.cotacoes)
+        # print('self.carteira_por_periodo.iloc[0, 0] ',self.carteira_por_periodo.iloc[0, 0])
+        # print('self.data_final ',self.data_final)
         cotacoes = self.cotacoes[(self.cotacoes['data'] >= self.carteira_por_periodo.iloc[0, 0]) &
                                        (self.cotacoes['data'] <= self.data_final)]
         
