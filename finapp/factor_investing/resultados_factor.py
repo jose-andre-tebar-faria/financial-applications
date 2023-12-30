@@ -5,7 +5,9 @@ from datetime import datetime
 # import mplcyberpunk 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
-import matplotlib.dates as mdate
+import matplotlib.dates as mdates
+import matplotlib.font_manager
+from matplotlib.ticker import FuncFormatter
 import seaborn as sns
 import warnings
 from pandas.errors import SettingWithCopyWarning
@@ -295,25 +297,63 @@ class MakeReportResult():
 
     def grafico_retorno_acum(self):
 
+       # Listar todas as fontes disponíveis
+        # fontes = matplotlib.font_manager.findSystemFonts(fontpaths=None, fontext='ttf')
+
+        # Imprimir a lista de fontes
+        # for fonte in fontes:
+        #     print(fonte)
+
         fig, ax = plt.subplots(figsize = (7, 4))
+
+        fig.patch.set_facecolor('white')
 
         rent_modelo = (self.df_trades['retorno'] + 1).cumprod() - 1
         rent_cdi = (self.cdi['retorno'] + 1).cumprod() - 1
         rent_ibov = (self.ibov['retorno'] + 1).cumprod() - 1
 
-        ax.plot(self.cdi['data'].values, rent_cdi.values, label = 'CDI')
-        ax.plot(self.ibov['data'].values, rent_ibov.values, label = 'IBOV')
-        ax.plot(self.df_trades['data'].values, rent_modelo.values, label = 'MODELO')
+        ax.plot(self.cdi['data'].values, rent_cdi.values, label = 'CDI', color='#3498db')
+        ax.plot(self.ibov['data'].values, rent_ibov.values, label = 'IBOV', color='#9b59b6')
+        ax.plot(self.df_trades['data'].values, rent_modelo.values, label = 'MODELO', color='#f39c12')
 
         ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
         
         plt.legend()
-        plt.title("Retorno acumulado")
-        ax.grid(False)
+        # plt.title("Retorno acumulado")
         
+        # Configurar o tamanho e estilo do título
+        ax.set_title("Retorno acumulado", fontsize=16, fontweight='bold', color='white')
+
+        ax.grid(False)
+
+        # Personalizar a grade
+        ax.grid(True, linestyle='--', alpha=1, which='both', color='lightgrey')
+
+
+
+
+
+        # Configurar o layout dos valores nos eixos
+        ax.xaxis.set_major_locator(mtick.AutoLocator())
+        ax.xaxis.set_minor_locator(mtick.AutoMinorLocator())
+
+        ax.yaxis.set_major_locator(mtick.AutoLocator())
+        ax.yaxis.set_minor_locator(mtick.AutoMinorLocator())
+
+        # Formatar os números exibidos nos eixos
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+        ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f'{y:.0%}'))
+
+
+
+        # Ajustar as margens e o layout da figura
+        plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
+
         #diretorio_atual = os.getcwd()
         #print("Diretório atual para salvar figuras:", diretorio_atual)
 
+        fig.patch.set_facecolor('white')
+        
         plt.savefig(f'{self.full_desired_path}/rent_acum.png', dpi = 300)
 
         plt.close()
@@ -339,7 +379,9 @@ class MakeReportResult():
 
         fig = plt.figure(figsize = (8.75, 4))
 
-        ax = sns.heatmap(rent_mes, cmap="YlGnBu", annot=True)
+        fig.patch.set_facecolor('white')
+
+        ax = sns.heatmap(rent_mes, cmap="RdYlGn", center=0, annot=True)
         plt.title("Retorno mês a mês")
 
         for t in ax.texts: 
@@ -358,13 +400,13 @@ class MakeReportResult():
 
         if self.dias_totais_backtest > 1000:
 
-            ax.xaxis.set_major_locator(mdate.YearLocator(2))
+            ax.xaxis.set_major_locator(mdates.YearLocator(2))
 
         else:
 
-            ax.xaxis.set_major_locator(mdate.YearLocator(1))
+            ax.xaxis.set_major_locator(mdates.YearLocator(1))
         
-        ax.xaxis.set_major_formatter(mdate.DateFormatter("%Y"))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
         plt.title("Underwater")
         ax.grid(False)
 
@@ -390,7 +432,7 @@ class MakeReportResult():
 
         fig.patch.set_facecolor('white')
 
-        ax = sns.heatmap(self.df_anual, cmap="YlGnBu", annot=True, fmt='.3g')
+        ax = sns.heatmap(self.df_anual, cmap="RdYlGn", center=0, annot=True, fmt='.3g')
         plt.title("Retorno ano a ano")
 
         for t in ax.texts: 
@@ -437,13 +479,13 @@ class MakeReportResult():
 
         if self.dias_totais_backtest > 1000:
 
-            ax.xaxis.set_major_locator(mdate.YearLocator(2))
+            ax.xaxis.set_major_locator(mdates.YearLocator(2))
 
         else:
 
-            ax.xaxis.set_major_locator(mdate.YearLocator(1))
+            ax.xaxis.set_major_locator(mdates.YearLocator(1))
         
-        ax.xaxis.set_major_formatter(mdate.DateFormatter("%Y"))
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
 
         if coluna == 'alfa':
 

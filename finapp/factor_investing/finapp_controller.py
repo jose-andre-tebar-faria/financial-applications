@@ -1185,8 +1185,8 @@ class FinappController:
 
         finapp = FinappController()
 
-        create_wallets_pfd = False
-        pdf_name = ''
+        create_wallets_pfd = True
+        pdf_name = 'testtttt.pdf'
 
         wallet_to_database = pd.DataFrame()
         rebalance_wallet_id = rebalance_wallet_id
@@ -1281,7 +1281,7 @@ class FinappController:
 
                         print('\nWallet to database: \n', wallet_to_database)
 
-                        wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+                        # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
                         
                         print('\nUPDATED!')
 
@@ -1292,7 +1292,7 @@ class FinappController:
 
                 print('\nWallet to database: \n', wallet_to_database)
 
-                wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+                # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
                 
             return wallet_to_database
 
@@ -1664,7 +1664,7 @@ if __name__ == "__main__":
 
 
     # enable indicators update
-    update_indicators               = True
+    update_indicators               = False
 
 
     # enable calculate risk premiuns database update
@@ -1680,7 +1680,7 @@ if __name__ == "__main__":
     # enable rating risks
     rate_risk_premiuns              = False
     # final_analysis_date             = '2022-12-31'
-    final_analysis_date             = '2023-12-31'
+    final_analysis_date             = '2024-12-31'
     rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
     create_rating_pdf               = False
     
@@ -1704,14 +1704,17 @@ if __name__ == "__main__":
 
 
     # enable rebalance wallet
-    rebalance_wallets               = False
-    rebalance_wallet_id             = '5765'
+    rebalance_wallets               = True
+    factor_calc_initial_date        = '2020-12-31'
+    rebalance_calc_end_date         = '2023-12-31'
+    # rebalance_wallet_id             = '3657'
+    # rebalance_wallet_id             = '5480'
+    rebalance_wallet_id             = '4819'
 
 
     # enable generation of wallet
     generate_wallets                = False
-    factor_calc_initial_date        = '2013-12-31'
-    factor_calc_end_date            = '2023-11-30'
+    factor_calc_end_date            = '2024-12-30'
     create_wallets_pfd              = False
     
 
@@ -1975,12 +1978,8 @@ if __name__ == "__main__":
 
         # print('\nrebalance_wallet_id: \n', rebalance_wallet_id)
 
-        rebalance_calc_end_date = '2024-12-31'
-        factor_calc_initial_date = '2019-12-31'
-        create_wallets_pfd = False
-
         wallet_to_database = finapp.run_rebalance_setups(rebalance_wallet_id, rebalance_calc_end_date, indicators_dict_database, factor_calc_initial_date,
-                                                        liquidity_filter, create_wallets_pfd)
+                                                        liquidity_filter)
 
 
     ###

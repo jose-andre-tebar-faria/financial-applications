@@ -711,7 +711,7 @@ if __name__ == "__main__":
     print('distinct_setups: \n', distinct_setups)
 
     # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = last_wallet_defined)
-    # wallet_manager.delete_portifolio_composition(wallet_id = 8942, rebalance_date = '2023-12-19')
+    # wallet_manager.delete_portifolio_composition(wallet_id = 5480, rebalance_date = '2023-12-14')
 
     ##############
     # OPERATION TYPES CONFIGURATION

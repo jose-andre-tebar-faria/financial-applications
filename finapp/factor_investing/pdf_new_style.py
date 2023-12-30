@@ -1,9 +1,12 @@
 from fpdf import FPDF
+import matplotlib.font_manager
+
 import os
 from dotenv import load_dotenv
 
 
 class PDF(FPDF):
+
     def header(self):
         
         diretorio_atual = os.getcwd()
@@ -66,53 +69,12 @@ class PDF(FPDF):
 
 class MakePDF():
 
-    def __init__(self, dd_all, dia_inicial, dia_final, dias_totais_backtest, 
-            retorno_acum_modelo, retorno_acum_cdi, retorno_acum_ibov, turn_over_medio,
-            retorno_aa_modelo, vol_ultimo_ano, sharpe, var_diario, 
-            numero_trades, operacoes_vencedoras, operacoes_perdedoras, media_ganhos, media_perdas, 
-            expectativa_matematica, percentual_cart_supera_ibov, maior_sequencia_vitorias, 
-            maior_sequencia_derrotas, joesley_day, mar20, boasorteday, greve_caminhao, 
-            crise_2008, precatorios, retorno_21_min, retorno_63_min, retorno_126_min, 
-            retorno_252_min, retorno_504_min, retorno_756_min, nome_arquivo = "backtest.pdf"):
+    def __init__(self):
         
         load_dotenv()
 
-        self.drawdown_maximo = dd_all
-        self.turn_over_medio = turn_over_medio
-        self.dia_inicial = dia_inicial
-        self.dia_final = dia_final
-        self.dias_totais_backtest = dias_totais_backtest
-        self.retorno_acum_modelo = retorno_acum_modelo
-        self.retorno_acum_cdi = retorno_acum_cdi
-        self.retorno_acum_ibov = retorno_acum_ibov
-        self.retorno_aa_modelo = retorno_aa_modelo
-        self.vol_ultimo_ano = vol_ultimo_ano
-        self.sharpe = sharpe
-        self.var_diario = var_diario
-        self.numero_trades = numero_trades
-        self.operacoes_vencedoras = operacoes_vencedoras
-        self.operacoes_perdedoras = operacoes_perdedoras
-        self.media_ganhos = media_ganhos
-        self.media_perdas = media_perdas
-        self.expectativa_matematica = expectativa_matematica
-        self.percentual_cart_supera_ibov = percentual_cart_supera_ibov
-        self.maior_sequencia_vitorias = maior_sequencia_vitorias
-        self.maior_sequencia_derrotas = maior_sequencia_derrotas
-        self.joesley_day = joesley_day
-        self.mar20 = mar20
-        self.boasorteday = boasorteday
-        self.greve_caminhao = greve_caminhao
-        self.crise_2008 = crise_2008
-        self.precatorios = precatorios
-        self.retorno_21_min = retorno_21_min
-        self.retorno_63_min = retorno_63_min
-        self.retorno_126_min = retorno_126_min
-        self.retorno_252_min = retorno_252_min
-        self.retorno_504_min = retorno_504_min
-        self.retorno_756_min = retorno_756_min 
+        self.nome_arquivo = 'prototype_pdf.pdf'
 
-        self.nome_arquivo = nome_arquivo
-        
         self.pdf = PDF("P", "mm", "Letter")
         self.pdf.set_auto_page_break(auto=True, margin=15)
         self.pdf.alias_nb_pages()
@@ -130,6 +92,8 @@ class MakePDF():
         self.pdf.set_text_color(255, 255, 255)  # Texto branco para contrastar com o fundo
         self.pdf.set_draw_color(35, 155, 132)
 
+        self.pdf_intro()
+
         self.current_folder = os.getcwd()
 
         self.project_folder = os.getenv("PROJECT_FOLDER")
@@ -139,14 +103,15 @@ class MakePDF():
         if(self.current_folder != self.full_desired_path):
             os.chdir(self.full_desired_path)
 
-        # self.pdf_intro()
+        self.pdf_intro()
+        self.pdf.ln(32)
         self.tabela_dias()
         self.grafico_retorno_acum()
-        self.tabelas_estatisticas_gerais()
-        self.eventos_estresse_e_dias_sem_lucro()
-        self.grafico_underwater()
+        # self.tabelas_estatisticas_gerais()
+        # self.eventos_estresse_e_dias_sem_lucro()
+        # self.grafico_underwater()
         self.retorno_ano_a_ano_mes_a_mes()
-        self.grafico_janelas_moveis()
+        # self.grafico_janelas_moveis()
 
         self.current_folder = os.getcwd()
 
@@ -157,40 +122,49 @@ class MakePDF():
         if(self.current_folder != self.full_desired_path):
             os.chdir(self.full_desired_path)
 
-        #diretorio_atual = os.getcwd()
-        #print("Diretório atual para output PDF:", diretorio_atual)
-
         self.file_name = os.path.join(self.full_desired_path,self.nome_arquivo)
 
         self.pdf.output(self.file_name)
 
     def pdf_intro(self):
+        # # Obtenha uma lista de todas as fontes disponíveis
+        # font_list = matplotlib.font_manager.findSystemFonts(fontpaths=None, fontext='ttf')
 
+        # # Imprima a lista de fontes
+        # for font_path in font_list:
+        #     font_name = matplotlib.font_manager.FontProperties(fname=font_path).get_name()
+        #     print(f"Fonte: {font_name}, Caminho: {font_path}")
+        
+        font_name = "Segoe UI"
+        font_path = "C:\Windows\Fonts\segoeuisl.ttf"
+        self.pdf.add_font(font_name, '', font_path, uni=True)
+        self.pdf.set_font(font_name, size=9)
         self.pdf.set_draw_color(255, 215, 0)
-        self.pdf.set_font('Arial', '', 8)
-        self.pdf.cell(99, 9, "Essa vai ser a intro da parada!", ln = False,  border = True, fill = True, align = "C")
+        self.pdf.set_x(28)
+
+        self.pdf.cell(w=149, h=27, txt="Essa vai ser a intro da parada!", ln = False,  border = True, fill = True, align = "C")
 
     def tabela_dias(self):
 
         self.pdf.set_draw_color(255, 215, 0)
         self.pdf.set_font('Arial', '', 8)
         self.pdf.cell(20, 7, "Dia inicial", ln = False,  border = True, fill = True, align = "C")
-        self.pdf.cell(20, 7, f" {self.dia_inicial.date()}", ln = True, 
+        self.pdf.cell(20, 7, f"2020-02-12", ln = True, 
                 border = True, fill = False, align = "C")
 
         self.pdf.cell(20, 7, "Dia final", ln = False,  border = True, fill = True, align = "C")
-        self.pdf.cell(20, 7, f" {self.dia_final.date()}", ln = True, 
+        self.pdf.cell(20, 7, f"3729-11-23", ln = True, 
                 border = True, fill = False, align = "C")
         
         self.pdf.cell(20, 7, "Dias totais", ln = False,  border = True, fill = True, align = "C")
-        self.pdf.cell(20, 7, f" {self.dias_totais_backtest}", ln = True, 
+        self.pdf.cell(20, 7, f"42", ln = True, 
                 border = True, fill = False, align = "C")
 
         self.pdf.ln(7)
 
     def grafico_retorno_acum(self):
 
-        self.pdf.image("./rent_acum.png", w = 140, h = 80, x = 55, y = 44.9)
+        self.pdf.image("./rent_acum.png", w = 140, h = 80, x = 35, y = 107)
 
     def tabelas_estatisticas_gerais(self):
             
@@ -322,3 +296,8 @@ class MakePDF():
         self.pdf.image("./janela_movel_24M_alfa.png", w = 80, h = 64, x = 110, y = 115)
         self.pdf.image("./janela_movel_36M_retorno_movel.png", w = 80, h = 64, x = 15, y = 185)
         self.pdf.image("./janela_movel_36M_alfa.png", w = 80, h = 64, x = 110, y = 185)
+
+
+pdf = PDF()
+
+MakePDF()
