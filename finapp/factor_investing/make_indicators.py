@@ -343,13 +343,28 @@ class MakeIndicator():
         total_number_of_stocks = total_number_of_stocks.sort_values(['data', 'ticker'])
         # print('total_number_of_stocks: \n', total_number_of_stocks)
 
-        total_number_of_stocks['data'] = pd.to_datetime(total_number_of_stocks['data'])
-        patrimonial_value['data'] = pd.to_datetime(patrimonial_value['data'])
-        total_number_of_stocks = total_number_of_stocks.dropna(subset=['ticker', 'data'])
-        patrimonial_value = patrimonial_value.dropna(subset=['ticker', 'data'])
-        quotations = quotations.dropna(subset=['ticker', 'data'])
+        # total_number_of_stocks['data'] = pd.to_datetime(total_number_of_stocks['data'])
+        # patrimonial_value['data'] = pd.to_datetime(patrimonial_value['data'])
+        # total_number_of_stocks = total_number_of_stocks.dropna(subset=['ticker', 'data'])
+        # patrimonial_value = patrimonial_value.dropna(subset=['ticker', 'data'])
+        # quotations = quotations.dropna(subset=['ticker', 'data'])
 
-        p_vp = pd.merge(pd.merge(total_number_of_stocks, patrimonial_value, on=['ticker', 'data'], how='outer'), quotations, on=['ticker', 'data'], how='outer')
+        # total_number_of_stocks.info()
+        # patrimonial_value.info()
+        # quotations.info()
+        # total_number_of_stocks['data'].fillna(pd.to_datetime('1900-01-01'), inplace=True)
+        # patrimonial_value['data'].fillna(pd.to_datetime('1900-01-01'), inplace=True)
+        # quotations['data'].fillna(pd.to_datetime('1900-01-01'), inplace=True)
+        quotations['data'] = quotations['data'].astype('datetime64[us]')
+
+        # print('total_number_of_stocks: \n', total_number_of_stocks)
+        # print('patrimonial_value: \n', patrimonial_value)
+        # print('quotations: \n', quotations)
+
+        # Mesclar os DataFrames após a padronização da resolução
+        merge_step1 = pd.merge(total_number_of_stocks, patrimonial_value, on=['ticker', 'data'], how='outer')
+        p_vp = pd.merge(merge_step1, quotations, on=['ticker', 'data'], how='outer')
+
         p_vp = p_vp.sort_values(['data', 'ticker'])
         p_vp = p_vp.dropna()
         # print('merged_data: \n', p_vp)

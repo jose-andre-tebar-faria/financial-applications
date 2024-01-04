@@ -51,7 +51,10 @@ class MakeBacktest():
         self.impacto_mercado = impacto_mercado
         self.dinheiro_inicial = 10000
 
-        print("OK.")
+        print("\nOK.")
+
+        print('\n\tfactor_calc_init_date: ',self.data_inicial)
+        print('\n\tfactor_calc_final_date: ',self.data_final)
 
     def pegando_dados(self):
         
@@ -103,11 +106,46 @@ class MakeBacktest():
                     lendo_indicador['valor'] = lendo_indicador['valor'].astype(float)
                     lendo_indicador = lendo_indicador[['data', 'ticker', 'valor']]
                     lendo_indicador.columns = ['data', 'ticker', indicador]
-                    lista_dfs.append(lendo_indicador)
+
+                    last_date = lendo_indicador['data'].tail(1).iloc[0]
+                    print(f'\n\tIndicador {indicador} está atualizado até o dia {last_date}.')
+                    # print('lendo_indicador: ', lendo_indicador)
+
+                    last_records = lendo_indicador.groupby('ticker').last()
+
+                    new_records = pd.DataFrame()
+                    for i in range(2):
+                        next_date = last_records['data'].max() + pd.DateOffset(days=i+1)
+                        next_date = next_date.strftime('%Y-%m-%d')
+                        next_records = last_records.copy()
+                        next_records['data'] = next_date
+                        new_records = pd.concat([new_records, next_records])
+                    
+                    new_records['ticker'] = new_records.index
+
+                    # Concatenar os DataFrames original e resultante
+                    lendo_indicador_2 = pd.concat([lendo_indicador, new_records], ignore_index=True)
+
+                    # Classificar o DataFrame por 'ticker' e 'data'
+                    lendo_indicador_2 = lendo_indicador_2.sort_values(['ticker', 'data']).reset_index(drop=True)
+
+                    last_date_2 = lendo_indicador_2['data'].tail(1).iloc[0]
+                    print(f'\n\tIndicador_2 {indicador} está atualizado até o dia {last_date_2}.')
+                    # print('lendo_indicador_2: \n', lendo_indicador_2)
+
+                    lista_dfs.append(lendo_indicador_2)
 
         df_dados = lista_dfs[0]
+        df_dados['data'] = pd.to_datetime(df_dados['data']).dt.date
 
         for df in lista_dfs[1:]:
+
+            print('df_dados: \n', df_dados)
+
+            df['data'] = pd.to_datetime(df['data']).dt.date
+            df['ticker'] = df['ticker'].astype(str)
+            print('df: \n', df)
+
             df_dados = pd.merge(df_dados, df,  how='inner', left_on=['data', 'ticker'], right_on=['data', 'ticker'])
 
         self.df_dados = df_dados.dropna()
@@ -182,6 +220,9 @@ class MakeBacktest():
 
     def calculando_retorno_diario(self):
 
+        # print('self.cotacoes\n',self.cotacoes)
+        # print('self.carteira_por_periodo.iloc[0, 0] ',self.carteira_por_periodo.iloc[0, 0])
+        # print('self.data_final ',self.data_final)
         cotacoes = self.cotacoes[(self.cotacoes['data'] >= self.carteira_por_periodo.iloc[0, 0]) &
                                        (self.cotacoes['data'] <= self.data_final)]
         

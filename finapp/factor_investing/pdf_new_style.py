@@ -1,9 +1,12 @@
 from fpdf import FPDF
+import matplotlib.font_manager
+
 import os
 from dotenv import load_dotenv
 
 
 class PDF(FPDF):
+
     def header(self):
         
         diretorio_atual = os.getcwd()
@@ -66,53 +69,56 @@ class PDF(FPDF):
 
 class MakePDF():
 
-    def __init__(self, dd_all, dia_inicial, dia_final, dias_totais_backtest, 
-            retorno_acum_modelo, retorno_acum_cdi, retorno_acum_ibov, turn_over_medio,
-            retorno_aa_modelo, vol_ultimo_ano, sharpe, var_diario, 
-            numero_trades, operacoes_vencedoras, operacoes_perdedoras, media_ganhos, media_perdas, 
-            expectativa_matematica, percentual_cart_supera_ibov, maior_sequencia_vitorias, 
-            maior_sequencia_derrotas, joesley_day, mar20, boasorteday, greve_caminhao, 
-            crise_2008, precatorios, retorno_21_min, retorno_63_min, retorno_126_min, 
-            retorno_252_min, retorno_504_min, retorno_756_min, nome_arquivo = "backtest.pdf"):
+    # def __init__(self, dd_all, dia_inicial, dia_final, dias_totais_backtest, 
+    #         retorno_acum_modelo, retorno_acum_cdi, retorno_acum_ibov, turn_over_medio,
+    #         retorno_aa_modelo, vol_ultimo_ano, sharpe, var_diario, 
+    #         numero_trades, operacoes_vencedoras, operacoes_perdedoras, media_ganhos, media_perdas, 
+    #         expectativa_matematica, percentual_cart_supera_ibov, maior_sequencia_vitorias, 
+    #         maior_sequencia_derrotas, joesley_day, mar20, boasorteday, greve_caminhao, 
+    #         crise_2008, precatorios, retorno_21_min, retorno_63_min, retorno_126_min, 
+    #         retorno_252_min, retorno_504_min, retorno_756_min, nome_arquivo = "backtest.pdf"):
+    
+    def __init__(self, dia_inicial, dia_final, dias_totais_backtest, nome_arquivo):
         
         load_dotenv()
 
-        self.drawdown_maximo = dd_all
-        self.turn_over_medio = turn_over_medio
+        # self.drawdown_maximo = dd_all
+        # self.turn_over_medio = turn_over_medio
         self.dia_inicial = dia_inicial
         self.dia_final = dia_final
         self.dias_totais_backtest = dias_totais_backtest
-        self.retorno_acum_modelo = retorno_acum_modelo
-        self.retorno_acum_cdi = retorno_acum_cdi
-        self.retorno_acum_ibov = retorno_acum_ibov
-        self.retorno_aa_modelo = retorno_aa_modelo
-        self.vol_ultimo_ano = vol_ultimo_ano
-        self.sharpe = sharpe
-        self.var_diario = var_diario
-        self.numero_trades = numero_trades
-        self.operacoes_vencedoras = operacoes_vencedoras
-        self.operacoes_perdedoras = operacoes_perdedoras
-        self.media_ganhos = media_ganhos
-        self.media_perdas = media_perdas
-        self.expectativa_matematica = expectativa_matematica
-        self.percentual_cart_supera_ibov = percentual_cart_supera_ibov
-        self.maior_sequencia_vitorias = maior_sequencia_vitorias
-        self.maior_sequencia_derrotas = maior_sequencia_derrotas
-        self.joesley_day = joesley_day
-        self.mar20 = mar20
-        self.boasorteday = boasorteday
-        self.greve_caminhao = greve_caminhao
-        self.crise_2008 = crise_2008
-        self.precatorios = precatorios
-        self.retorno_21_min = retorno_21_min
-        self.retorno_63_min = retorno_63_min
-        self.retorno_126_min = retorno_126_min
-        self.retorno_252_min = retorno_252_min
-        self.retorno_504_min = retorno_504_min
-        self.retorno_756_min = retorno_756_min 
+        # self.retorno_acum_modelo = retorno_acum_modelo
+        # self.retorno_acum_cdi = retorno_acum_cdi
+        # self.retorno_acum_ibov = retorno_acum_ibov
+        # self.retorno_aa_modelo = retorno_aa_modelo
+        # self.vol_ultimo_ano = vol_ultimo_ano
+        # self.sharpe = sharpe
+        # self.var_diario = var_diario
+        # self.numero_trades = numero_trades
+        # self.operacoes_vencedoras = operacoes_vencedoras
+        # self.operacoes_perdedoras = operacoes_perdedoras
+        # self.media_ganhos = media_ganhos
+        # self.media_perdas = media_perdas
+        # self.expectativa_matematica = expectativa_matematica
+        # self.percentual_cart_supera_ibov = percentual_cart_supera_ibov
+        # self.maior_sequencia_vitorias = maior_sequencia_vitorias
+        # self.maior_sequencia_derrotas = maior_sequencia_derrotas
+        # self.joesley_day = joesley_day
+        # self.mar20 = mar20
+        # self.boasorteday = boasorteday
+        # self.greve_caminhao = greve_caminhao
+        # self.crise_2008 = crise_2008
+        # self.precatorios = precatorios
+        # self.retorno_21_min = retorno_21_min
+        # self.retorno_63_min = retorno_63_min
+        # self.retorno_126_min = retorno_126_min
+        # self.retorno_252_min = retorno_252_min
+        # self.retorno_504_min = retorno_504_min
+        # self.retorno_756_min = retorno_756_min 
 
         self.nome_arquivo = nome_arquivo
-        
+        # self.nome_arquivo = 'prototype_pdf.pdf'
+
         self.pdf = PDF("P", "mm", "Letter")
         self.pdf.set_auto_page_break(auto=True, margin=15)
         self.pdf.alias_nb_pages()
@@ -130,6 +136,8 @@ class MakePDF():
         self.pdf.set_text_color(255, 255, 255)  # Texto branco para contrastar com o fundo
         self.pdf.set_draw_color(35, 155, 132)
 
+        # self.pdf_intro()
+
         self.current_folder = os.getcwd()
 
         self.project_folder = os.getenv("PROJECT_FOLDER")
@@ -140,13 +148,14 @@ class MakePDF():
             os.chdir(self.full_desired_path)
 
         self.pdf_intro()
-        # self.tabela_dias()
+        self.pdf.ln(9)
+        # self.tabela_dias() GONE
         self.grafico_retorno_acum()
-        self.tabelas_estatisticas_gerais()
-        self.eventos_estresse_e_dias_sem_lucro()
-        self.grafico_underwater()
+        # self.tabelas_estatisticas_gerais()
+        # self.eventos_estresse_e_dias_sem_lucro()
+        # self.grafico_underwater()
         self.retorno_ano_a_ano_mes_a_mes()
-        self.grafico_janelas_moveis()
+        # self.grafico_janelas_moveis()
 
         self.current_folder = os.getcwd()
 
@@ -157,13 +166,9 @@ class MakePDF():
         if(self.current_folder != self.full_desired_path):
             os.chdir(self.full_desired_path)
 
-        #diretorio_atual = os.getcwd()
-        #print("Diretório atual para output PDF:", diretorio_atual)
-
         self.file_name = os.path.join(self.full_desired_path,self.nome_arquivo)
 
         self.pdf.output(self.file_name)
-
 
     def pdf_intro(self):
         # # Obtenha uma lista de todas as fontes disponíveis
@@ -186,12 +191,9 @@ class MakePDF():
         w=185
         h=37
 
-        dia_inicial_formatado = self.dia_inicial.strftime('%Y-%m-%d')
-        dia_final_formatado = self.dia_final.strftime('%Y-%m-%d')
-        
         text = f'''    Está presente nesse relatório diversas visões, gráficas e numéricas, para que você posso tirar suas próprias conclusões sobre a performance histórica dos indicadores escolhidos. Considere também o número de ativos e o período de rebalanceamento. 
     É importante notar que nunca devemos tirar conclusões a partir de somente um parâmetro, deve-ser avaliar o contexto.
-    O relatório está considerando a data inicial de {dia_inicial_formatado} e data final de {dia_final_formatado} na qual somam {self.dias_totais_backtest} dias.
+    O relatório está considerando a data inicial de {self.dia_inicial} e data final de {self.dia_final} na qual somam {self.dias_totais_backtest} dias.
         '''
         self.pdf.rect(x, y, w, h)
         self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
@@ -204,7 +206,7 @@ class MakePDF():
         x=16
         y=175
         w=185
-        h=65
+        h=70
         text = f'''    Acima o histórico de rentabilidades diárias comparadas entre o Modelo, uma referência da renda fixa - CDI e o IBOV. Para uma análise inicial, esse tipo de gráfico já dá um bom norte sobre a performance de operação do Modelo. Todos os outros parâmetros serão tirados da avaliação da composição histórica da carteira.
     Além de avaliar a performance de rentabilidade, deve-se também olhar para o conjunto de informações geradas a partir dos dados das tabelas apresentadas a seguir. Todo investimento deve ser visto fundamentalemnte por 3 pilares, a Rentabilidade, a Liquidez e a Segurança, dessa forma os dados apresentados a seguir estão ali para que, com a análise devida, lhe dê maior segurançã a respeito do modelo escolhido.
         '''
@@ -214,26 +216,16 @@ class MakePDF():
 
     def tabelas_estatisticas_gerais(self):
             
+        
         self.pdf.add_page()
 
-        x=16
-        y=45
-        w=185
-        h=90
-        text = f'''    Avaliar e ter ciências do contexto geral do modelo é essencial para entender a sua robustez. Alguns parâmetros importantes a se olhar são:
-            1) 'Vol 252d': reprensenta a volatilidade do ativo no último ano, ou seja, o quanto aquele ativo oscilou de preço do último período de 252 dias úteis.
-            2) 'Drawdown máximo': representa o máximo de perda percentual de patrimônio identificado no período de análise.
-            3) 'Expec. matemática por trade': 
-            4) 'Médias de perda & ganho': representa o valor percentual médio de quando se perde ou se ganha.
-            5) 'Retorno a.a. modelo': mostra a rentabilidade anualizada do modelo no período de análise. Trabalha junto com o 'Retorno acum. modelo'.
-        Todos os parâmetros mostrados tem algum valor específico em alguma análise, exemplificamos acima alguns que tem mais relevância geral.
-        '''
-        self.pdf.rect(x, y, w, h)
-        self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
-        self.pdf.multi_cell(w - 4, 8, text, border = False)
+        self.pdf.cell(0, 60, ln = True)
+
         self.pdf.set_draw_color(255, 215, 0)
 
         self.pdf.set_font('Arial', 'B', 11)
+
+        self.pdf.cell(8, 10, ln = False)
 
         self.pdf.cell(70, 10, "Estatísticas de Retorno e Risco", ln = False, align = "C")
 
@@ -287,20 +279,11 @@ class MakePDF():
             self.pdf.cell(45, 8, nomes_estat_gerais[i], border = True, ln = False, align = "C")
             self.pdf.cell(25, 8, texto2, border = True, ln = True, align = "C")
 
+        # self.pdf.image('./nave1.png', x = 70, y = 225, w = 75, h = 33)
+
+        self.pdf.cell(0, 40, ln = True)
+
     def eventos_estresse_e_dias_sem_lucro(self):
-
-        self.pdf.add_page()
-
-        x=16
-        y=45
-        w=185
-        h=18
-        text = f'''    Dentro do período de análise estão contidos e calculadas as oscilações negativas de eventos de estresse na Bolsa de Valores brasileira.
-        '''
-        self.pdf.rect(x, y, w, h)
-        self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
-        self.pdf.multi_cell(w - 4, 8, text, border = False)
-        self.pdf.set_draw_color(255, 215, 0)
 
         self.pdf.set_font('Arial', 'B', 11)
 
@@ -344,17 +327,7 @@ class MakePDF():
  
     def grafico_underwater(self):
 
-        x=16
-        y=135
-        w=185
-        h=28
-        text = f'''    O grágico de Underderwater, também conhecido como gráfico do azarado, mostra a variação negativa desde a última máxima histórica dentro do período de análise. É possível verificar picos de queda ('Drawdown máximo') e momento da carteira de forma geral. 
-        '''
-        self.pdf.rect(x, y, w, h)
-        self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
-        self.pdf.multi_cell(w - 4, 8, text, border = False)
-        self.pdf.set_draw_color(255, 215, 0)
-        self.pdf.image("./grafico_underwater.png", w = 140, h = 90, x = 35, y = 170)
+        self.pdf.image("./grafico_underwater.png", w = 140, h = 90, x = 35, y = 160)
 
     def retorno_ano_a_ano_mes_a_mes(self):
 
@@ -373,3 +346,24 @@ class MakePDF():
         self.pdf.image("./janela_movel_24M_alfa.png", w = 80, h = 64, x = 110, y = 115)
         self.pdf.image("./janela_movel_36M_retorno_movel.png", w = 80, h = 64, x = 15, y = 185)
         self.pdf.image("./janela_movel_36M_alfa.png", w = 80, h = 64, x = 110, y = 185)
+
+
+pdf = PDF()
+
+nome_arquivo = 'prototype_pdf.pdf'
+
+dia_inicial = '1892-10-23'
+dia_final = '1992-08-12'
+dias_totais_backtest = 3653
+
+MakePDF(dia_inicial, dia_final, dias_totais_backtest, nome_arquivo)
+
+# MakePDF(self.dd_all, self.dia_inicial, self.dia_final, self.dias_totais_backtest, 
+#     self.retorno_acum_modelo, self.retorno_acum_cdi, self.retorno_acum_ibov, self.turn_over_medio,
+#     self.retorno_aa_modelo, self.vol_ultimo_ano, self.sharpe, self.var_diario, 
+#     self.numero_trades, self.operacoes_vencedoras, self.operacoes_perdedoras, self.media_ganhos, self.media_perdas, 
+#     self.expectativa_matematica, self.percentual_cart_supera_ibov, self.maior_sequencia_vitorias, 
+#     self.maior_sequencia_derrotas, self.joesley_day, self.mar20, self.boasorteday, self.greve_caminhao, 
+#     self.crise_2008, self.precatorios, self.retorno_21_min, self.retorno_63_min, self.retorno_126_min, 
+#     self.retorno_252_min, self.retorno_504_min, self.retorno_756_min, nome_arquivo = self.nome_arquivo,
+#     )

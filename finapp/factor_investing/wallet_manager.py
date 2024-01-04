@@ -458,7 +458,7 @@ class WalletManager:
                 new_setup = compositions_df.drop(compositions_df[condition].index)
                 print('New setup: \n', new_setup)
                 
-                # new_setup.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
+                new_setup.to_parquet(f'{self.full_desired_path}/wallets_composition.parquet', index = True)
     
     
     
@@ -633,7 +633,7 @@ if __name__ == "__main__":
     # SETUP CONFIGURATION
     ##############
 
-    # file_not_found, wallets_df = wallet_manager.read_setups()
+    file_not_found, wallets_df = wallet_manager.read_setups()
     # print(wallets_df)
 
     # print(wallets_df[['wallet_id', 'wallet_name', 'number_of_assets', 'user_name', 'proportion', 'close_date', 'rebalance_periods', 'last_rebalance_date']])
@@ -685,10 +685,33 @@ if __name__ == "__main__":
     # print('wallet_id', wallet_id)
 
     # file_not_found, compositions_df = wallet_manager.read_portifolios_composition(wallet_id = 3657)
+    file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
     # print('compositions_df',compositions_df)
 
+    df_merge = pd.merge(compositions_df, wallets_df, on=['wallet_id'], how='left')
+    # print('df_merge',df_merge[['wallet_id', 'rebalance_date', 'user_name']])
+
+    # Filtrar as linhas onde user_name é NaN
+    filtered_df = df_merge.loc[df_merge['user_name'].isna()]
+    print('\nsetups without usernames: \n',filtered_df[['wallet_id', 'rebalance_date', 'user_name']])
+
+    # Capturar os wallet_id distintos dessas linhas
+    distinct_wallet_ids = filtered_df['wallet_id'].drop_duplicates()
+    distinct_user_name_ids = filtered_df['user_name'].drop_duplicates()
+
+    # Se você quiser obter os resultados como uma lista
+    distinct_wallet_ids_list = distinct_wallet_ids.tolist()
+    # print('wallet_ids distintos: ', distinct_wallet_ids_list)
+    
+    # Filtrar as linhas onde user_name não é NaN
+    filtered_df2 = df_merge.loc[~df_merge['user_name'].isna()]
+    # print('\nsetups with usernames: \n',filtered_df2[['wallet_id', 'rebalance_date', 'user_name']])
+
+    distinct_setups = filtered_df2[['wallet_id', 'user_name']].drop_duplicates()
+    print('distinct_setups: \n', distinct_setups)
+
     # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = last_wallet_defined)
-    # wallet_manager.delete_portifolio_composition(wallet_id = 3657, rebalance_date = '2023-08-17')
+    # wallet_manager.delete_portifolio_composition(wallet_id = 5480, rebalance_date = '2023-12-14')
 
     ##############
     # OPERATION TYPES CONFIGURATION
