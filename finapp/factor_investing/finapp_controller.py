@@ -872,6 +872,8 @@ class FinappController:
             for chave, valor in premium_name_dict.items():
 
                 # print('\nchave: \n', chave)
+                
+                ## INSERIR AQUI A VALIDAÇÃO DAS CHAVES DE RENTABILIDADE DA ÚLTIMA JANELA
 
                 for step_months in step_months_list:
 
@@ -1704,7 +1706,7 @@ if __name__ == "__main__":
 
 
     # enable rebalance wallet
-    rebalance_wallets               = True
+    rebalance_wallets               = False
     factor_calc_initial_date        = '2020-12-31'
     rebalance_calc_end_date         = '2023-12-31'
     # rebalance_wallet_id             = '3657'

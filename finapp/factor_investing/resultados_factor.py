@@ -324,14 +324,8 @@ class MakeReportResult():
         # Configurar o tamanho e estilo do título
         ax.set_title("Retorno acumulado", fontsize=16, fontweight='bold', color='white')
 
-        ax.grid(False)
-
         # Personalizar a grade
-        ax.grid(True, linestyle='--', alpha=1, which='both', color='lightgrey')
-
-
-
-
+        ax.grid(True, linestyle='--', alpha=0.1, which='both', color='lightgrey')
 
         # Configurar o layout dos valores nos eixos
         ax.xaxis.set_major_locator(mtick.AutoLocator())
@@ -343,8 +337,6 @@ class MakeReportResult():
         # Formatar os números exibidos nos eixos
         ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
         ax.yaxis.set_major_formatter(FuncFormatter(lambda y, _: f'{y:.0%}'))
-
-
 
         # Ajustar as margens e o layout da figura
         plt.subplots_adjust(left=0.1, right=0.9, top=0.9, bottom=0.1)
@@ -379,10 +371,11 @@ class MakeReportResult():
 
         fig = plt.figure(figsize = (8.75, 4))
 
+        # fig.patch.set_facecolor(0, 31, 63)
         fig.patch.set_facecolor('white')
 
-        ax = sns.heatmap(rent_mes, cmap="RdYlGn", center=0, annot=True)
-        plt.title("Retorno mês a mês")
+        ax = sns.heatmap(rent_mes, cmap="RdYlGn", center=0, annot=True, vmin=(-15), vmax=(15))
+        plt.title("Retorno Mês a Mês")
 
         for t in ax.texts: 
              t.set_text(t.get_text() + "%")
@@ -395,7 +388,7 @@ class MakeReportResult():
         
         fig, ax = plt.subplots(figsize = (7, 4.5))
 
-        ax.plot(self.drawdowns.index, self.drawdowns)
+        ax.plot(self.drawdowns.index, self.drawdowns, color='#3498db')
         ax.yaxis.set_major_formatter(mtick.PercentFormatter(1))
 
         if self.dias_totais_backtest > 1000:
@@ -407,8 +400,12 @@ class MakeReportResult():
             ax.xaxis.set_major_locator(mdates.YearLocator(1))
         
         ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y"))
-        plt.title("Underwater")
-        ax.grid(False)
+
+        # Configurar o tamanho e estilo do título
+        ax.set_title("Underwater", fontsize=16, fontweight='bold', color='white')
+
+        # Personalizar a grade
+        ax.grid(True, linestyle='--', alpha=0.1, which='both', color='lightgrey')
 
         plt.savefig(f'{self.full_desired_path}/grafico_underwater.png', dpi = 300)
 
@@ -430,10 +427,12 @@ class MakeReportResult():
 
         fig = plt.figure(figsize = (8.75, 4))
 
+        # fig.patch.set_facecolor(0, 31, 63)
         fig.patch.set_facecolor('white')
 
-        ax = sns.heatmap(self.df_anual, cmap="RdYlGn", center=0, annot=True, fmt='.3g')
-        plt.title("Retorno ano a ano")
+        ax = sns.heatmap(self.df_anual, cmap="RdYlGn", center=0, annot=True, fmt='.3g', vmin=(-15), vmax=(15))
+        plt.title("Retorno Ano a Ano")
+        # plt.set_title("Retorno Ano a Ano", fontsize=16, fontweight='bold', color='white')
 
         for t in ax.texts: 
              t.set_text(t.get_text() + "%")

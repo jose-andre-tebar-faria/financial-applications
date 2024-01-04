@@ -316,7 +316,7 @@ class TelegramManager:
         rebalance_periods_setup = int(rebalance_periods_setup)
         print('rebalance_periods_setup: ', rebalance_periods_setup)
 
-        factor_calc_end_date = '2024-12-31'
+        factor_calc_end_date = '2024-01-31'
         factor_calc_initial_date = '2019-12-31'
         asset_quantity_setup = 5
         liquidity_filter_setup = 1

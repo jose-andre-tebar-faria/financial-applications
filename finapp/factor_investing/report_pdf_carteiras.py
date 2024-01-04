@@ -139,8 +139,8 @@ class MakePDF():
         if(self.current_folder != self.full_desired_path):
             os.chdir(self.full_desired_path)
 
-        # self.pdf_intro()
-        self.tabela_dias()
+        self.pdf_intro()
+        # self.tabela_dias()
         self.grafico_retorno_acum()
         self.tabelas_estatisticas_gerais()
         self.eventos_estresse_e_dias_sem_lucro()
@@ -164,43 +164,76 @@ class MakePDF():
 
         self.pdf.output(self.file_name)
 
+
     def pdf_intro(self):
+        # # Obtenha uma lista de todas as fontes disponíveis
+        # font_list = matplotlib.font_manager.findSystemFonts(fontpaths=None, fontext='ttf')
 
-        self.pdf.set_draw_color(255, 215, 0)
-        self.pdf.set_font('Arial', '', 8)
-        self.pdf.cell(99, 9, "Essa vai ser a intro da parada!", ln = False,  border = True, fill = True, align = "C")
-
-    def tabela_dias(self):
-
-        self.pdf.set_draw_color(255, 215, 0)
-        self.pdf.set_font('Arial', '', 8)
-        self.pdf.cell(20, 7, "Dia inicial", ln = False,  border = True, fill = True, align = "C")
-        self.pdf.cell(20, 7, f" {self.dia_inicial.date()}", ln = True, 
-                border = True, fill = False, align = "C")
-
-        self.pdf.cell(20, 7, "Dia final", ln = False,  border = True, fill = True, align = "C")
-        self.pdf.cell(20, 7, f" {self.dia_final.date()}", ln = True, 
-                border = True, fill = False, align = "C")
+        # # Imprima a lista de fontes
+        # for font_path in font_list:
+        #     font_name = matplotlib.font_manager.FontProperties(fname=font_path).get_name()
+        #     print(f"Fonte: {font_name}, Caminho: {font_path}")
         
-        self.pdf.cell(20, 7, "Dias totais", ln = False,  border = True, fill = True, align = "C")
-        self.pdf.cell(20, 7, f" {self.dias_totais_backtest}", ln = True, 
-                border = True, fill = False, align = "C")
+        font_name = "Segoe UI"
+        font_path = "C:\Windows\Fonts\segoeuisl.ttf"
+        self.pdf.add_font(font_name, '', font_path, uni=True)
+        self.pdf.set_font(font_name, size=9)
+        self.pdf.set_draw_color(255, 215, 0)
+        self.pdf.set_x(28)
 
-        self.pdf.ln(7)
+        x=14
+        y=45
+        w=185
+        h=37
+
+        dia_inicial_formatado = self.dia_inicial.strftime('%Y-%m-%d')
+        dia_final_formatado = self.dia_final.strftime('%Y-%m-%d')
+        
+        text = f'''    Está presente nesse relatório diversas visões, gráficas e numéricas, para que você posso tirar suas próprias conclusões sobre a performance histórica dos indicadores escolhidos. Considere também o número de ativos e o período de rebalanceamento. 
+    É importante notar que nunca devemos tirar conclusões a partir de somente um parâmetro, deve-ser avaliar o contexto.
+    O relatório está considerando a data inicial de {dia_inicial_formatado} e data final de {dia_final_formatado} na qual somam {self.dias_totais_backtest} dias.
+        '''
+        self.pdf.rect(x, y, w, h)
+        self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
+        self.pdf.multi_cell(w - 4, 8, text)
 
     def grafico_retorno_acum(self):
 
-        self.pdf.image("./rent_acum.png", w = 140, h = 80, x = 55, y = 44.9)
+        self.pdf.image("./rent_acum.png", w = 140, h = 80, x = 35, y = 89)
+
+        x=16
+        y=175
+        w=185
+        h=65
+        text = f'''    Acima o histórico de rentabilidades diárias comparadas entre o Modelo, uma referência da renda fixa - CDI e o IBOV. Para uma análise inicial, esse tipo de gráfico já dá um bom norte sobre a performance de operação do Modelo. Todos os outros parâmetros serão tirados da avaliação da composição histórica da carteira.
+    Além de avaliar a performance de rentabilidade, deve-se também olhar para o conjunto de informações geradas a partir dos dados das tabelas apresentadas a seguir. Todo investimento deve ser visto fundamentalemnte por 3 pilares, a Rentabilidade, a Liquidez e a Segurança, dessa forma os dados apresentados a seguir estão ali para que, com a análise devida, lhe dê maior segurançã a respeito do modelo escolhido.
+        '''
+        self.pdf.rect(x, y, w, h)
+        self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
+        self.pdf.multi_cell(w - 4, 8, text, border = False)
 
     def tabelas_estatisticas_gerais(self):
             
-        self.pdf.cell(0, 60, ln = True)
+        self.pdf.add_page()
 
+        x=16
+        y=45
+        w=185
+        h=90
+        text = f'''    Avaliar e ter ciências do contexto geral do modelo é essencial para entender a sua robustez. Alguns parâmetros importantes a se olhar são:
+            1) 'Vol 252d': reprensenta a volatilidade do ativo no último ano, ou seja, o quanto aquele ativo oscilou de preço do último período de 252 dias úteis.
+            2) 'Drawdown máximo': representa o máximo de perda percentual de patrimônio identificado no período de análise.
+            3) 'Expec. matemática por trade': 
+            4) 'Médias de perda & ganho': representa o valor percentual médio de quando se perde ou se ganha.
+            5) 'Retorno a.a. modelo': mostra a rentabilidade anualizada do modelo no período de análise. Trabalha junto com o 'Retorno acum. modelo'.
+        Todos os parâmetros mostrados tem algum valor específico em alguma análise, exemplificamos acima alguns que tem mais relevância geral.
+        '''
+        self.pdf.rect(x, y, w, h)
+        self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
+        self.pdf.multi_cell(w - 4, 8, text, border = False)
         self.pdf.set_draw_color(255, 215, 0)
 
         self.pdf.set_font('Arial', 'B', 11)
-
-        self.pdf.cell(8, 10, ln = False)
 
         self.pdf.cell(70, 10, "Estatísticas de Retorno e Risco", ln = False, align = "C")
 
@@ -254,11 +287,20 @@ class MakePDF():
             self.pdf.cell(45, 8, nomes_estat_gerais[i], border = True, ln = False, align = "C")
             self.pdf.cell(25, 8, texto2, border = True, ln = True, align = "C")
 
-        # self.pdf.image('./nave1.png', x = 70, y = 225, w = 75, h = 33)
-
-        self.pdf.cell(0, 40, ln = True)
-
     def eventos_estresse_e_dias_sem_lucro(self):
+
+        self.pdf.add_page()
+
+        x=16
+        y=45
+        w=185
+        h=18
+        text = f'''    Dentro do período de análise estão contidos e calculadas as oscilações negativas de eventos de estresse na Bolsa de Valores brasileira.
+        '''
+        self.pdf.rect(x, y, w, h)
+        self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
+        self.pdf.multi_cell(w - 4, 8, text, border = False)
+        self.pdf.set_draw_color(255, 215, 0)
 
         self.pdf.set_font('Arial', 'B', 11)
 
@@ -302,8 +344,17 @@ class MakePDF():
  
     def grafico_underwater(self):
 
-
-        self.pdf.image("./grafico_underwater.png", w = 140, h = 90, x = 35, y = 160)
+        x=16
+        y=135
+        w=185
+        h=28
+        text = f'''    O grágico de Underderwater, também conhecido como gráfico do azarado, mostra a variação negativa desde a última máxima histórica dentro do período de análise. É possível verificar picos de queda ('Drawdown máximo') e momento da carteira de forma geral. 
+        '''
+        self.pdf.rect(x, y, w, h)
+        self.pdf.set_xy(x + 2, y + 2)  # Margem de 2 unidades para o texto dentro da célula
+        self.pdf.multi_cell(w - 4, 8, text, border = False)
+        self.pdf.set_draw_color(255, 215, 0)
+        self.pdf.image("./grafico_underwater.png", w = 140, h = 90, x = 35, y = 170)
 
     def retorno_ano_a_ano_mes_a_mes(self):
 
