@@ -285,7 +285,10 @@ class FinappController:
 
     def compose_last_wallet_with_bcg_matrix(self, last_wallet, bcg_dimensions_list):
         
-        last_wallet['ticker'] = last_wallet['ticker'].str[:4]
+        analysis_assets_list = last_wallet['ticker']
+        print('\nWallet assets list: \n', analysis_assets_list)
+
+        last_wallet['ticker'] = last_wallet['ticker'].str[:4]        
         last_wallet = last_wallet.rename(columns={'ticker': 'asset'})
 
         last_wallet = last_wallet.set_index('asset', drop=True)
@@ -304,12 +307,6 @@ class FinappController:
         final_analysis = pd.merge(bcg_matrix_df, last_wallet, on='asset')
         print('\nNightvision: \n', final_analysis.sort_values(by=['sector', 'subsector']))
         
-
-        analysis_assets_list = list(final_analysis.index)
-        print('\nWallet assets list: \n', analysis_assets_list)
-
-        analysis_assets_list = [element + '3' for element in analysis_assets_list]
-
         return analysis_assets_list, final_analysis
 
     def calculate_wallet_returns(self, analysis_assets_list, rebalance_date, next_rebalance_date):
@@ -873,12 +870,13 @@ class FinappController:
 
                 # print('\nchave: \n', chave)
                 
-                ## INSERIR AQUI A VALIDAÇÃO DAS CHAVES DE RENTABILIDADE DA ÚLTIMA JANELA
 
                 for step_months in step_months_list:
 
                     # print('\nstep_month: ', step_months)
 
+                    ## INSERIR AQUI A VALIDAÇÃO DAS CHAVES E CÁLCULO DE RENTABILIDADE DA ÚLTIMA JANELA DE step_months
+                    
                     profit_count = 0
                     loss_count = 0
 
@@ -1187,7 +1185,7 @@ class FinappController:
 
         finapp = FinappController()
 
-        create_wallets_pfd = True
+        create_wallets_pfd = False
         pdf_name = 'testtttt.pdf'
 
         wallet_to_database = pd.DataFrame()
