@@ -14,7 +14,7 @@ plt.style.use("cyberpunk")
 
 class MakeResultsPremium:
 
-    def __init__(self, factors_dict, final_analysis_date, file_name = 'premios_de_risco.pdf'):
+    def __init__(self, factors_dict, final_analysis_date, initial_analysis_date, file_name = 'premios_de_risco.pdf'):
                 
         print("Inicializing MakeResultPremium!")
 
@@ -29,6 +29,7 @@ class MakeResultsPremium:
             self.liquidez.append(item)
             
         self.final_analysis_date = (datetime.datetime.strptime(final_analysis_date, '%Y-%m-%d')).date()
+        self.inital_analysis_date = (datetime.datetime.strptime(initial_analysis_date, '%Y-%m-%d')).date()
         self.file_name = file_name
 
         print("OK.")
@@ -37,6 +38,7 @@ class MakeResultsPremium:
 
         lista_dfs = []
         data_inicial = []
+        data_final = []
         file_not_found = False
         df = pd.DataFrame()
         
@@ -64,12 +66,33 @@ class MakeResultsPremium:
 
             lista_dfs.append(df)
             data_inicial.append(min(df['data']))
+            data_final.append(max(df['data']))
+
+            print('\npremium: ', {nome_premio})
+            print('\n\tmin_data_inicial: ', min(df['data']))
+            print('\n\tmax_data_final: ', max(df['data']))
 
         self.premios_de_risco = pd.concat(lista_dfs)
-        data_inicial = max(data_inicial)
+        combined_min_data_inicial = max(data_inicial)
+        combined_max_data_final = min(data_final)
+        # print('\ncombined_min_data_inicial: ', combined_min_data_inicial)
+        # print('\ncombined_max_data_final: ', combined_max_data_final)
+
+        if self.inital_analysis_date >= combined_min_data_inicial:
+            data_inicial = self.inital_analysis_date
+        else:
+            data_inicial = combined_min_data_inicial
+
+        if self.final_analysis_date <= combined_max_data_final:
+            data_final = self.final_analysis_date
+        else:
+            data_final = combined_max_data_final
+
+        print('\ndata_inicial: ', data_inicial)
+        print('\ndata_final: ', data_final)
 
         self.premios_de_risco = self.premios_de_risco[(self.premios_de_risco['data'] >= data_inicial) &
-                                                      (self.premios_de_risco['data'] <= self.final_analysis_date)]
+                                                      (self.premios_de_risco['data'] <= data_final)]
 
         self.premios_de_risco = self.premios_de_risco.assign(premio_fator = 
                                                              (1 + self.premios_de_risco['primeiro_quartil'])/(1 + self.premios_de_risco['quarto_quartil'])) 
@@ -82,7 +105,7 @@ class MakeResultsPremium:
 
         premios_de_risco = self.premios_de_risco
 
-        return file_not_found, premios_de_risco
+        return file_not_found, premios_de_risco, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final
 
     def retorno_quartis(self):
 
