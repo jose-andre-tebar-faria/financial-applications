@@ -186,7 +186,7 @@ class TelegramManager:
         return distribution_indicadors, ranking_indicator, top_indicators, setup_dict, fail_to_execute
 
     def rank_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, create_rating_pdf, final_analysis_date, initial_analysis_date,
-                                   step_months_rank_list, columns_rank_list, premiuns_to_dict, premiuns_to_show):
+                                   step_months_rank_list, columns_rank_database_list, columns_rank_list, premiuns_to_dict, premiuns_to_show):
         
         rating_premiuns_file_name       = r'..\\PDFs\rating-INDICATORS.pdf'
         # create_rating_pdf               = False
@@ -201,7 +201,7 @@ class TelegramManager:
                                                                                                                         rating_premiuns_file_name, 
                                                                                                                         single_combinations, double_combinations, triple_combinations, 
                                                                                                                         create_rating_pdf,
-                                                                                                                        step_months_rank_list, columns_rank_list,
+                                                                                                                        step_months_rank_list, columns_rank_database_list, columns_rank_list,
                                                                                                                         premiuns_to_dict, premiuns_to_show)
 
 
@@ -648,7 +648,7 @@ class TelegramManager:
                     column_name_to_show = column_name_str.rsplit('_', 2)[1]
                     column_name_to_show = column_name_to_show + '_months'
 
-                    markdown_text += f"       🟩 {column_name_to_show} -> {row[column_name]}%\n"
+                    markdown_text += f"       🟩 {column_name_to_show} -> {row[column_name]}% a.a.\n"
 
                 elif '_high_acum_returns_' in column_name:
                     
@@ -661,7 +661,7 @@ class TelegramManager:
                     column_name_to_show = column_name_str.rsplit('_', 2)[1]
                     column_name_to_show = column_name_to_show + '_months'
 
-                    markdown_text += f"       🟪 {column_name_to_show} -> {row[column_name]}%\n"
+                    markdown_text += f"       🟪 {column_name_to_show} -> {row[column_name]}% a.a.\n"
                 elif '_low_acum_returns_' in column_name:
                     
                     row[column_name] = round(float(row[column_name])*100,2)
@@ -673,7 +673,7 @@ class TelegramManager:
                     column_name_to_show = column_name_str.rsplit('_', 2)[1]
                     column_name_to_show = column_name_to_show + '_months'
 
-                    markdown_text += f"       🟥 {column_name_to_show} -> {row[column_name]}%\n"
+                    markdown_text += f"       🟥 {column_name_to_show} -> {row[column_name]}% a.a.\n"
                 elif 'last_acum_return_' in column_name:
                     
                     row[column_name] = round(float(row[column_name])*100,2)
@@ -687,7 +687,21 @@ class TelegramManager:
                     column_name_to_show = column_name_to_show + '_months'
                     # print(column_name_to_show)
 
-                    markdown_text += f"       🟫 {column_name_to_show} -> {row[column_name]}%\n"
+                    markdown_text += f"       🟧 {column_name_to_show} -> {row[column_name]}% a.a.\n"
+                elif 'anual_std_dev_acum_returns_' in column_name:
+                    
+                    row[column_name] = round(float(row[column_name])*100,2)
+
+                    if first_time:
+                        markdown_text += f"    anual_std_dev_acum_returns_\n"
+                        first_time = False
+
+                    column_name_to_show = column_name_str.rsplit('_', 2)[1]
+                    # print(column_name_to_show)
+                    column_name_to_show = column_name_to_show + '_months'
+                    # print(column_name_to_show)
+
+                    markdown_text += f"       🟦 {column_name_to_show} -> {row[column_name]}%\n"
             
             rank_position+=1
 
@@ -1307,7 +1321,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                   'anual_mean_acum_returns', 
                                   'anual_high_acum_returns', 
                                   'anual_low_acum_returns',
-                                  'last_acum_return']
+                                  'last_acum_return',
+                                  'anual_std_dev_acum_returns']
     
     #ignoring old messages (older than 10 minutes)
     message_txt: str = update.message
@@ -1614,6 +1629,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             append_text = ''
             
             #verificar se as variaveis estão corretas
+
             decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
             print('\ndecoded_variables_split_list: \n', decoded_variables_split_list)
 
@@ -1727,7 +1743,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                                                                                     single_combinations=single_combinations, double_combinations=double_combinations, triple_combinations=triple_combinations, 
                                                                                     create_rating_pdf=create_pdf, 
                                                                                     initial_analysis_date = initial_analysis_date, final_analysis_date=final_analysis_date,
-                                                                                    step_months_rank_list=step_months_rank_list, columns_rank_list=columns_rank_list, 
+                                                                                    step_months_rank_list=step_months_rank_list, 
+                                                                                    columns_rank_database_list=columns_rank_database_list, columns_rank_list=columns_rank_list, 
                                                                                     premiuns_to_dict=premiuns_to_dict, premiuns_to_show=premiuns_to_show)
                 
                 if fail_to_execute == False:
@@ -2097,7 +2114,6 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     error_txt = f'Execution caused error -> {context.error}'
     await update.message.reply_text(error_txt)
     print(f'Update {update} caused error {context.error}')
-
 
 
 #

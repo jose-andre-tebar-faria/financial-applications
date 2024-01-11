@@ -20,6 +20,7 @@ import numpy as np
 from dateutil.relativedelta  import relativedelta
 from datetime import datetime
 import time
+import statistics
 
 class FinappController:
 
@@ -756,15 +757,18 @@ class FinappController:
 
     def run_rank_risk_premiuns(self, indicators_dict, initial_analysis_date, final_analysis_date, rating_premiuns_file_name, 
                               single_combinations, double_combinations, triple_combinations, create_rating_pdf,
-                              step_months_rank_list, columns_rank_list,
+                              step_months_rank_list, 
+                              columns_rank_database_list, columns_rank_list,
                               premiuns_to_dict, premiuns_to_show):
         
         print(".\n..\n...\nRanking Risk Premiuns!\n...\n..\n.")
 
-        fail_to_execute = False
+        ascend_statistics = ['anual_std_dev_acum_returns']
         
-        factor_calc_initial_date    = initial_analysis_date
-        factor_calc_end_date        = final_analysis_date
+        fail_to_execute                 = False
+        
+        factor_calc_initial_date        = initial_analysis_date
+        factor_calc_end_date            = final_analysis_date
         
         all_variables_present           = False
         all_selected_premiuns_present   = False
@@ -772,14 +776,12 @@ class FinappController:
 
         include_max_window              = False
 
-        step_months_list = step_months_rank_list
+        step_months_list                = step_months_rank_list
         
         setup_dict = {}
         
         premiuns_statistics_to_show = pd.DataFrame()
         analyzed_windows_df = pd.DataFrame()
-
-        columns_rank_database_list = ['profit_perc', 'anual_mean_acum_returns', 'anual_high_acum_returns', 'anual_low_acum_returns', 'last_acum_return']
 
         if step_months_rank_list is None or step_months_list is None or columns_rank_list is None:
             all_variables_present = False
@@ -820,9 +822,15 @@ class FinappController:
         if existent_in_analysis and (len(step_months_rank_list) > 0) and all_variables_present:
 
             finapp = FinappController()
+            
+            dataframe_columns = ['premium_name', 'liquidity', 
+                                 'months_window_size', 'analyzed_windows']
+            
+            print('.\n.\ncolumns_rank_database_list: \n', columns_rank_database_list)
 
-            dataframe_columns = ['premium_name', 'liquidity', 'months_window_size', 'analyzed_windows', 'profit_perc', 'mean_acum_returns' , 'anual_mean_acum_returns', 'anual_high_acum_returns', 'anual_low_acum_returns', 'last_acum_return']
-            # dataframe_columns = ['premium_name', 'liquidity', 'months_window_size', 'analyzed_windows', 'profit_perc', 'mean_acum_returns' , 'anual_mean_acum_returns', 'anual_high_acum_returns', 'anual_low_acum_returns']
+            dataframe_columns += columns_rank_database_list
+            # print('.\n.\ndataframe_columns: \n', dataframe_columns)
+            
             premiuns_statistics = pd.DataFrame(columns=dataframe_columns)
 
             print(".\n..\n...\nExtracting Statistics from Risk Premiuns!\n...\n..\n.")
@@ -936,8 +944,14 @@ class FinappController:
                             number_of_executions+=1
                     
                     if len(acum_primeiro_quartil_list) > 0:
+
+                        # print('\nacum_primeiro_quartil_list: \n', acum_primeiro_quartil_list)
+
                         mean_acum_returns = sum(acum_primeiro_quartil_list) / len(acum_primeiro_quartil_list)
                         # print('\nmean_acum_returns: \n', mean_acum_returns)
+
+                        anual_std_dev_acum_returns = statistics.stdev(acum_primeiro_quartil_list)
+                        # print('\nanual_std_dev_acum_returns: \n', anual_std_dev_acum_returns)
 
                         anual_mean_acum_returns = ((1 + mean_acum_returns) ** (12 / step_months)) - 1
                         # print('\nanual_mean_acum_returns: \n', anual_mean_acum_returns)
@@ -963,6 +977,7 @@ class FinappController:
                         premiuns_statistics.loc[index, 'anual_mean_acum_returns'] = anual_mean_acum_returns
                         premiuns_statistics.loc[index, 'anual_high_acum_returns'] = anual_high_acum_returns
                         premiuns_statistics.loc[index, 'anual_low_acum_returns'] = anual_low_acum_returns
+                        premiuns_statistics.loc[index, 'anual_std_dev_acum_returns'] = anual_std_dev_acum_returns
 
                         premiuns_statistics = premiuns_statistics.sort_values('anual_mean_acum_returns', ascending = False)
 
@@ -987,8 +1002,10 @@ class FinappController:
 
             # print('\nnumber_of_executions: \n', number_of_executions)
 
-            # columns_to_pivot = ['analyzed_windows', 'profit_perc', 'anual_mean_acum_returns', 'anual_high_acum_returns', 'anual_low_acum_returns']
-            columns_to_pivot = ['analyzed_windows', 'profit_perc', 'anual_mean_acum_returns', 'anual_high_acum_returns', 'anual_low_acum_returns', 'last_acum_return']
+            columns_to_pivot = ['analyzed_windows']
+            
+            columns_to_pivot += columns_rank_database_list
+            print('\ncolumns_to_pivot: \n', columns_to_pivot)
 
             final_statistics = premiuns_statistics.pivot(index='premium_name', columns='months_window_size', values=columns_to_pivot)
             final_statistics.reset_index(inplace=True)
@@ -1023,11 +1040,27 @@ class FinappController:
             columns_to_rank = [item + sufix for item in columns_rank_list for sufix in columns_rank_sufix_list]
             print('\ncolumns_to_rank: \n', columns_to_rank)
 
-            ranking_premiuns_statistics = final_statistics[columns_to_rank].rank(ascending=False, method='min')
+            # Filtrar elementos que contêm pelo menos um dos prefixos
+            columns_ascend = [column for column in columns_to_rank if any(column.startswith(prefixo) for prefixo in ascend_statistics)]
+            print('\ncolumns_ascend: \n', columns_ascend)
+            columns_descend = [column for column in columns_to_rank if not any(column.startswith(prefixo) for prefixo in ascend_statistics)]
+            print('\ncolumns_descend: \n', columns_descend)
+
+            # Realizar o ranking
+            ranking_ascend = final_statistics[columns_ascend].rank(ascending=True, method='min')
+            print('\nranking_ascend: \n', ranking_ascend)
+            ranking_descend = final_statistics[columns_descend].rank(ascending=False, method='min')
+            print('\nranking_descend: \n', ranking_descend)
+
+            # Concatenar os resultados
+            ranking_premiuns_statistics = pd.concat([ranking_ascend, ranking_descend], axis=1)
+
+            # ranking_premiuns_statistics = final_statistics[columns_to_rank].rank(ascending=False, method='min')
+            print('\nranking_premiuns_statistics: \n', ranking_premiuns_statistics)
 
             ranking_premiuns_statistics.columns = ['rank_' + coluna for coluna in columns_to_rank]
             ranking_premiuns_statistics['rank_final'] = ranking_premiuns_statistics.sum(axis=1).rank(ascending=True, method='min')
-            # print('\nranking_premiuns_statistics: \n', ranking_premiuns_statistics)
+            print('\nranking_premiuns_statistics: \n', ranking_premiuns_statistics)
 
             premiuns_statistics = pd.concat([final_statistics, ranking_premiuns_statistics], axis=1)
             premiuns_statistics = premiuns_statistics.sort_values('rank_final', ascending = True)
@@ -1304,17 +1337,22 @@ class FinappController:
                 
             return wallet_to_database
 
-    def run_optimize_setup(self, rebalance_wallet_id, indicators_dict_database):
+    def run_optimize_setup(self, rebalance_wallet_id, indicators_dict_database, columns_rank_database_list):
         
         fail_to_execute = False
 
-        rebalance_periods_list      = [21,42,126]
+        rebalance_periods_list      = [21,126]
         asset_quantity_list         = [3,7]
-        step_months_list            = [12,36,60]
+        step_months_list            = [36,60]
         # step_months_list            = [60]
+        acum_return_list            = []
 
         factor_calc_initial_date    = '2012-12-31'
-        factor_calc_end_date        = '2023-12-06'
+        factor_calc_end_date        = '2023-12-31'
+
+        pdf_name = 'test.pdf'
+
+        number_of_executions = 0
 
         finapp = FinappController()
 
@@ -1325,26 +1363,125 @@ class FinappController:
             fail_to_execute = True
             return fail_to_execute
         else:
-            for step_months in step_months_list:
 
-                print('\nstep_month: ', step_months)
 
-                for window_start, window_end  in finapp.sliding_window(start_date=factor_calc_initial_date, end_date=factor_calc_end_date, step_months=step_months):
-                    # window_end = window_start + pd.DateOffset(months=step_months)
-                    print(f"Window: {window_start} to {window_end}")
+            dataframe_columns = ['premium_name', 'liquidity', 'months_window_size', 'analyzed_windows', 'rebalance_periods']
+            
+            print('.\n.\ncolumns_rank_database_list: \n', columns_rank_database_list)
 
-                    window_start_str = window_start.strftime('%Y-%m-%d')
-                    window_end_str = window_end.strftime('%Y-%m-%d')
-                    # print(window_start_str)
-                    # print(window_end_str)
+            dataframe_columns += columns_rank_database_list
+            print('.\n.\ndataframe_columns: \n', dataframe_columns)
+            
+            models_statistics = pd.DataFrame(columns=dataframe_columns)
 
-                    # wallets, returns = finapp.run_factor_calculator(setup_dict, 
-                    #                                                 window_end_str, window_start_str, 
-                    #                                                 asset_quantity, rebalance_periods, liquidity_filter, 
-                    #                                                 create_wallets_pfd)
-                    # print(returns)
+            for rebalance_periods in rebalance_periods_list:
+
+                print(f"\nrebalance_periods: {rebalance_periods}")
+
+                for step_months in step_months_list:
+
+                    print('\nstep_month: ', step_months)
+
+                    window_size_threshold = (step_months*30) * (11 / 12)
+
+                    analyzed_windows = 0
+
+                    profit_count = 0
+                    loss_count = 0
+
+                    index = 0
+
+                    for window_start, window_end in finapp.sliding_window(start_date=factor_calc_initial_date, end_date=factor_calc_end_date, step_months=step_months):
+                        
+                        days_in_window = (window_end - window_start).days
+                        days_in_window = float(days_in_window)
+
+                        window_start = pd.to_datetime(window_start)
+                        window_start = window_start.strftime('%Y-%m-%d')
+                        window_end = pd.to_datetime(window_end)
+                        window_end = window_end.strftime('%Y-%m-%d')
+
+                        if days_in_window > window_size_threshold:
+
+                            window_start_str = str(window_start)
+                            window_end_str = str(window_end)
+
+                            print(f"\n.\n..\nWindow: {window_start} to {window_end}\n..\n.")
+                            # print('\ndays_in_window: ', days_in_window)
+
+                            wallets, returns = finapp.run_factor_calculator(setup_dict, 
+                                                                            window_end_str, window_start_str,
+                                                                            asset_quantity_setup, rebalance_periods, liquidity_filter, 
+                                                                            create_wallets_pfd, pdf_name)
+                        
+                            print('\nwallets: \n', wallets)
+                            print('\nreturns: \n', returns)
+
+                            initial_money = returns.loc[1, 'dinheiro']  # Valor no segundo dia (índice 1)
+                            final_money = returns.loc[returns.index[-1], 'dinheiro']  # Valor no último dia
+
+                            # Calcule a rentabilidade total
+                            acum_return = (final_money - initial_money) / initial_money
+
+                            acum_return_list.append(acum_return)
+
+                            print('\nacum_return: \n', acum_return)
+                            
+                            if acum_return > 0:
+                                profit_count+=1
+                            else:
+                                loss_count+=1
+                        
+                            analyzed_windows+=1
+                            number_of_executions+=1
+
+                    if len(acum_return_list) > 0:
+
+                        print('\nacum_return_list: \n', acum_return_list)
+
+                        mean_acum_returns = sum(acum_return_list) / len(acum_return_list)
+                        print('\nmean_acum_returns: \n', mean_acum_returns)
+
+                        # anual_std_dev_acum_returns = statistics.stdev(acum_return_list)
+                        # print('\nanual_std_dev_acum_returns: \n', anual_std_dev_acum_returns)
+
+                        anual_mean_acum_returns = ((1 + mean_acum_returns) ** (12 / step_months)) - 1
+                        print('\nanual_mean_acum_returns: \n', anual_mean_acum_returns)
+
+                        high_acum_returns = max(acum_return_list)
+                        anual_high_acum_returns = ((1 + high_acum_returns) ** (12 / step_months)) - 1
+                        print('\nanual_high_acum_returns: \n', anual_high_acum_returns)
+
+                        low_acum_returns = min(acum_return_list)
+                        anual_low_acum_returns = ((1 + low_acum_returns) ** (12 / step_months)) - 1
+                        print('\nanual_low_acum_returns: \n', anual_low_acum_returns)
+
+                        total_count = profit_count + loss_count
+                        print('\ntotal_count: \n', total_count)
+
+                        profit_perc = (profit_count / total_count ) * 100
+                        print('\nprofit_perc: \n', profit_perc)
+
+                        models_statistics.loc[index, 'rebalance_periods'] = rebalance_periods
+                        models_statistics.loc[index, 'months_window_size'] = step_months
+                        models_statistics.loc[index, 'analyzed_windows'] = analyzed_windows
+                        models_statistics.loc[index, 'analyzed_windows'] = analyzed_windows
+                        models_statistics.loc[index, 'analyzed_windows'] = analyzed_windows
+                        models_statistics.loc[index, 'profit_perc'] = profit_perc
+                        models_statistics.loc[index, 'mean_acum_returns'] = mean_acum_returns
+                        models_statistics.loc[index, 'anual_mean_acum_returns'] = anual_mean_acum_returns
+                        models_statistics.loc[index, 'anual_high_acum_returns'] = anual_high_acum_returns
+                        models_statistics.loc[index, 'anual_low_acum_returns'] = anual_low_acum_returns
+                        # models_statistics.loc[index, 'anual_std_dev_acum_returns'] = anual_std_dev_acum_returns
+
+                        models_statistics = models_statistics.sort_values('anual_mean_acum_returns', ascending = False)
+
+                        index+=1
+                        
+                        print('\nmodels_statistics: \n', models_statistics)
 
             fail_to_execute = False
+
             return fail_to_execute
 
     def run_make_indicators(self):
@@ -1717,8 +1854,8 @@ if __name__ == "__main__":
     factor_calc_initial_date        = '2020-12-31'
     rebalance_calc_end_date         = '2023-12-31'
     # rebalance_wallet_id             = '3657'
-    # rebalance_wallet_id             = '5480'
-    rebalance_wallet_id             = '4819'
+    rebalance_wallet_id             = '5480'
+    # rebalance_wallet_id             = '4819'
 
 
     # enable generation of wallet
@@ -1735,7 +1872,14 @@ if __name__ == "__main__":
 
     # enable requirements.txt update
     optimize_setup                  = False
-
+    columns_rank_database_list      = ['profit_perc', 
+                                        'anual_mean_acum_returns', 
+                                        'anual_high_acum_returns', 
+                                        'anual_low_acum_returns',
+                                        'last_acum_return',
+                                        'anual_std_dev_acum_returns'
+                                        ]
+    
     # enable requirements.txt update
     update_requirements_txt         = False
 
@@ -2061,7 +2205,7 @@ if __name__ == "__main__":
     ###
     if(optimize_setup):
         print('')
-        finapp.run_optimize_setup(rebalance_wallet_id, indicators_dict_database)
+        finapp.run_optimize_setup(rebalance_wallet_id, indicators_dict_database, columns_rank_database_list)
 
     ###
     ##
