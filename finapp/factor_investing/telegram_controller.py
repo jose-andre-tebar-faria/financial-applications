@@ -185,10 +185,9 @@ class TelegramManager:
 
         return distribution_indicadors, ranking_indicator, top_indicators, setup_dict, fail_to_execute
 
-    def rank_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, create_rating_pdf, final_analysis_date,
-                                   step_months_rank_list, columns_rank_list, premiuns_to_dict, premiuns_to_show):
+    def rank_risk_premiuns_command(indicators_dict, single_combinations, double_combinations, triple_combinations, create_rating_pdf, final_analysis_date, initial_analysis_date,
+                                   step_months_rank_list, columns_rank_database_list, columns_rank_list, premiuns_to_dict, premiuns_to_show):
         
-        # final_analysis_date             = '2022-12-31'
         rating_premiuns_file_name       = r'..\\PDFs\rating-INDICATORS.pdf'
         # create_rating_pdf               = False
     
@@ -198,13 +197,15 @@ class TelegramManager:
 
         finapp = fc.FinappController()
 
-        premiuns_statistics_to_show, analyzed_windows_df, setup_dict, fail_to_execute = finapp.run_rank_risk_premiuns(indicators_dict, final_analysis_date, rating_premiuns_file_name, 
-                                                                                                                 single_combinations, double_combinations, triple_combinations, create_rating_pdf,
-                                                                                                                 step_months_rank_list, columns_rank_list,
-                                                                                                                 premiuns_to_dict, premiuns_to_show)
+        premiuns_statistics_to_show, analyzed_windows_df, setup_dict, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, fail_to_execute = finapp.run_rank_risk_premiuns(indicators_dict, initial_analysis_date, final_analysis_date, 
+                                                                                                                        rating_premiuns_file_name, 
+                                                                                                                        single_combinations, double_combinations, triple_combinations, 
+                                                                                                                        create_rating_pdf,
+                                                                                                                        step_months_rank_list, columns_rank_database_list, columns_rank_list,
+                                                                                                                        premiuns_to_dict, premiuns_to_show)
 
 
-        return premiuns_statistics_to_show, analyzed_windows_df, setup_dict
+        return premiuns_statistics_to_show, analyzed_windows_df, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, setup_dict
 
     def rebalance_setup_command(rebalance_wallet_id, rebalance_calc_end_date, indicators_dict_database, factor_calc_initial_date, liquidity_filter):
         
@@ -367,7 +368,10 @@ class TelegramManager:
 
         indicators_list = []
         variables_list = []
-
+        
+        # lógica para aceitar quando o comando tem caracteres maiúsculos
+        # command_string = command_string.lower()
+        
         save_username_pattern = re.compile(r'save_username')
         update_fintz_database_pattern = re.compile(r'update_database')
         make_indicators_pattern = re.compile(r'make_indicators')
@@ -644,7 +648,7 @@ class TelegramManager:
                     column_name_to_show = column_name_str.rsplit('_', 2)[1]
                     column_name_to_show = column_name_to_show + '_months'
 
-                    markdown_text += f"       🟩 {column_name_to_show} -> {row[column_name]}%\n"
+                    markdown_text += f"       🟩 {column_name_to_show} -> {row[column_name]}% a.a.\n"
 
                 elif '_high_acum_returns_' in column_name:
                     
@@ -657,7 +661,7 @@ class TelegramManager:
                     column_name_to_show = column_name_str.rsplit('_', 2)[1]
                     column_name_to_show = column_name_to_show + '_months'
 
-                    markdown_text += f"       🟪 {column_name_to_show} -> {row[column_name]}%\n"
+                    markdown_text += f"       🟪 {column_name_to_show} -> {row[column_name]}% a.a.\n"
                 elif '_low_acum_returns_' in column_name:
                     
                     row[column_name] = round(float(row[column_name])*100,2)
@@ -669,7 +673,35 @@ class TelegramManager:
                     column_name_to_show = column_name_str.rsplit('_', 2)[1]
                     column_name_to_show = column_name_to_show + '_months'
 
-                    markdown_text += f"       🟥 {column_name_to_show} -> {row[column_name]}%\n"
+                    markdown_text += f"       🟥 {column_name_to_show} -> {row[column_name]}% a.a.\n"
+                elif 'last_acum_return_' in column_name:
+                    
+                    row[column_name] = round(float(row[column_name])*100,2)
+
+                    if first_time:
+                        markdown_text += f"    last_acum_return_\n"
+                        first_time = False
+
+                    column_name_to_show = column_name_str.rsplit('_', 2)[1]
+                    # print(column_name_to_show)
+                    column_name_to_show = column_name_to_show + '_months'
+                    # print(column_name_to_show)
+
+                    markdown_text += f"       🟧 {column_name_to_show} -> {row[column_name]}% a.a.\n"
+                elif 'anual_std_dev_acum_returns_' in column_name:
+                    
+                    row[column_name] = round(float(row[column_name])*100,2)
+
+                    if first_time:
+                        markdown_text += f"    anual_std_dev_acum_returns_\n"
+                        first_time = False
+
+                    column_name_to_show = column_name_str.rsplit('_', 2)[1]
+                    # print(column_name_to_show)
+                    column_name_to_show = column_name_to_show + '_months'
+                    # print(column_name_to_show)
+
+                    markdown_text += f"       🟦 {column_name_to_show} -> {row[column_name]}%\n"
             
             rank_position+=1
 
@@ -1288,7 +1320,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     columns_rank_database_list = ['profit_perc', 
                                   'anual_mean_acum_returns', 
                                   'anual_high_acum_returns', 
-                                  'anual_low_acum_returns']
+                                  'anual_low_acum_returns',
+                                  'last_acum_return',
+                                  'anual_std_dev_acum_returns']
     
     #ignoring old messages (older than 10 minutes)
     message_txt: str = update.message
@@ -1417,7 +1451,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             else:
                 await update.message.reply_text("Ok.")
 
-            TelegramManager.update_database_command()    
+            TelegramManager.update_database_command()
         
         if(decoded_command == 'make_indicators' and adm_interaction):
             fail_to_execute = False
@@ -1590,11 +1624,12 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             premiuns_to_show            = 3
             columns_rank_list           = ['anual_mean_acum_returns' , 'profit_perc']
             create_pdf                  = False
-            factor_calc_initial_date    = '2012-01-31'
-            factor_calc_end_date        = '2024-12-31'
+            initial_analysis_date       = '2012-01-31'
+            final_analysis_date         = '2024-01-31'
             append_text = ''
             
             #verificar se as variaveis estão corretas
+
             decoded_variables_split_list = [(item.split('=')[0], item.split('=')[1]) for item in decoded_variables_list]
             print('\ndecoded_variables_split_list: \n', decoded_variables_split_list)
 
@@ -1614,17 +1649,28 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     else:
                         print(f"variável não é booleana = {save_setup}")
                         fail_to_execute = True
-                # elif variable == 'start_date':
-                #     final_analysis_date = value
-                #     if TelegramManager.is_valid_date(value):
-                #         final_analysis_date = pd.to_datetime(final_analysis_date)
-                #         final_analysis_date = final_analysis_date.strftime('%Y-%m-%d')
-                #         print(f"{final_analysis_date} DATA VÁLIDA.")
-                #     else:
-                #         validation_txt = f"({final_analysis_date}) não é uma data válida no formato esperado."
-                #         print(validation_txt)
-                #         await update.message.reply_text(validation_txt)
-                #         fail_to_execute = True
+                elif variable == 'start_date':
+                    initial_analysis_date = value
+                    if TelegramManager.is_valid_date(value):
+                        initial_analysis_date = pd.to_datetime(initial_analysis_date)
+                        initial_analysis_date = initial_analysis_date.strftime('%Y-%m-%d')
+                        print(f"{initial_analysis_date} DATA VÁLIDA.")
+                    else:
+                        validation_txt = f"({initial_analysis_date}) não é uma data válida no formato esperado."
+                        print(validation_txt)
+                        await update.message.reply_text(validation_txt)
+                        fail_to_execute = True
+                elif variable == 'end_date':
+                    final_analysis_date = value
+                    if TelegramManager.is_valid_date(value):
+                        final_analysis_date = pd.to_datetime(final_analysis_date)
+                        final_analysis_date = final_analysis_date.strftime('%Y-%m-%d')
+                        print(f"{final_analysis_date} DATA VÁLIDA.")
+                    else:
+                        validation_txt = f"({final_analysis_date}) não é uma data válida no formato esperado."
+                        print(validation_txt)
+                        await update.message.reply_text(validation_txt)
+                        fail_to_execute = True
                 # elif variable == 'create_pdf':
                 #     if value.lower() == 'true':
                 #         create_pdf = True
@@ -1693,15 +1739,20 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 indicators_dict = {chave: indicators_dict_database[chave] for chave in decoded_indicators_list if chave in indicators_dict_database}
                 print('indicators_dict: \n', indicators_dict)
 
-                premiuns_statistics_to_show, analyzed_windows_df, setup_dict = TelegramManager.rank_risk_premiuns_command(indicators_dict, 
+                premiuns_statistics_to_show, analyzed_windows_df, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, setup_dict = TelegramManager.rank_risk_premiuns_command(indicators_dict, 
                                                                                     single_combinations=single_combinations, double_combinations=double_combinations, triple_combinations=triple_combinations, 
                                                                                     create_rating_pdf=create_pdf, 
-                                                                                    final_analysis_date=factor_calc_end_date,
-                                                                                    step_months_rank_list=step_months_rank_list, columns_rank_list=columns_rank_list, 
+                                                                                    initial_analysis_date = initial_analysis_date, final_analysis_date=final_analysis_date,
+                                                                                    step_months_rank_list=step_months_rank_list, 
+                                                                                    columns_rank_database_list=columns_rank_database_list, columns_rank_list=columns_rank_list, 
                                                                                     premiuns_to_dict=premiuns_to_dict, premiuns_to_show=premiuns_to_show)
                 
                 if fail_to_execute == False:
 
+                    print('\ncombined_min_data_inicial: ', combined_min_data_inicial)
+                    print('\ncombined_max_data_final: ', combined_max_data_final)
+                    print('\ndata_inicial: ', data_inicial)
+                    print('\ndata_final: ', data_final)
                     # print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
                     # print('\nnumber_of_analysed_windows: \n', number_of_analysed_windows)
                     print('\nsetup_dict: \n', setup_dict)
@@ -1748,7 +1799,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     #                                                                     save_setup, wallet_id, wallet_existent, wallets_df)
 
                     answer_text = TelegramManager.create_ranking_answer(premiuns_to_show, premiuns_to_dict, columns_rank_list, step_months_rank_list, 
-                                                                        factor_calc_initial_date, factor_calc_end_date, premiuns_statistics_to_show, setup_dict, 
+                                                                        data_inicial, data_final, premiuns_statistics_to_show, setup_dict, 
                                                                         indicators_dict_database, save_setup, wallet_id, wallet_existent, wallets_df,
                                                                         analyzed_windows_df,
                                                                         append_text)
@@ -2063,7 +2114,6 @@ async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     error_txt = f'Execution caused error -> {context.error}'
     await update.message.reply_text(error_txt)
     print(f'Update {update} caused error {context.error}')
-
 
 
 #
