@@ -205,7 +205,91 @@ class TelegramManager:
                                                                                                                         premiuns_to_dict, premiuns_to_show)
 
 
-        return premiuns_statistics_to_show, analyzed_windows_df, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, setup_dict
+        print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
+        
+        number_rank_combinations = len(premiuns_statistics_to_show)
+
+        print('\nnumber_rank_combinations: ', number_rank_combinations)
+        first_quartile = int(np.ceil(number_rank_combinations/4))
+        print('\nfirst_quartile: ', first_quartile)
+
+        filtered_premiuns_statistics_to_show = premiuns_statistics_to_show.head(first_quartile)
+
+        file_names = []
+
+        for indicator, indicator_info in indicators_dict.items():
+            file_name = indicator_info['file_name']
+            # print(f"Indicator: {indicator}, File Name: {file_name}")
+            file_names.append(file_name)
+
+        # print(file_names)
+        
+        # Cria todos os pares possíveis de indicadores
+        pairs_of_indicators = [(file_names[i], file_names[j]) for i in range(len(file_names)) for j in range(i + 1, len(file_names))]
+
+        # Contador para armazenar a contagem de cada file_name no primeiro quartil
+        single_indicators_count_dict = {file_name: 0 for file_name in file_names}
+
+        # Contador para armazenar a contagem de cada par de indicadores no primeiro quartil
+        pair_indicators_count_dict = {par: 0 for par in pairs_of_indicators}
+
+        # Itera sobre as linhas do DataFrame
+        for index, row in premiuns_statistics_to_show.iterrows():
+            premium_name = row['premium_name']
+            
+            # Verifica se cada file_name está contido no premium_name
+            for file_name in file_names:
+                if file_name in premium_name:
+                    single_indicators_count_dict[file_name] += 1
+
+            # Verifica se cada par de indicadores está contido no premium_name
+            for pair in pairs_of_indicators:
+                if all(indicador in premium_name for indicador in pair):
+                    pair_indicators_count_dict[pair] += 1
+
+        pair_indicators_total_count = list(pair_indicators_count_dict.values())[0]
+        print ('\npair_indicators_total_count: \n', pair_indicators_total_count)
+        single_indicators_total_count = list(single_indicators_count_dict.values())[0]
+        print ('\nsingle_indicators_total_count: \n', single_indicators_total_count)
+
+
+        # Reseta o Contador
+        single_indicators_count_dict = {file_name: 0 for file_name in file_names}
+
+        pair_indicators_count_dict = {par: 0 for par in pairs_of_indicators}
+
+        # Itera sobre as linhas do DataFrame
+        for index, row in filtered_premiuns_statistics_to_show.iterrows():
+            premium_name = row['premium_name']
+            
+            # Verifica se cada file_name está contido no premium_name
+            for file_name in file_names:
+                if file_name in premium_name:
+                    single_indicators_count_dict[file_name] += 1
+
+            # Verifica se cada par de indicadores está contido no premium_name
+            for pair in pairs_of_indicators:
+                if all(indicador in premium_name for indicador in pair):
+                    pair_indicators_count_dict[pair] += 1
+
+        # Cria um DataFrame a partir do dicionário de contagens
+        single_indicator_count = pd.DataFrame(list(single_indicators_count_dict.items()), columns=['indicator', 'count_first_quartile'])
+
+        single_indicator_count = single_indicator_count.sort_values(by='count_first_quartile', ascending=False)
+
+        single_indicator_count = single_indicator_count.reset_index(drop=True)
+
+        print ('\ncount_first_quartile: \n', single_indicator_count)
+
+        # Cria um DataFrame a partir do dicionário de contagens
+        pairs_indicator_count = pd.DataFrame(list(pair_indicators_count_dict.items()), columns=['pair_indicators', 'contagem_no_primeiro_quartil'])
+
+        # Classifica o DataFrame pelo valor da contagem
+        pairs_indicator_count = pairs_indicator_count.sort_values(by='contagem_no_primeiro_quartil', ascending=False)
+
+        print('\npairs_indicator_count: \n', pairs_indicator_count)
+
+        return premiuns_statistics_to_show, analyzed_windows_df, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, setup_dict, single_indicator_count, single_indicators_total_count, pairs_indicator_count, pair_indicators_total_count
 
     def rebalance_setup_command(rebalance_wallet_id, rebalance_calc_end_date, indicators_dict_database, factor_calc_initial_date, liquidity_filter):
         
@@ -529,27 +613,16 @@ class TelegramManager:
 
         return markdown_text
 
-    def create_ranking_answer(premiuns_to_show, premiuns_to_dict, columns_rank_list, step_months_rank_list, factor_calc_initial_date, factor_calc_end_date, 
-                              premiuns_statistics_to_show, setup_dict, indicators_dict_database, save_setup, wallet_id, wallet_existent, wallets_df, 
-                              analyzed_windows_df,
-                              append_text):
-        
-        print('\n>> creating ranking answer <<\n')
+    def create_ranking_header_answer(premiuns_statistics_to_show, step_months_rank_list, analyzed_windows_df, columns_rank_list, data_inicial, data_final):
 
-        top_rank_premiuns = premiuns_statistics_to_show.head(premiuns_to_show)
-        # print('\ntop_rank_premiuns: \n', top_rank_premiuns)
-        
-        total_analysed_windows = 0
-        
         statistics_columns_name = []
-        answer_text = ''
-        # premiuns_statistics_to_show = round(premiuns_statistics_to_show.astype(float),2)
+        total_analysed_windows = 0
 
         number_of_combinations = len(premiuns_statistics_to_show)
 
-        markdown_text = f'🏆 RANKING COMPLET!!! 🏆\n\n'
+        markdown_text = f'🏆 RANKING COMPLETO!!! 🏆\n\n'
         
-        markdown_text += f"Foram avaliados {number_of_combinations} combinações dos prêmios de risco atrelados aos indicadores. Os cálculos foram feitos considerando a janela temporal de {factor_calc_initial_date} até {factor_calc_end_date}. "
+        markdown_text += f"Foram avaliados {number_of_combinations} combinações dos prêmios de risco atrelados aos indicadores. Os cálculos foram feitos considerando a janela temporal de {data_inicial} até {data_final}. "
         markdown_text += f"\n\nA avaliação de desempenho foi realizada para os seguintes janelas temporais:\n"
 
         for period in step_months_rank_list:
@@ -578,9 +651,99 @@ class TelegramManager:
                 # print('\nstatistics_columns_name: \n', statistics_columns_name)
             markdown_text += f"          🌡 {statistic}\n"
 
-        markdown_text += f"\n-- RANKING {premiuns_to_show} PRIMEIROS\n"
+        return markdown_text
 
-        markdown_text += f"\nO ranking final foi feito por percentual de rentabilidade, no final é mostrado o ranking dos indicadores puros mostrando o número de vezes que o indicador apareceu no rank final.\n"
+    def create_indicator_count_answer(single_indicator_count, single_indicators_total_count, premiuns_statistics_to_show):
+        
+        number_of_combinations = len(premiuns_statistics_to_show)
+
+        first_quartile = int(np.ceil(number_of_combinations/4))
+        print('\nfirst_quartile: ', first_quartile)
+        
+        number_indicator_count = len(single_indicator_count)
+        print('\nnumber_indicator_count: ', number_indicator_count)
+
+        mean_count_first_quartile = int(sum(single_indicator_count['count_first_quartile']) / number_indicator_count)
+
+        markdown_text = f'-- O ranking de indicadores mostrado abaixo realiza a contagem de vezes que cada indicador apareceu no primeiro quartil ({first_quartile}/{number_of_combinations}) do ranking. Cada indicador apareceu {single_indicators_total_count} vezes no ranking. \n\n'
+
+        # Adiciona as linhas
+        for _, row in single_indicator_count.iterrows():
+
+            perc_quartile = (row['count_first_quartile']/first_quartile)*100
+            perc_total = (row['count_first_quartile']/single_indicators_total_count)*100
+            perc_quartile = round(float(perc_quartile),1)
+            perc_total = round(float(perc_total),1)
+            markdown_text += f" 💠 {row['indicator']} \n         - ocorrências no quartil: {row['count_first_quartile']}/{first_quartile} | {perc_quartile}% \n         - ocorrências no total:    {row['count_first_quartile']}/{single_indicators_total_count} | {perc_total}% \n"
+
+        # Finaliza a string Markdown
+        markdown_text += f'\nA média foi de {mean_count_first_quartile} aparições no primeiro quartil do ranking.'
+
+        return markdown_text
+    
+    def create_pair_indicator_count_answer(pair_indicator_count, pair_indicators_total_count):
+        
+        number_pair_indicator_count = len(pair_indicator_count)
+        print('\nnumber_pair_indicator_count: ', number_pair_indicator_count)
+
+        first_ten_percent = int(np.ceil(number_pair_indicator_count/10))
+        print('\nfirst_five_percent: ', first_ten_percent)
+
+        pair_indicator_count = pair_indicator_count.head(first_ten_percent)
+
+        mean_count_first_ten_percent = int(sum(pair_indicator_count['contagem_no_primeiro_quartil']) / first_ten_percent)
+
+        markdown_text = f'-- O ranking mostrado abaixo exibe os 10% melhores ({first_ten_percent}/{number_pair_indicator_count}) pares de indicadores com respeito a mais ocorrências no primeiro quartil do ranking. Cada par apareceu {pair_indicators_total_count} vezes no ranking.\n\n'
+
+        # Adiciona os cabeçalhos
+        # markdown_text += "| pair_indicators | count_first_quartile |\n"
+        # markdown_text += "|-----------|-----------------------|\n"
+
+        # Adiciona as linhas
+        # for _, row in pair_indicator_count.iterrows():
+        #     markdown_text += f"| {row['pair_indicators']} | {row['contagem_no_primeiro_quartil']}/{pair_indicators_total_count} |\n"
+
+        # Adiciona as linhas
+        for _, row in pair_indicator_count.iterrows():
+
+            perc_total = (row['contagem_no_primeiro_quartil']/pair_indicators_total_count)*100
+            perc_total = round(float(perc_total),1)
+
+            markdown_text += f"  🔍 {row['pair_indicators']} \n              - ocorrências no total: {row['contagem_no_primeiro_quartil']}/{pair_indicators_total_count} | {perc_total}%\n\n"
+
+        # Finaliza a string Markdown
+        # markdown_text += "```"
+            
+        markdown_text += f'\nA média foi de {mean_count_first_ten_percent} aparições de pares no primeiro quartil do ranking.'
+
+        return markdown_text
+
+    def create_ranking_answer(premiuns_to_show, premiuns_to_dict, columns_rank_list, step_months_rank_list, 
+                              premiuns_statistics_to_show, setup_dict, indicators_dict_database, save_setup, wallet_id, wallet_existent, wallets_df, 
+                              analyzed_windows_df,
+                              append_text):
+        
+        print('\n>> creating ranking answer <<\n')
+
+        top_rank_premiuns = premiuns_statistics_to_show.head(premiuns_to_show)
+        # print('\ntop_rank_premiuns: \n', top_rank_premiuns)
+        
+        statistics_columns_name = []
+
+        answer_text = ''
+        markdown_text = f''
+
+        prefix = '_'
+        sufix = '_months'
+
+        columns_sufix_list = [prefix + str(item) + sufix for item in step_months_rank_list]
+
+        for statistic in columns_rank_list:
+            for sufix_columns in columns_sufix_list:
+                column = statistic + sufix_columns
+                statistics_columns_name.append(column)
+
+        markdown_text += f"\n-- RANKING {premiuns_to_show} PRIMEIROS\n"
 
         rank_position = 1
 
@@ -687,7 +850,7 @@ class TelegramManager:
                     column_name_to_show = column_name_to_show + '_months'
                     # print(column_name_to_show)
 
-                    markdown_text += f"       🟧 {column_name_to_show} -> {row[column_name]}% a.a.\n"
+                    markdown_text += f"       🟧 {column_name_to_show} -> {row[column_name]}% \n"
                 elif 'anual_std_dev_acum_returns_' in column_name:
                     
                     row[column_name] = round(float(row[column_name])*100,2)
@@ -833,7 +996,7 @@ class TelegramManager:
             markdown_text += f"\n✅✅✅✅ GREEEEEN ✅✅✅✅\n\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}."
         else:
         
-            markdown_text += f"\n❗❗❗❗ MANTÉM A ESTRATÉGIA ❗❗❗❗\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}."
+            markdown_text += f"\n❗❗❗❗ MANTÉM A ESTRATÉGIA ❗❗❗❗\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}.\n"
         
         answer_text = markdown_text
 
@@ -1739,14 +1902,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 indicators_dict = {chave: indicators_dict_database[chave] for chave in decoded_indicators_list if chave in indicators_dict_database}
                 print('indicators_dict: \n', indicators_dict)
 
-                premiuns_statistics_to_show, analyzed_windows_df, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, setup_dict = TelegramManager.rank_risk_premiuns_command(indicators_dict, 
+                premiuns_statistics_to_show, analyzed_windows_df, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, setup_dict, single_indicator_count, single_indicators_total_count, pairs_indicator_count, pair_indicators_total_count = TelegramManager.rank_risk_premiuns_command(indicators_dict, 
                                                                                     single_combinations=single_combinations, double_combinations=double_combinations, triple_combinations=triple_combinations, 
                                                                                     create_rating_pdf=create_pdf, 
                                                                                     initial_analysis_date = initial_analysis_date, final_analysis_date=final_analysis_date,
                                                                                     step_months_rank_list=step_months_rank_list, 
                                                                                     columns_rank_database_list=columns_rank_database_list, columns_rank_list=columns_rank_list, 
                                                                                     premiuns_to_dict=premiuns_to_dict, premiuns_to_show=premiuns_to_show)
-                
+
                 if fail_to_execute == False:
 
                     print('\ncombined_min_data_inicial: ', combined_min_data_inicial)
@@ -1795,15 +1958,24 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     else:
                         print('\nNÃO PODE SALVAR!!\n')
                     
-                    # answer_text = TelegramManager.create_rating_answer(distribution_indicadors, ranking_indicator, top_indicators, setup_dict, indicators_dict_database,
-                    #                                                                     save_setup, wallet_id, wallet_existent, wallets_df)
+                    ranking_header_answer = TelegramManager.create_ranking_header_answer(premiuns_statistics_to_show, step_months_rank_list, analyzed_windows_df, 
+                                                                                    columns_rank_list, data_inicial, data_final)
+                    await update.message.reply_text(ranking_header_answer)
 
-                    answer_text = TelegramManager.create_ranking_answer(premiuns_to_show, premiuns_to_dict, columns_rank_list, step_months_rank_list, 
-                                                                        data_inicial, data_final, premiuns_statistics_to_show, setup_dict, 
+                    ranking_text = TelegramManager.create_ranking_answer(premiuns_to_show, premiuns_to_dict, columns_rank_list, step_months_rank_list, 
+                                                                        premiuns_statistics_to_show, setup_dict, 
                                                                         indicators_dict_database, save_setup, wallet_id, wallet_existent, wallets_df,
                                                                         analyzed_windows_df,
                                                                         append_text)
-            
+                    await update.message.reply_text(ranking_text)
+
+                    indicator_count_answer = TelegramManager.create_indicator_count_answer(single_indicator_count, single_indicators_total_count, premiuns_statistics_to_show)
+                    await update.message.reply_text(indicator_count_answer)
+
+                    pair_indicator_count_answer = TelegramManager.create_pair_indicator_count_answer(pairs_indicator_count, pair_indicators_total_count)
+                    await update.message.reply_text(pair_indicator_count_answer)
+                    
+                    answer_text = '🛫 obrigado.'
                     
                     # create_pdf = bool(create_pdf)
                     print('create_pdf: ', create_pdf)

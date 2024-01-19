@@ -128,7 +128,9 @@ class FintzData:
                 print("Demonstração não encontrada!")
                 exit()
 
+            # print(response.json())
             download_link = (response.json())['link']
+
             urllib.request.urlretrieve(download_link, f"{data_name}.parquet")
             
             #indicator = pd.read_parquet(f"{data_name}.parquet")
@@ -149,6 +151,7 @@ class FintzData:
                 print("Indicador não encontrado!")
                 exit()
 
+            # print(response.json())
             download_link = (response.json())['link']
             urllib.request.urlretrieve(download_link, f"{data_name}.parquet")
             
@@ -158,3 +161,33 @@ class FintzData:
 
         else:
             print("Escolha uma demonstração ou indicador.")
+
+
+    def download_dividendyield(self):
+
+        print("Downloading Dividend Yield")
+        
+        indicators_download_link = os.getenv("DIVIDENDYIELD_DOWNLOAD_LINK")
+        full_link = indicators_download_link
+        print(full_link)
+
+        params = { 'indicador': 'DividendYield', 'ticker': 'AZEV4' }
+
+        try:
+            # response = requests.get(full_link, headers=self.headers)
+            response = requests.get(full_link, headers=self.headers, params=params)
+            print("OK.")
+        except:
+            print("Indicador não encontrado!")
+            exit()
+
+        # print(response.json())
+
+        response_df = pd.DataFrame(response.json())
+        print (response_df)
+        # download_link = (response.json())['link']
+        # urllib.request.urlretrieve(download_link, f"{data_name}.parquet")
+        
+        #indicator = pd.read_parquet(f"{data_name}.parquet")
+        #print(indicator[indicator['ticker'] == 'WEGE3'])
+        #print(indicator)

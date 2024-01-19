@@ -576,6 +576,7 @@ class FinappController:
             for indicator in fintz_indicators_list:
                 data_from_fintz.download_accounting_files(indicator=True, data_name = indicator)
 
+            # data_from_fintz.download_dividendyield()
             data_from_fintz.download_cdi(initial_date=initial_date)
             data_from_fintz.download_ibov(initial_date=initial_date)
             data_from_fintz.download_quotations()
@@ -801,7 +802,7 @@ class FinappController:
             existent_in_analysis = False
             print('\nexistent_in_analysis: \n', existent_in_analysis)
 
-        if premiuns_to_show == None or premiuns_to_show > 15:
+        if premiuns_to_show == None or premiuns_to_show > 10:
             #caso não sejá passado quantidade de premios para exibir ou for muito grande, força os 5 primeiros
             premiuns_to_show = 5
             enable_to_create_dict = False
@@ -1056,7 +1057,7 @@ class FinappController:
             ranking_premiuns_statistics = pd.concat([ranking_ascend, ranking_descend], axis=1)
 
             # ranking_premiuns_statistics = final_statistics[columns_to_rank].rank(ascending=False, method='min')
-            print('\nranking_premiuns_statistics: \n', ranking_premiuns_statistics)
+            # print('\nranking_premiuns_statistics: \n', ranking_premiuns_statistics)
 
             ranking_premiuns_statistics.columns = ['rank_' + coluna for coluna in columns_to_rank]
             ranking_premiuns_statistics['rank_final'] = ranking_premiuns_statistics.sum(axis=1).rank(ascending=True, method='min')
@@ -1090,7 +1091,7 @@ class FinappController:
 
             ##### OUTPUTS #####
 
-            print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
+            # print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
             print('\nnumber_of_analysed_windows: \n', number_of_analysed_windows)
 
             ##### OUTPUTS #####
@@ -1148,10 +1149,6 @@ class FinappController:
                 ]
         
         finapp = FinappController()
-
-
-
-
 
         next_rebalance_date = finapp.find_next_rebalance_date(compositions_df, wallet_id, rebalance_date)
         print('next_rebalance_date: \n', next_rebalance_date)
@@ -1794,9 +1791,9 @@ if __name__ == "__main__":
     finapp = FinappController()
 
     # enable database update
-    update_database                 = False
+    update_database                 = True
     update_api_database             = False
-    update_fintz_database           = False
+    update_fintz_database           = True
     update_webscrapping_database    = False
 
 
@@ -1813,7 +1810,7 @@ if __name__ == "__main__":
 
 
     # enable calculate risk premiuns database update
-    calculate_risk_premiuns         = True
+    calculate_risk_premiuns         = False
     # choose de indicators combinations to rate
     single_combinations             = True
     double_combinations             = True
@@ -1889,13 +1886,13 @@ if __name__ == "__main__":
     ##
     ###
     fintz_demonstration_list = [
-                                'AcoesEmCirculacao', 'TotalAcoes',
+                                # 'AcoesEmCirculacao', 'TotalAcoes',
                                 'PatrimonioLiquido',
-                                'LucroLiquido12m', 'LucroLiquido',
-                                'ReceitaLiquida', 'ReceitaLiquida12m', 
-                                'DividaBruta', 'DividaLiquida',
+                                # 'LucroLiquido12m', 'LucroLiquido',
+                                # 'ReceitaLiquida', 'ReceitaLiquida12m', 
+                                # 'DividaBruta', 'DividaLiquida',
                                 # 'Disponibilidades', 
-                                'Ebit', 'Ebit12m',
+                                # 'Ebit', 'Ebit12m',
                                 # 'Impostos', 'Impostos12m',
                                 # 'LucroLiquidoSociosControladora',
                                 # 'LucroLiquidoSociosControladora12m'
@@ -1903,7 +1900,7 @@ if __name__ == "__main__":
 
     fintz_indicators_list = [
                             # 'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 
-                            'ValorDeMercado'
+                            'DividendYield'
                             ]
     
     bc_dict = {
@@ -2049,7 +2046,6 @@ if __name__ == "__main__":
                                                                             single_combinations=single_combinations,
                                                                             double_combinations=double_combinations,
                                                                             triple_combinations=triple_combinations)
-        
         
 
         ##
