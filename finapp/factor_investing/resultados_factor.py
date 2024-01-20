@@ -59,10 +59,17 @@ class MakeReportResult():
         
         plt.style.use('cyberpunk')
 
+        # self.make_report()
+
+    def execute_make_report(self):
+
         self.make_report()
-        
-        #diretorio_atual = os.getcwd()
-        #print("Diretório atual depois MakeReport:", diretorio_atual)
+
+    def export_turn_over(self):
+
+        self.turnover_carteira()
+
+        return self.turn_over_medio
 
     def make_report(self):
 

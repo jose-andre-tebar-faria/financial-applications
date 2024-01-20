@@ -403,7 +403,7 @@ class TelegramManager:
 
         factor_calc_end_date = '2024-01-31'
         factor_calc_initial_date = '2019-12-31'
-        asset_quantity_setup = 5
+        # asset_quantity_setup = 5
         liquidity_filter_setup = 1
         create_wallets_pfd = True
 
@@ -1116,17 +1116,17 @@ class TelegramManager:
                 previous_rebalance_date = row['previous_rebalance_date']
 
                 markdown_text += f'--------------------\n'
+                
+                wallet_proportion_actual = round(perc_variation,1)
+                wallet_proportion_actual = round(wallet_proportion_previous,1)
+                wallet_proportion_actual = round(wallet_proportion_actual,1)
 
                 if ticker in list(buy_orders['ticker']):
-                    print('compra')
-
                     markdown_text += f'⬅️ COMPRA: {ticker}\n'
                     markdown_text += f'     🔹 porcentagem de compra: {perc_variation}%\n'
                     markdown_text += f'     🔹 porcentagem anterior: {wallet_proportion_previous}%\n'
                     markdown_text += f'     🔹 porcentagem atual: {wallet_proportion_actual}%\n'
                 elif ticker in list(sell_orders['ticker']):
-                    print('venda')
-
                     markdown_text += f'➡️ VENDA: {ticker}\n'
                     markdown_text += f'     🔹 porcentagem de venda: {perc_variation}%\n'
                     markdown_text += f'     🔹 porcentagem anterior: {wallet_proportion_previous}%\n'
@@ -1478,8 +1478,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
                     'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
                     'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
-                    }
-    
+                    }   
     columns_rank_database_list = ['profit_perc', 
                                   'anual_mean_acum_returns', 
                                   'anual_high_acum_returns', 

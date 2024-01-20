@@ -492,20 +492,21 @@ class FinappController:
 
         return setup_dict, rebalance_periods_setup, asset_quantity_setup
      
-    def sliding_window(self, start_date, end_date, step_months):
+    def sliding_window(self, start_date, end_date, months_window_size):
 
         current_date = pd.to_datetime(end_date)
         start_date = pd.to_datetime(start_date)
-        months_window_size = pd.DateOffset(months=step_months)
-        if step_months > 6:
-            months_offset = 3
+        window_size = pd.DateOffset(months=months_window_size)
+
+        if months_window_size > 6:
+            months_offset = 9
         else:
             months_offset = 2
 
 
         while current_date > start_date:
             window_end = current_date
-            window_start = current_date - months_window_size
+            window_start = current_date - window_size
 
             # Verifica se a data da primeira janela ultrapassa o start_date
             if window_start < start_date:
@@ -513,7 +514,7 @@ class FinappController:
 
             yield window_start, window_end
 
-            # current_date -= pd.DateOffset(months=step_months/2)
+            # current_date -= pd.DateOffset(months=months_window_size/2)
             current_date -= pd.DateOffset(months=months_offset)
 
     def find_next_rebalance_date(self, compositions_df, wallet_id, rebalance_date):
@@ -1102,17 +1103,15 @@ class FinappController:
 
         print(".\n..\n...\nGenerating Wallet(s)!\n...\n..\n.")
 
-        #before initialize class must define the name of the file
-        # pdf_name = ''
         if create_wallets_pfd:
             # pdf_name = finapp.create_factor_file_names(setup_dict)
-            print('pdf_name: '), pdf_name
+            print('\npdf_name: ', pdf_name)
         
         rebalance_periods = int(rebalance_periods)
 
         backtest = fc.MakeBacktest(data_final = factor_calc_end_date, data_inicial = factor_calc_initial_date, 
                                    filtro_liquidez=(liquidity_filter * 1000000), balanceamento = rebalance_periods, 
-                                   numero_ativos = asset_quantity, corretagem = 0.01, nome_arquivo = pdf_name, **setup_dict)
+                                   numero_ativos = asset_quantity, corretagem = 0.003, nome_arquivo = pdf_name, **setup_dict)
 
         print('\n +++ pegando_dados')
         backtest.pegando_dados()
@@ -1123,7 +1122,7 @@ class FinappController:
         print('\n +++ calculando_retorno_diario')
         wallets, returns = backtest.calculando_retorno_diario()
 
-        print('\nlast 30 wallet days: \n',returns.tail(30))
+        # print('\nlast 30 wallet days: \n',returns.tail(30))
         # print('wallets: \n',wallets)
         # print(returns)
 
@@ -1133,9 +1132,17 @@ class FinappController:
         ##
         #
         if(create_wallets_pfd):
-            backtest.make_report()
+            
+            turn_over_medio = backtest.make_report()
+        #
+        ##
+        # CALCULATE TURN OVER
+        ##
+        #
+        turn_over_medio = backtest.export_turn_over(execute=True)
+        # print('\nturn_over_medio: ', turn_over_medio)
 
-        return wallets, returns
+        return wallets, returns, turn_over_medio
 
     def run_nightvision_wallet(self, compositions_df, wallet_id, rebalance_date):
         
@@ -1224,7 +1231,7 @@ class FinappController:
         finapp = FinappController()
 
         create_wallets_pfd = False
-        pdf_name = 'testtttt.pdf'
+        pdf_name = 'impossible.pdf'
 
         wallet_to_database = pd.DataFrame()
         rebalance_wallet_id = rebalance_wallet_id
@@ -1243,7 +1250,7 @@ class FinappController:
             #
             ## CALCULATE BACKTEST TO VERIFY REBALANCE POSSIBILITY
             #
-            wallets, returns = finapp.run_factor_calculator(setup_dict, 
+            wallets, returns, turn_over = finapp.run_factor_calculator(setup_dict, 
                                                             factor_calc_end_date=rebalance_calc_end_date, factor_calc_initial_date=factor_calc_initial_date, 
                                                             asset_quantity=asset_quantity_setup, rebalance_periods=rebalance_periods_setup, liquidity_filter=liquidity_filter,
                                                             create_wallets_pfd=create_wallets_pfd, pdf_name=pdf_name)
@@ -1319,7 +1326,7 @@ class FinappController:
 
                         print('\nWallet to database: \n', wallet_to_database)
 
-                        # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+                        wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
                         
                         print('\nUPDATED!')
 
@@ -1330,156 +1337,178 @@ class FinappController:
 
                 print('\nWallet to database: \n', wallet_to_database)
 
-                # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
+                wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
                 
             return wallet_to_database
 
-    def run_optimize_setup(self, rebalance_wallet_id, indicators_dict_database, columns_rank_database_list):
+    def run_optimize_setup(self, optimize_wallet_id, indicators_dict_database, columns_rank_optimization, rebalance_periods_list, asset_quantity_list, months_window_size_list):
         
         fail_to_execute = False
 
-        rebalance_periods_list      = [21,126]
-        asset_quantity_list         = [3,7]
-        step_months_list            = [36,60]
-        # step_months_list            = [60]
-        acum_return_list            = []
-
-        factor_calc_initial_date    = '2012-12-31'
+        factor_calc_initial_date    = '2013-12-31'
         factor_calc_end_date        = '2023-12-31'
 
-        pdf_name = 'test.pdf'
+        create_wallets_pfd = False
+        pdf_name = 'impossible.pdf'
 
-        number_of_executions = 0
+        total_combinations = len(rebalance_periods_list) * len(months_window_size_list) * len(asset_quantity_list)
 
         finapp = FinappController()
 
-        setup_dict, rebalance_periods_setup, asset_quantity_setup = finapp.create_setup_dict(rebalance_wallet_id, indicators_dict_database)
-        wallet_manager = wm.WalletManager()
+        setup_dict, rebalance_periods_setup, asset_quantity_setup = finapp.create_setup_dict(optimize_wallet_id, indicators_dict_database)
+        # wallet_manager = wm.WalletManager()
 
         if len(setup_dict) == 0:
             fail_to_execute = True
             return fail_to_execute
         else:
 
-
-            dataframe_columns = ['premium_name', 'liquidity', 'months_window_size', 'analyzed_windows', 'rebalance_periods']
+            dataframe_columns = ['rebalance_periods', 'asset_quantity','months_window_size', 'analyzed_windows']
             
-            print('.\n.\ncolumns_rank_database_list: \n', columns_rank_database_list)
+            print('.\n.\ncolumns_rank_optimization: \n', columns_rank_optimization)
 
-            dataframe_columns += columns_rank_database_list
+            dataframe_columns += columns_rank_optimization
             print('.\n.\ndataframe_columns: \n', dataframe_columns)
             
             models_statistics = pd.DataFrame(columns=dataframe_columns)
 
+            index = 0
+
+            combination_number = 1
+
             for rebalance_periods in rebalance_periods_list:
 
-                print(f"\nrebalance_periods: {rebalance_periods}")
+                for asset_quantity in asset_quantity_list:
 
-                for step_months in step_months_list:
+                    acum_return_list = []
+                    turn_over_medio_list = []
 
-                    print('\nstep_month: ', step_months)
+                    for months_window_size in months_window_size_list:
 
-                    window_size_threshold = (step_months*30) * (11 / 12)
+                        window_size_threshold = (months_window_size * 30) * (11 / 12)
 
-                    analyzed_windows = 0
+                        analyzed_windows = 0
 
-                    profit_count = 0
-                    loss_count = 0
+                        profit_count = 0
+                        loss_count = 0
 
-                    index = 0
-
-                    for window_start, window_end in finapp.sliding_window(start_date=factor_calc_initial_date, end_date=factor_calc_end_date, step_months=step_months):
-                        
-                        days_in_window = (window_end - window_start).days
-                        days_in_window = float(days_in_window)
-
-                        window_start = pd.to_datetime(window_start)
-                        window_start = window_start.strftime('%Y-%m-%d')
-                        window_end = pd.to_datetime(window_end)
-                        window_end = window_end.strftime('%Y-%m-%d')
-
-                        if days_in_window > window_size_threshold:
-
-                            window_start_str = str(window_start)
-                            window_end_str = str(window_end)
-
-                            print(f"\n.\n..\nWindow: {window_start} to {window_end}\n..\n.")
-                            # print('\ndays_in_window: ', days_in_window)
-
-                            wallets, returns = finapp.run_factor_calculator(setup_dict, 
-                                                                            window_end_str, window_start_str,
-                                                                            asset_quantity_setup, rebalance_periods, liquidity_filter, 
-                                                                            create_wallets_pfd, pdf_name)
-                        
-                            print('\nwallets: \n', wallets)
-                            print('\nreturns: \n', returns)
-
-                            initial_money = returns.loc[1, 'dinheiro']  # Valor no segundo dia (índice 1)
-                            final_money = returns.loc[returns.index[-1], 'dinheiro']  # Valor no último dia
-
-                            # Calcule a rentabilidade total
-                            acum_return = (final_money - initial_money) / initial_money
-
-                            acum_return_list.append(acum_return)
-
-                            print('\nacum_return: \n', acum_return)
+                        for window_start, window_end in finapp.sliding_window(start_date=factor_calc_initial_date, end_date=factor_calc_end_date, months_window_size=months_window_size):
                             
-                            if acum_return > 0:
-                                profit_count+=1
-                            else:
-                                loss_count+=1
+                            days_in_window = (window_end - window_start).days
+                            days_in_window = float(days_in_window)
+
+                            window_start = pd.to_datetime(window_start)
+                            window_start = window_start.strftime('%Y-%m-%d')
+                            window_end = pd.to_datetime(window_end)
+                            window_end = window_end.strftime('%Y-%m-%d')
+
+                            if days_in_window > window_size_threshold:
+
+                                window_start_str = str(window_start)
+                                window_end_str = str(window_end)
+
+                                print(f"\n\t=====")
+                                print(f"\nrebalance_periods: {rebalance_periods}")
+                                print('\nasset_quantity: ', asset_quantity)
+                                print('\nmonths_window_size: ', months_window_size)
+                                print(f'\ncombination_number: {combination_number}/{total_combinations}')
+                                print('\nanalyzed_windows: ', analyzed_windows)
+                                print(f"\n.\nSliding Window: {window_start} to {window_end}\n.")
+                                # print('\ndays_in_window: ', days_in_window)
+
+                                # wallets, returns = finapp.run_factor_calculator(setup_dict, 
+                                #                                                 window_end_str, window_start_str,
+                                #                                                 asset_quantity_setup, rebalance_periods, liquidity_filter, 
+                                #                                                 create_wallets_pfd, pdf_name)                            
+                                
+                                wallets, returns, turn_over_medio = finapp.run_factor_calculator(setup_dict, 
+                                                                                window_end_str, window_start_str,
+                                                                                asset_quantity, rebalance_periods, liquidity_filter, 
+                                                                                create_wallets_pfd, pdf_name)
+                            
+                                # print('\nwallets: \n', wallets)
+                                # print('\nreturns: \n', returns)
+                                # print('\nturn_over_medio: \n', turn_over_medio)
+
+                                initial_money = returns.loc[1, 'dinheiro']  # Valor no segundo dia (índice 1)
+                                final_money = returns.loc[returns.index[-1], 'dinheiro']  # Valor no último dia
+
+                                # Calcule a rentabilidade total
+                                acum_return = (final_money - initial_money) / initial_money
+
+                                acum_return_list.append(acum_return)
+                                print('\nacum_return: ', acum_return)
+
+                                turn_over_medio_list.append(turn_over_medio)
+                                print('\nturn_over_medio: ', turn_over_medio)
+                                
+                                if acum_return > 0:
+                                    profit_count+=1
+                                else:
+                                    loss_count+=1
+                            
+                                analyzed_windows+=1
                         
-                            analyzed_windows+=1
-                            number_of_executions+=1
+                        combination_number+=1
 
-                    if len(acum_return_list) > 0:
+                        if len(acum_return_list) > 0:
 
-                        print('\nacum_return_list: \n', acum_return_list)
+                            print('\nacum_return_list: \n', acum_return_list)
+                            print('\nturn_over_medio_list: \n', turn_over_medio_list)
 
-                        mean_acum_returns = sum(acum_return_list) / len(acum_return_list)
-                        print('\nmean_acum_returns: \n', mean_acum_returns)
+                            mean_turn_over_medio = sum(turn_over_medio_list) / len(turn_over_medio_list)
+                            print('\nmean_turn_over_medio: \n', mean_turn_over_medio)
 
-                        # anual_std_dev_acum_returns = statistics.stdev(acum_return_list)
-                        # print('\nanual_std_dev_acum_returns: \n', anual_std_dev_acum_returns)
+                            mean_acum_returns = sum(acum_return_list) / len(acum_return_list)
+                            print('\nmean_acum_returns: \n', mean_acum_returns)
 
-                        anual_mean_acum_returns = ((1 + mean_acum_returns) ** (12 / step_months)) - 1
-                        print('\nanual_mean_acum_returns: \n', anual_mean_acum_returns)
+                            # anual_std_dev_acum_returns = statistics.stdev(acum_return_list)
+                            # print('\nanual_std_dev_acum_returns: \n', anual_std_dev_acum_returns)
 
-                        high_acum_returns = max(acum_return_list)
-                        anual_high_acum_returns = ((1 + high_acum_returns) ** (12 / step_months)) - 1
-                        print('\nanual_high_acum_returns: \n', anual_high_acum_returns)
+                            anual_mean_acum_returns = ((1 + mean_acum_returns) ** (12 / months_window_size)) - 1
+                            print('\nanual_mean_acum_returns: \n', anual_mean_acum_returns)
 
-                        low_acum_returns = min(acum_return_list)
-                        anual_low_acum_returns = ((1 + low_acum_returns) ** (12 / step_months)) - 1
-                        print('\nanual_low_acum_returns: \n', anual_low_acum_returns)
+                            high_acum_returns = max(acum_return_list)
+                            anual_high_acum_returns = ((1 + high_acum_returns) ** (12 / months_window_size)) - 1
+                            print('\nanual_high_acum_returns: \n', anual_high_acum_returns)
 
-                        total_count = profit_count + loss_count
-                        print('\ntotal_count: \n', total_count)
+                            low_acum_returns = min(acum_return_list)
+                            anual_low_acum_returns = ((1 + low_acum_returns) ** (12 / months_window_size)) - 1
+                            print('\nanual_low_acum_returns: \n', anual_low_acum_returns)
 
-                        profit_perc = (profit_count / total_count ) * 100
-                        print('\nprofit_perc: \n', profit_perc)
+                            profit_count = round(float(profit_count), 1)
+                            print('\nprofit_count: \n', profit_count)
+                            loss_count = round(float(loss_count), 1)
+                            print('\nloss_count: \n', loss_count)
+                            total_count = profit_count + loss_count
+                            print('\ntotal_count: \n', total_count)
 
-                        models_statistics.loc[index, 'rebalance_periods'] = rebalance_periods
-                        models_statistics.loc[index, 'months_window_size'] = step_months
-                        models_statistics.loc[index, 'analyzed_windows'] = analyzed_windows
-                        models_statistics.loc[index, 'analyzed_windows'] = analyzed_windows
-                        models_statistics.loc[index, 'analyzed_windows'] = analyzed_windows
-                        models_statistics.loc[index, 'profit_perc'] = profit_perc
-                        models_statistics.loc[index, 'mean_acum_returns'] = mean_acum_returns
-                        models_statistics.loc[index, 'anual_mean_acum_returns'] = anual_mean_acum_returns
-                        models_statistics.loc[index, 'anual_high_acum_returns'] = anual_high_acum_returns
-                        models_statistics.loc[index, 'anual_low_acum_returns'] = anual_low_acum_returns
-                        # models_statistics.loc[index, 'anual_std_dev_acum_returns'] = anual_std_dev_acum_returns
+                            profit_perc = round( (profit_count / total_count ) * 100, 1)
+                            print('\nprofit_perc: \n', profit_perc)
 
-                        models_statistics = models_statistics.sort_values('anual_mean_acum_returns', ascending = False)
+                            models_statistics.loc[index, 'rebalance_periods'] = rebalance_periods
+                            models_statistics.loc[index, 'months_window_size'] = months_window_size
+                            models_statistics.loc[index, 'analyzed_windows'] = analyzed_windows
+                            models_statistics.loc[index, 'asset_quantity'] = asset_quantity
+                            models_statistics.loc[index, 'profit_perc'] = profit_perc
+                            # models_statistics.loc[index, 'mean_acum_returns'] = mean_acum_returns
+                            models_statistics.loc[index, 'mean_turn_over'] = mean_turn_over_medio
+                            models_statistics.loc[index, 'anual_mean_acum_returns'] = anual_mean_acum_returns
+                            models_statistics.loc[index, 'anual_high_acum_returns'] = anual_high_acum_returns
+                            models_statistics.loc[index, 'anual_low_acum_returns'] = anual_low_acum_returns
+                            # models_statistics.loc[index, 'anual_std_dev_acum_returns'] = anual_std_dev_acum_returns
+                            
+                            models_statistics['ranking_anual_mean'] = models_statistics['anual_mean_acum_returns'].rank(ascending=False)
 
-                        index+=1
-                        
-                        print('\nmodels_statistics: \n', models_statistics)
+                            models_statistics = models_statistics.sort_values('ranking_anual_mean', ascending = True)
+
+                            index+=1
+                            
+                            print('\nmodels_statistics: \n', models_statistics)
 
             fail_to_execute = False
 
-            return fail_to_execute
+            return models_statistics, fail_to_execute
 
     def run_make_indicators(self):
 
@@ -1512,6 +1541,8 @@ class FinappController:
         print(".\n.\n=== UPDATE COMPLETE! ===")
 
     def run_execute_rebalance(self, wallet_id, rebalance_date):
+
+        result_df = pd.DataFrame(['wallet_id_actual', 'rebalance_date_actual', 'ticker', 'wallet_proportion_actual', 'price_date_1', 'wallet_proportion_previous', 'price_date_2'])
         
         wallet_manager = wm.WalletManager()
 
@@ -1614,7 +1645,7 @@ class FinappController:
                 for date in dates:
                     # Obter o preço para a data específica
                     price = ticker_data[ticker_data['data'] == date]['preco_fechamento_ajustado'].values
-                    
+
                     # Adicionar as informações ao dicionário
                     info_dict[f'date_{dates.tolist().index(date) + 1}'] = date
                     info_dict[f'price_date_{dates.tolist().index(date) + 1}'] = price[0] if len(price) > 0 else None
@@ -1628,11 +1659,11 @@ class FinappController:
             # print('result_df: \n', result_df)
 
             result_df = pd.merge(df_merge, result_df, on='ticker', how='left')
-            # print('result_df: \n', result_df)
+            print('result_df: \n', result_df)
 
             # Selecionar as colunas necessárias
             result_df = result_df[['wallet_id_actual', 'rebalance_date_actual', 'ticker', 'wallet_proportion_actual', 'price_date_1', 'wallet_proportion_previous', 'price_date_2']].drop_duplicates()
-            # print('result_df: \n', result_df)
+            print('result_df: \n', result_df)
 
 
 
@@ -1775,7 +1806,7 @@ class FinappController:
             # print('pdf_name: ', pdf_name)
             # print('description_pdf: ', description_pdf)
 
-            wallets, returns = finapp.run_factor_calculator(setup_dict, 
+            wallets, returns, turn_over = finapp.run_factor_calculator(setup_dict, 
                                                             factor_calc_end_date=factor_calc_end_date, factor_calc_initial_date=factor_calc_initial_date, 
                                                             asset_quantity=asset_quantity_setup, rebalance_periods=rebalance_periods_setup, liquidity_filter=liquidity_filter,
                                                             create_wallets_pfd=create_wallets_pfd, pdf_name=pdf_name)
@@ -1791,18 +1822,45 @@ if __name__ == "__main__":
     finapp = FinappController()
 
     # enable database update
-    update_database                 = True
-    update_api_database             = False
-    update_fintz_database           = True
-    update_webscrapping_database    = False
+    update_database                 = False
 
+    update_api_database             = False
+
+    update_fintz_database           = False    
+    fintz_demonstration_list        = [
+                                # 'AcoesEmCirculacao', 'TotalAcoes',
+                                'PatrimonioLiquido',
+                                # 'LucroLiquido12m', 'LucroLiquido',
+                                # 'ReceitaLiquida', 'ReceitaLiquida12m', 
+                                # 'DividaBruta', 'DividaLiquida',
+                                # 'Disponibilidades', 
+                                # 'Ebit', 'Ebit12m',
+                                # 'Impostos', 'Impostos12m',
+                                # 'LucroLiquidoSociosControladora',
+                                # 'LucroLiquidoSociosControladora12m'
+                                ]
+    fintz_indicators_list           = [
+                            # 'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 
+                            'DividendYield'
+                            ]
+    
+    update_webscrapping_database    = False
+    bc_dict                         = {
+                'selic':    {'bc_code': '432'},
+                'ipca':     {'bc_code': '433'},
+                'dolar':    {'bc_code': '1'},
+                }
 
     # enable asset profile update
     update_asset_profile            = False
 
 
     # enable create BCG Matrix
-    update_bcg_matrix               = False
+    update_bcg_matrix               = False    
+    bcg_dimensions_list             = [
+                                        'sector', 
+                                        'subsector',
+                                    ]
 
 
     # enable indicators update
@@ -1812,16 +1870,62 @@ if __name__ == "__main__":
     # enable calculate risk premiuns database update
     calculate_risk_premiuns         = False
     # choose de indicators combinations to rate
-    single_combinations             = True
-    double_combinations             = True
-    triple_combinations             = True
+    single_combinations             = False
+    double_combinations             = False
+    triple_combinations             = False
     # true if you want to update a existing file
     update_existing_file            = False
 
 
+    indicators_dict                 = {
+                                    'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
+                                    'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
+                                    'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
+                                    'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
+                                    # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
+                                    'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
+                                    'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
+                                    'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
+                                    'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
+                                    'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
+                                    'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
+                                    'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
+                                    'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
+                                    'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
+                                    'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
+                                    'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
+                                    }
+    indicators_dict_database        = {
+                                    'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
+                                    'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
+                                    'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
+                                    'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
+                                    'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
+                                    'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
+                                    'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
+                                    'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
+                                    'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
+                                    'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
+                                    'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
+                                    'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
+                                    'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
+                                    'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
+                                    'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
+                                    'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
+                                    }
+    
     # enable rating risks
     rate_risk_premiuns              = False
     rank_risk_premiuns              = False
+    number_of_top_comb_indicators   = 5
+    columns_rank_database_list      = ['profit_perc', 
+                                        'anual_mean_acum_returns', 
+                                        'mean_turn_over',
+                                        'anual_high_acum_returns', 
+                                        'anual_low_acum_returns',
+                                        # 'last_acum_return',
+                                        # 'anual_std_dev_acum_returns'
+                                        ]
     # final_analysis_date             = '2022-12-31'
     final_analysis_date             = '2024-12-31'
     rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
@@ -1851,8 +1955,8 @@ if __name__ == "__main__":
     factor_calc_initial_date        = '2020-12-31'
     rebalance_calc_end_date         = '2023-12-31'
     # rebalance_wallet_id             = '3657'
-    rebalance_wallet_id             = '5480'
-    # rebalance_wallet_id             = '4819'
+    # rebalance_wallet_id             = '1099'
+    rebalance_wallet_id             = '2779'
 
 
     # enable generation of wallet
@@ -1869,50 +1973,36 @@ if __name__ == "__main__":
 
     # enable requirements.txt update
     optimize_setup                  = False
-    columns_rank_database_list      = ['profit_perc', 
+    # optimize_wallet_id              = '1099'
+    optimize_wallet_id              = '2145'
+    rebalance_periods_list          = [5,10,21]
+    # rebalance_periods_list          = [21]
+    asset_quantity_list             = [2,3,4]
+    # asset_quantity_list             = [1]
+    # months_window_size_list         = [36,60]
+    months_window_size_list         = [60]
+    columns_rank_optimization       = ['profit_perc', 
                                         'anual_mean_acum_returns', 
                                         'anual_high_acum_returns', 
                                         'anual_low_acum_returns',
-                                        'last_acum_return',
-                                        'anual_std_dev_acum_returns'
+                                        'mean_turn_over',
+                                        # 'anual_std_dev_acum_returns'
                                         ]
     
     # enable requirements.txt update
-    update_requirements_txt         = False
+    update_requirements_txt         = True
+
 
     ###
     ##
     #update_database
     ##
     ###
-    fintz_demonstration_list = [
-                                # 'AcoesEmCirculacao', 'TotalAcoes',
-                                'PatrimonioLiquido',
-                                # 'LucroLiquido12m', 'LucroLiquido',
-                                # 'ReceitaLiquida', 'ReceitaLiquida12m', 
-                                # 'DividaBruta', 'DividaLiquida',
-                                # 'Disponibilidades', 
-                                # 'Ebit', 'Ebit12m',
-                                # 'Impostos', 'Impostos12m',
-                                # 'LucroLiquidoSociosControladora',
-                                # 'LucroLiquidoSociosControladora12m'
-                                ]
-
-    fintz_indicators_list = [
-                            # 'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 
-                            'DividendYield'
-                            ]
-    
-    bc_dict = {
-                'selic':    {'bc_code': '432'},
-                'ipca':     {'bc_code': '433'},
-                'dolar':    {'bc_code': '1'},
-                }
-
     if(update_database):
 
         finapp.run_update_database(update_fintz_database = update_fintz_database, update_api_database = update_api_database, update_webscrapping_database = update_webscrapping_database,
                                    fintz_indicators_list = fintz_indicators_list, fintz_demonstration_list = fintz_demonstration_list)
+
 
     ###
     ##
@@ -1933,16 +2023,12 @@ if __name__ == "__main__":
 
         profile_updater.read_profile_database()
    
+
     ###
     ##
     #bcg_matrix
     ##
     ###
-    bcg_dimensions_list = [
-                        'sector', 
-                        'subsector',
-                    ]
-
     if(update_bcg_matrix):
 
         print(".\n..\n...\nCreating BCG Matrix!\n...\n..\n.")
@@ -1950,6 +2036,7 @@ if __name__ == "__main__":
         bcg_matrix = cbm.BcgMatrix(bcg_dimensions_list)
 
         bcg_matrix.create_bcg_matrix()
+
 
     ###
     ##
@@ -1960,57 +2047,23 @@ if __name__ == "__main__":
 
         finapp.run_make_indicators()
 
+
     ###
     ##
-    #risk_premiuns
+    #calculate_risk_premiuns
     ##
     ###
-    indicators_dict = {
-                        'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
-                        'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
-                        'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
-                        'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
-                        # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
-                        'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
-                        'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
-                        'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
-                        'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
-                        'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
-                        'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
-                        'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
-                        'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
-                        'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
-                        'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
-                        'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
-                        }
-
-    indicators_dict_database = {
-                        'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
-                        'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
-                        'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
-                        'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
-                        'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
-                        'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
-                        'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
-                        'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
-                        'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
-                        'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
-                        'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
-                        'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
-                        'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
-                        'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
-                        'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
-                        'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
-                        }
-    
-
     if(calculate_risk_premiuns):
 
         finapp.run_calculate_risk_premiuns(indicators_dict, 
                                           single_combinations, double_combinations, triple_combinations, 
                                           update_existing_file)
 
-
+    ###
+    ##
+    #rank_risk_premiuns   
+    ##
+    ###
     if (rank_risk_premiuns):
 
         step_months_rank_list = [12] 
@@ -2028,13 +2081,13 @@ if __name__ == "__main__":
         print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
         print('\nanalyzed_windows_df: \n', analyzed_windows_df)
         print('\nsetup_dict: \n', setup_dict)
+    
+    
     ###
     ##
     #rate_risk_premiuns   
     ##
     ###
-    number_of_top_comb_indicators = 5
-
     if(rate_risk_premiuns):
 
         distribution_indicadors, ranking_indicator, top_indicators, fail_to_execute = finapp.run_rate_risk_premius(
@@ -2076,6 +2129,7 @@ if __name__ == "__main__":
 
         print(".\n.\n=== RATING COMPLETE! ===")
 
+
     ###
     ##
     #regression_model
@@ -2096,14 +2150,13 @@ if __name__ == "__main__":
         fazendo_modelo.execute_regression()
 
 
+    create_date_auto = datetime.now()
+    create_date_auto = create_date_auto.strftime('%Y-%m-%d')
     ###
     ##
     # save setup in database
     ##
     ###
-    create_date_auto = datetime.now()
-    create_date_auto = create_date_auto.strftime('%Y-%m-%d')
-
     if(config_setups):
 
         wallet_manager = wm.WalletManager()
@@ -2193,15 +2246,19 @@ if __name__ == "__main__":
             wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = rebalance_wallet_id, wallet_defined = wallet_to_database)
 
 
-
     ###
     ##
     # optimize setup
     ##
     ###
     if(optimize_setup):
-        print('')
-        finapp.run_optimize_setup(rebalance_wallet_id, indicators_dict_database, columns_rank_database_list)
+        
+        models_statistics, fail_to_execute = finapp.run_optimize_setup(optimize_wallet_id, indicators_dict_database, columns_rank_optimization, 
+                                                                       rebalance_periods_list, asset_quantity_list, months_window_size_list)
+
+        print(models_statistics[(models_statistics['mean_turn_over'] < 0.36) & (models_statistics['anual_low_acum_returns'] > 0.12) &
+                (models_statistics['anual_mean_acum_returns'] > 0.30)])
+
 
     ###
     ##

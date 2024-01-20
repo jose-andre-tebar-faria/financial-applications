@@ -634,7 +634,26 @@ if __name__ == "__main__":
     ##############
 
     file_not_found, wallets_df = wallet_manager.read_setups()
+
+    ##############
+    # UPDATE CONFIGURATION
+    ##############
+
+    # wallets_df.loc[wallets_df['wallet_id'] == '2145', 'number_of_assets'] = 3
+
+    # current_folder = os.getcwd()
+
+    # project_folder = os.getenv("PROJECT_FOLDER")
+    # databse_folder = os.getenv("DATABASE_FOLDER")
+    # full_desired_path = os.path.join(project_folder,databse_folder)
+
+    # if(current_folder != full_desired_path):
+    #     os.chdir(full_desired_path)
+
     # print(wallets_df)
+    # wallets_df.to_parquet(f'{full_desired_path}/wallets.parquet', index = True)
+
+    ##############
 
     # print(wallets_df[['wallet_id', 'wallet_name', 'number_of_assets', 'user_name', 'proportion', 'close_date', 'rebalance_periods', 'last_rebalance_date']])
 
@@ -684,9 +703,9 @@ if __name__ == "__main__":
     #     save_wallet_composion = False
     # print('wallet_id', wallet_id)
 
-    # file_not_found, compositions_df = wallet_manager.read_portifolios_composition(wallet_id = 3657)
-    file_not_found, compositions_df = wallet_manager.read_portifolios_composition()
-    # print('compositions_df',compositions_df)
+    file_not_found, compositions_df = wallet_manager.read_portifolios_composition(wallet_id = '1099')
+    # file_not_found, compositions_df = wallet_manager.read_portifolios_composition() 
+    print('compositions_df',compositions_df)
 
     df_merge = pd.merge(compositions_df, wallets_df, on=['wallet_id'], how='left')
     # print('df_merge',df_merge[['wallet_id', 'rebalance_date', 'user_name']])
@@ -711,7 +730,7 @@ if __name__ == "__main__":
     print('distinct_setups: \n', distinct_setups)
 
     # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = last_wallet_defined)
-    # wallet_manager.delete_portifolio_composition(wallet_id = 5480, rebalance_date = '2023-12-14')
+    # wallet_manager.delete_portifolio_composition(wallet_id = 2145, rebalance_date = '2024-01-10')
 
     ##############
     # OPERATION TYPES CONFIGURATION

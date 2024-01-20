@@ -108,13 +108,13 @@ class MakeBacktest():
                     lendo_indicador.columns = ['data', 'ticker', indicador]
 
                     last_date = lendo_indicador['data'].tail(1).iloc[0]
-                    print(f'\n\tIndicador {indicador} está atualizado até o dia {last_date}.')
+                    # print(f'\n\tIndicador {indicador} está atualizado até o dia {last_date}.')
                     # print('lendo_indicador: ', lendo_indicador)
 
                     last_records = lendo_indicador.groupby('ticker').last()
 
                     new_records = pd.DataFrame()
-                    for i in range(2):
+                    for i in range(11):
                         next_date = last_records['data'].max() + pd.DateOffset(days=i+1)
                         next_date = next_date.strftime('%Y-%m-%d')
                         next_records = last_records.copy()
@@ -130,7 +130,7 @@ class MakeBacktest():
                     lendo_indicador_2 = lendo_indicador_2.sort_values(['ticker', 'data']).reset_index(drop=True)
 
                     last_date_2 = lendo_indicador_2['data'].tail(1).iloc[0]
-                    print(f'\n\tIndicador_2 {indicador} está atualizado até o dia {last_date_2}.')
+                    # print(f'\n\tIndicador_2 {indicador} está atualizado até o dia {last_date_2}.')
                     # print('lendo_indicador_2: \n', lendo_indicador_2)
 
                     lista_dfs.append(lendo_indicador_2)
@@ -140,11 +140,11 @@ class MakeBacktest():
 
         for df in lista_dfs[1:]:
 
-            print('df_dados: \n', df_dados)
+            # print('df_dados: \n', df_dados)
 
             df['data'] = pd.to_datetime(df['data']).dt.date
             df['ticker'] = df['ticker'].astype(str)
-            print('df: \n', df)
+            # print('df: \n', df)
 
             df_dados = pd.merge(df_dados, df,  how='inner', left_on=['data', 'ticker'], right_on=['data', 'ticker'])
 
@@ -291,10 +291,24 @@ class MakeBacktest():
 
     def make_report(self):
 
+        print(self.carteira_por_periodo)
         self.carteira_por_periodo = self.carteira_por_periodo.set_index('data')
 
-        MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, nome_arquivo=self.nome_arquivo)
+        make_report = MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, nome_arquivo=self.nome_arquivo)
+        make_report.execute_make_report()
 
+    def export_turn_over(self, execute=False):
+
+        turn_over_medio = 0
+
+        if execute:
+            self.carteira_por_periodo = self.carteira_por_periodo.set_index('data')
+
+            make_report = MakeReportResult(df_trades=self.df_retornos, df_carteiras=self.carteira_por_periodo, nome_arquivo=self.nome_arquivo)
+
+            turn_over_medio = make_report.export_turn_over()
+
+        return turn_over_medio
 
 if __name__ == "__main__":
 
