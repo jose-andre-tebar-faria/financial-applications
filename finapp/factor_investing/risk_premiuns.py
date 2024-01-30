@@ -3,6 +3,9 @@ import numpy as np
 from dateutil.relativedelta  import relativedelta
 import os
 from dotenv import load_dotenv
+# from datetime import date
+from unidecode import unidecode
+import datetime
 
 class RiskPremium:
 
@@ -33,11 +36,50 @@ class RiskPremium:
         
         print("OK.")
 
+    def filtering_tickers_by_sectors(self, sector=''):
+
+        self.sector = sector
+        self.tickers_database = pd.read_parquet("sectors_assets_b3_webscraping.parquet")
+        # print(f'tickers_database: \n {self.tickers_database}')
+
+        self.sectors = self.tickers_database.groupby('sector').count()
+        # print(f'sectors: \n {self.sectors.index}')
+        # self.subsectors = self.tickers_database.groupby('subsector').count()
+        # print(self.subsectors)
+
+        self.sectors_list = list(self.sectors.index)
+        print(f'sectors_list: \n {self.sectors_list}')
+
+        self.ticker_sector_df = pd.DataFrame({'ticker': self.tickers_database['ticker'], 'sector': self.tickers_database['sector']})
+        # print(f'ticker_sector_df: \n {self.ticker_sector_df}')
+        self.ticker_sector_df['ticker'].replace('', pd.NA, inplace=True)
+        self.ticker_sector_df = self.ticker_sector_df.dropna(subset=['ticker'])
+        # print(f'ticker_sector_df: \n {self.ticker_sector_df}')
+
     def getting_quotations(self):
 
         self.quotations = pd.read_parquet("cotacoes.parquet")
-        self.quotations['id_dado'] = self.quotations['ticker'].astype(str) + "_" + self.quotations['data'].astype(str)
-        self.quotations['data'] = pd.to_datetime(self.quotations['data']).dt.date
+        # print(f'self.quotations 1: \n {str(self.quotations[["data", "ticker", "preco_fechamento"]])}')
+
+        if self.sector != '':
+
+            filtered_tickers = self.ticker_sector_df[self.ticker_sector_df['sector'] == self.sector]['ticker']
+            # print(f'self.filtered_tickers: \n {filtered_tickers}')
+            self.filtered_tickers_list = list(filtered_tickers)
+            # print(f'self.filtered_tickers_list: \n {self.filtered_tickers_list}')
+
+            self.quotations_by_sector = self.quotations[self.quotations['ticker'].isin(self.filtered_tickers_list)]
+            # print(f'self.quotations_by_sector: \n {str(self.quotations_by_sector[["data", "ticker", "preco_fechamento"]])}')
+
+            self.quotations_by_sector['id_dado'] = self.quotations_by_sector['ticker'].astype(str) + "_" + self.quotations_by_sector['data'].astype(str)
+            self.quotations_by_sector['data'] = pd.to_datetime(self.quotations_by_sector['data']).dt.date
+        else:
+            self.quotations['id_dado'] = self.quotations['ticker'].astype(str) + "_" + self.quotations['data'].astype(str)
+            self.quotations['data'] = pd.to_datetime(self.quotations['data']).dt.date
+
+        
+        # self.quotations['id_dado'] = self.quotations['ticker'].astype(str) + "_" + self.quotations['data'].astype(str)
+        # self.quotations['data'] = pd.to_datetime(self.quotations['data']).dt.date
 
     def getting_possible_dates(self):
 
@@ -49,7 +91,17 @@ class RiskPremium:
         all_last_dates_each_month = petr_quotations.groupby(['year', 'month'])['data'].last()
         all_last_dates_each_month = all_last_dates_each_month.reset_index()
 
+        all_last_dates_each_month['data'] = all_last_dates_each_month['data'].apply(lambda x: datetime.date(x.year, x.month, x.day))
+
+        # print(f'all_last_dates_each_month: \n {all_last_dates_each_month}')
+
         self.all_last_dates_each_month = all_last_dates_each_month
+
+        if self.sector != '':
+            print('\nself.quotations_by_sector: \n', self.quotations_by_sector[['data','ticker', 'preco_fechamento_ajustado']])
+            self.quotations = self.quotations_by_sector
+            self.quotations['data'] = pd.to_datetime(self.quotations['data']).dt.date
+        # print(f'self.quotations 2: \n {self.quotations}')
 
     def filtering_volume(self):
 
@@ -59,6 +111,7 @@ class RiskPremium:
         median_volume_data.columns = ['id_dado', 'volumeMediano']
         self.quotations = pd.merge(self.quotations, median_volume_data, how = 'inner', on = 'id_dado')
         self.quotations = self.quotations[self.quotations['volumeMediano'] > self.liquidity]
+        # print(f'self.quotations 3: \n {self.quotations}')
 
     def getting_indicators(self):
         
@@ -71,6 +124,8 @@ class RiskPremium:
                df = None
                print("Indicator file not found.")
             self.indicators_dataframe.append(df)
+
+        # print(f'self.quotations 4: \n {self.indicators_dataframe}')
 
     def discovering_initial_month(self):
         dates = []
@@ -86,6 +141,10 @@ class RiskPremium:
         self.list_all_last_dates_each_month = (self.all_last_dates_each_month.query('data >= @self.general_minimum_date'))['data'].to_list()
         self.filtered_quotations = self.quotations.query('data >= @self.general_minimum_date')
 
+        # print(f'self.list_all_last_dates_each_month: \n {self.list_all_last_dates_each_month}')
+
+        # print(f'self.filtered_quotations 5: \n {self.filtered_quotations}')
+
     def calculating_premiuns(self):
 
         print("Calculating Premium.")
@@ -97,7 +156,9 @@ class RiskPremium:
 
         for i, data in enumerate(self.list_all_last_dates_each_month):
 
+            # print(f'data: \n {data}')
             df_info_pontuais = self.filtered_quotations[self.filtered_quotations['data'] == data][['ticker', 'preco_fechamento_ajustado', 'volume_negociado']]
+            # print(f'df_info_pontuais: \n {df_info_pontuais}')
 
             #calculando rent da carteira anterior
             if i != 0:
@@ -114,7 +175,7 @@ class RiskPremium:
 
                 premiuns_dataframe.loc[data, 'universo'] = np.mean(np.array(lista_retornos))
 
-            #print("premiuns_dataframe", premiuns_dataframe)
+            # print(f'premiuns_dataframe: \n{premiuns_dataframe}')
 
             #pegando as novas carteiras
             df_info_pontuais['ranking_final'] = 0
@@ -148,7 +209,7 @@ class RiskPremium:
             lista_dfs[2] = df_info_pontuais.iloc[(empresas_por_quartil * 2): (empresas_por_quartil * 3)]
             lista_dfs[3] = df_info_pontuais.iloc[(empresas_por_quartil * 3): ((empresas_por_quartil * 4) + sobra_empresas)]
                 
-        #print("df_info_pontuais", df_info_pontuais)
+        # print("\ndf_info_pontuais: \n", df_info_pontuais)
     
         #print("primeiro_quartil",lista_dfs[0])
 
@@ -174,4 +235,7 @@ class RiskPremium:
         if(self.current_folder != self.full_desired_path):
             os.chdir(self.full_desired_path)
 
-        self.premiuns_dataframe.to_parquet(f'{self.full_desired_path}/{self.premium_name}_{self.liquidity}.parquet', index = False)
+        # print(self.premiuns_dataframe)
+        # print(self.premium_name)
+
+        self.premiuns_dataframe.to_parquet(f'{self.full_desired_path}/{self.premium_name}_{self.liquidity}.parquet', index = False) 

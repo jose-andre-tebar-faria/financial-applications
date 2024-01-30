@@ -21,6 +21,7 @@ from dateutil.relativedelta  import relativedelta
 from datetime import datetime
 import time
 import statistics
+from unidecode import unidecode
 
 class FinappController:
 
@@ -60,7 +61,7 @@ class FinappController:
 
         return self.list_combinations
 
-    def create_file_names(self, list_combinations, indicators_dict):
+    def create_file_names(self, list_combinations, indicators_dict, sector = ''):
 
         self.list_combination_file_name = []
 
@@ -73,9 +74,20 @@ class FinappController:
             desired_value = 'file_name'
             self.premium_name = [file_name[desired_value] for file_name in indicators_dict_new.values()]
             self.premium_name = '-with-'.join(self.premium_name)
+            # print(f'premium_name: {self.premium_name}')
+
+            if sector != '':
+                # print(f'sector: {sector}')
+                sector_name_file = unidecode(sector.lower().replace(" ", "_"))
+                sector_name_file = str(sector_name_file)
+                # print(f'sector_name_file: {sector_name_file}')
+                self.premium_name += '_' + sector_name_file
+
+            print(f'premium_name: {self.premium_name}')
 
             self.list_combination_file_name.append(self.premium_name)
 
+        # print(f'list_combination_file_name: {self.list_combination_file_name}')
         return self.list_combination_file_name
 
     def reading_folder_files(self):
@@ -102,11 +114,11 @@ class FinappController:
 
         # parsed_premium_files_name.remove('market_premium.parquet')
 
-        # print(parsed_premium_files_name)
+        # print(f'parsed_premium_files_name: \n {parsed_premium_files_name}')
 
         return parsed_premium_files_name
 
-    def prepare_data_for_rate_premiuns_risks(self, indicators_dict, single_combinations, double_combinations, triple_combinations):
+    def prepare_data_for_rate_premiuns_risks(self, indicators_dict, single_combinations, double_combinations, triple_combinations, sector=''):
         
         finapp = FinappController()
 
@@ -126,19 +138,25 @@ class FinappController:
 
         print('Number of combinations: ', len(list_combinations))
 
-        list_combination_file_name = finapp.create_file_names(list_combinations, indicators_dict)
+        list_combination_file_name = finapp.create_file_names(list_combinations, indicators_dict, sector)
 
         premium_name_dict = dict.fromkeys(list_combination_file_name, 1000000)
         
         print('.\n.\nPremium names dictionary: \n\t', premium_name_dict, '\n.\n.')
 
         return premium_name_dict
-
-    def create_wallet_dict(self, indicators_dict, premiuns_statistics_to_show, premiuns_to_dict):
+    
+    def remove_sector_from_premium_name(self,premium_name):
+        last_underscore_index = premium_name.rfind("_")
+        return premium_name[:last_underscore_index]
+    
+    def create_wallet_dict(self, indicators_dict, premiuns_statistics_to_show, premiuns_to_dict, sector=''):
         
         # print(indicators_dict)
 
         indicators_comb_list = list(premiuns_statistics_to_show['premium_name'])
+        # Aplicar a função a cada elemento da lista
+        indicators_comb_list = [self.remove_sector_from_premium_name(premium_name) for premium_name in indicators_comb_list]
         print(f'\nindicators_comb_list: \n', indicators_comb_list)
 
         marker = '-with-'
@@ -199,6 +217,14 @@ class FinappController:
 
                 auto_wallet_dict.update(default_wallet)
                 # print('\nAutomatic wallet dict created: \n', auto_wallet_dict)
+
+            print(wallet_name)
+            # # Encontrar a posição do último underscore
+            # last_underscore_index = wallet_name.rfind("_")
+
+            # # Cortar a string até o último underscore
+            # wallet_name = wallet_name[:last_underscore_index]
+            # print(wallet_name)
 
             existing_wallets_list.append(wallet_name)
             # print(existing_wallets_list)
@@ -294,7 +320,7 @@ class FinappController:
 
         last_wallet = last_wallet.set_index('asset', drop=True)
         # last_wallet = last_wallet.drop(columns = 'index')
-        # print(last_wallet)
+        print(last_wallet)
 
         bcg_matrix_acess = cbm.BcgMatrix(bcg_dimensions_list)
         bcg_matrix = bcg_matrix_acess.read_bcg_matrix_database()
@@ -303,7 +329,7 @@ class FinappController:
 
         bcg_matrix_df = bcg_matrix_df.set_index('asset', drop=True)
         bcg_matrix_df = bcg_matrix_df.drop(columns = 'index')
-        # print(bcg_matrix_df)
+        print(bcg_matrix_df)
         
         final_analysis = pd.merge(bcg_matrix_df, last_wallet, on='asset')
         print('\nNightvision: \n', final_analysis.sort_values(by=['sector', 'subsector']))
@@ -499,7 +525,7 @@ class FinappController:
         window_size = pd.DateOffset(months=months_window_size)
 
         if months_window_size > 6:
-            months_offset = 9
+            months_offset = 4
         else:
             months_offset = 2
 
@@ -544,7 +570,14 @@ class FinappController:
             next_rebalance_date = datetime.now()
             next_rebalance_date = next_rebalance_date.strftime('%Y-%m-%d')
             return next_rebalance_date
-
+    
+    def is_valid_integer(self, str):
+        
+        try:
+            integer = int(str)
+            return True
+        except ValueError:
+            return False
 
 
 ###########################EXECUTORS#######################################
@@ -575,11 +608,12 @@ class FinappController:
                 data_from_fintz.download_accounting_files(demonstration=True, data_name = demonstration)
 
             for indicator in fintz_indicators_list:
-                data_from_fintz.download_accounting_files(indicator=True, data_name = indicator)
+                # data_from_fintz.download_accounting_files(indicator=True, data_name = indicator)
+                print('')
 
-            # data_from_fintz.download_dividendyield()
-            data_from_fintz.download_cdi(initial_date=initial_date)
-            data_from_fintz.download_ibov(initial_date=initial_date)
+            #data_from_fintz.download_dividendyield()
+            #data_from_fintz.download_cdi(initial_date=initial_date)
+            #data_from_fintz.download_ibov(initial_date=initial_date)
             data_from_fintz.download_quotations()
         
         if(update_api_database):
@@ -599,7 +633,7 @@ class FinappController:
         else:
             print(".\n.\n=== UPDATE COMPLETE! ===")
 
-    def run_calculate_risk_premiuns(self, indicators_dict, single_combinations, double_combinations, triple_combinations, update_existing_file):
+    def run_calculate_risk_premiuns(self, indicators_dict, single_combinations, double_combinations, triple_combinations, update_existing_file, sector = ''):
 
         finapp = FinappController()
         
@@ -623,7 +657,7 @@ class FinappController:
 
             # print(list_combinations)
             print(indicators_dict)
-            list_combination_file_name = finapp.create_file_names(list_combinations, indicators_dict)
+            list_combination_file_name = finapp.create_file_names(list_combinations, indicators_dict, sector)
 
             folder_files = finapp.reading_folder_files()
 
@@ -642,6 +676,7 @@ class FinappController:
                     premium = rp.RiskPremium(indicators_dict_new, premium_name, liquidity = 1000000)
                     
                     print("Preparing Data....")
+                    premium.filtering_tickers_by_sectors(sector)
                     premium.getting_quotations()
                     premium.getting_possible_dates()
                     premium.filtering_volume()
@@ -761,7 +796,8 @@ class FinappController:
                               single_combinations, double_combinations, triple_combinations, create_rating_pdf,
                               step_months_rank_list, 
                               columns_rank_database_list, columns_rank_list,
-                              premiuns_to_dict, premiuns_to_show):
+                              premiuns_to_dict, premiuns_to_show,
+                              sector=''):
         
         print(".\n..\n...\nRanking Risk Premiuns!\n...\n..\n.")
 
@@ -771,6 +807,11 @@ class FinappController:
         
         factor_calc_initial_date        = initial_analysis_date
         factor_calc_end_date            = final_analysis_date
+        
+        # combined_min_data_inicial = ''
+        # data_inicial = ''
+        # combined_max_data_final = ''
+        # data_final = ''
         
         all_variables_present           = False
         all_selected_premiuns_present   = False
@@ -787,10 +828,13 @@ class FinappController:
 
         if step_months_rank_list is None or step_months_list is None or columns_rank_list is None:
             all_variables_present = False
-            print('\nall_variables_present: \n', all_variables_present)
+            # print('\nall_variables_present: \n', all_variables_present)
         else:
             all_variables_present = True
             # print('\nall_variables_present: \n', all_variables_present)
+
+        print('\ncolumns_rank_list: \n', columns_rank_list)
+        print('\ncolumns_rank_database_list: \n', columns_rank_database_list)
 
         if columns_rank_list != None:
             all_variables_present = all(elem in columns_rank_database_list for elem in columns_rank_list)
@@ -801,7 +845,7 @@ class FinappController:
             # print('\nexistent_in_analysis: \n', existent_in_analysis)
         else:
             existent_in_analysis = False
-            print('\nexistent_in_analysis: \n', existent_in_analysis)
+            # print('\nexistent_in_analysis: \n', existent_in_analysis)
 
         if premiuns_to_show == None or premiuns_to_show > 10:
             #caso não sejá passado quantidade de premios para exibir ou for muito grande, força os 5 primeiros
@@ -818,7 +862,7 @@ class FinappController:
                 enable_to_create_dict = False
         else:
             all_selected_premiuns_present = False
-            print('\nall_selected_premiuns_present: \n', all_selected_premiuns_present)
+            # print('\nall_selected_premiuns_present: \n', all_selected_premiuns_present)
 
         # condições de execução
         if existent_in_analysis and (len(step_months_rank_list) > 0) and all_variables_present:
@@ -828,7 +872,7 @@ class FinappController:
             dataframe_columns = ['premium_name', 'liquidity', 
                                  'months_window_size', 'analyzed_windows']
             
-            print('.\n.\ncolumns_rank_database_list: \n', columns_rank_database_list)
+            # print('.\n.\ncolumns_rank_database_list: \n', columns_rank_database_list)
 
             dataframe_columns += columns_rank_database_list
             # print('.\n.\ndataframe_columns: \n', dataframe_columns)
@@ -838,7 +882,7 @@ class FinappController:
             print(".\n..\n...\nExtracting Statistics from Risk Premiuns!\n...\n..\n.")
 
             indicators_dict = dict(indicators_dict)
-            print('\nindicators_dict: \n', indicators_dict)
+            # print('\nindicators_dict: \n', indicators_dict)
 
             single_combinations = bool(single_combinations)
             double_combinations = bool(double_combinations)
@@ -850,7 +894,7 @@ class FinappController:
             rating_premiuns = rrp.MakeResultsPremium(final_analysis_date = factor_calc_end_date, initial_analysis_date=factor_calc_initial_date,
                                                         factors_dict = premium_name_dict, file_name = rating_premiuns_file_name)
 
-            file_not_found, premios_de_risco, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final = rating_premiuns.getting_premiuns()
+            file_not_found, premios_de_risco, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final = rating_premiuns.getting_premiuns(sector)
             # print('.\n.\npremios_de_risco: \n', premios_de_risco)
 
             premios_de_risco['data'] = pd.to_datetime(premios_de_risco['data'])
@@ -882,7 +926,13 @@ class FinappController:
             for chave, valor in premium_name_dict.items():
 
                 # print('\nchave: \n', chave)
+
+                if sector != '':
+                    sector_name_file = unidecode(sector.lower().replace(" ", "_"))
+                    sector_name_file = str(sector_name_file)
+                    chave += '_' + sector_name_file
                 
+                # print('\nchave: \n', chave)
 
                 for step_months in step_months_list:
 
@@ -903,7 +953,7 @@ class FinappController:
 
                     analyzed_windows = 0
 
-                    for window_start, window_end in finapp.sliding_window(start_date=factor_calc_initial_date, end_date=factor_calc_end_date, step_months=step_months):
+                    for window_start, window_end in finapp.sliding_window(start_date=factor_calc_initial_date, end_date=factor_calc_end_date, months_window_size=step_months):
                         
                         window_start = pd.to_datetime(window_start)
                         window_end = pd.to_datetime(window_end)
@@ -916,6 +966,7 @@ class FinappController:
                             # print(f"\nWindow: {window_start} to {window_end}")
                             # print('\ndays_in_window: ', days_in_window)
 
+                            # print('\npremios_de_risco: \n', premios_de_risco)
                             recorte_premios_de_risco = premios_de_risco[premios_de_risco['data'] >= window_start]
                             recorte_premios_de_risco = recorte_premios_de_risco[recorte_premios_de_risco['data'] <= window_end]
                             # print('\nrecorte_premios_de_risco: \n', recorte_premios_de_risco)
@@ -923,7 +974,6 @@ class FinappController:
                             fator = recorte_premios_de_risco[(recorte_premios_de_risco['nome_premio'] == chave) &
                                                                 (recorte_premios_de_risco['liquidez'] == valor)]
                             # print('\nfator: \n', fator)
-                            # print('\nfator[nome_premio]: \n', fator[fator['nome_premio'] == 'MOMENTO_MM_7_40-with-P_VP_INVERT'])
 
                             acum_primeiro_quartil = (fator['primeiro_quartil'].cumprod() - 1).iloc[-1]
                             # print('\nacum_primeiro_quartil: \n', acum_primeiro_quartil)
@@ -1084,8 +1134,7 @@ class FinappController:
             ##
             # todos os premius indicados para ir ao dicionário de carteiras devem estar dentro dos premios a serem exibidos
             if enable_to_create_dict and all_selected_premiuns_present:
-                print('entrou')
-                setup_dict = finapp.create_wallet_dict(indicators_dict, premiuns_statistics_to_show, premiuns_to_dict)
+                setup_dict = finapp.create_wallet_dict(indicators_dict, premiuns_statistics_to_show, premiuns_to_dict, sector)
                 # print('\nsetup_dict: \n', setup_dict)
             else:
                 print('\n\n\t---- não satisfez condições para criação do setup_dict.')
@@ -1096,6 +1145,8 @@ class FinappController:
             print('\nnumber_of_analysed_windows: \n', number_of_analysed_windows)
 
             ##### OUTPUTS #####
+        else:
+            print('não satisfez!')
 
         return premiuns_statistics_to_show, analyzed_windows_df, setup_dict, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, fail_to_execute
 
@@ -1211,13 +1262,27 @@ class FinappController:
             print('\n\nlast_period_variation: \n',last_period_variation)
 
             # last_period_variation.rename(columns={'ticker': 'asset'}, inplace=True)
-            last_period_variation['asset'] = last_period_variation['ticker'].str[:-1]
-            print('\n\nlast_period_variation: \n',last_period_variation)
 
-            final_analysis = pd.merge(final_analysis, last_period_variation, on='asset')
+
+
+            for index, row in last_period_variation.iterrows():
+
+                print('\nrow[ticker]: \n',row['ticker'])
+                last_two_caracters = str(row['ticker'][-2:])
+                print('\n\nlast_two_caracters: \n',last_two_caracters)
+
+                is_valid_integer = finapp.is_valid_integer(last_two_caracters)
+                # print('\n\nis_valid_integer: \n',is_valid_integer)
+
+                if is_valid_integer:
+                    last_period_variation.at[index, 'asset'] = row['ticker'][:-2]
+                else:
+                    last_period_variation.at[index, 'asset'] = row['ticker'][:-1]
+
+        
+
+            final_analysis = pd.merge(final_analysis, last_period_variation, on='asset', how='right')
             print('\n\nfinal_analysis: \n',final_analysis)
-            
-            print(final_analysis.columns)
             
             weighted_average_returns = (final_analysis['percentual_variation'] * final_analysis['peso']).sum() / final_analysis['peso'].sum()
             print(f'\nweighted_average wallet rentability past {periods_since_rebalance} periods: ', round(weighted_average_returns,2) , '%')
@@ -1341,12 +1406,9 @@ class FinappController:
                 
             return wallet_to_database
 
-    def run_optimize_setup(self, optimize_wallet_id, indicators_dict_database, columns_rank_optimization, rebalance_periods_list, asset_quantity_list, months_window_size_list):
+    def run_optimize_setup(self, optimize_wallet_id, indicators_dict_database, columns_rank_optimization, rebalance_periods_list, asset_quantity_list, months_window_size_list, optimization_initial_date, optimization_end_date):
         
         fail_to_execute = False
-
-        factor_calc_initial_date    = '2013-12-31'
-        factor_calc_end_date        = '2023-12-31'
 
         create_wallets_pfd = False
         pdf_name = 'impossible.pdf'
@@ -1392,7 +1454,7 @@ class FinappController:
                         profit_count = 0
                         loss_count = 0
 
-                        for window_start, window_end in finapp.sliding_window(start_date=factor_calc_initial_date, end_date=factor_calc_end_date, months_window_size=months_window_size):
+                        for window_start, window_end in finapp.sliding_window(start_date=optimization_initial_date, end_date=optimization_end_date, months_window_size=months_window_size):
                             
                             days_in_window = (window_end - window_start).days
                             days_in_window = float(days_in_window)
@@ -1516,26 +1578,26 @@ class FinappController:
 
         indicator = mi.MakeIndicator()
 
-        indicator.making_momentum(months = 1)
-        indicator.making_momentum(months = 6)
-        indicator.making_momentum(months = 12)
-        indicator.ratio_moving_mean(mm_curta = 7, mm_longa = 40)
-        indicator.median_volume(months = 1)
-        indicator.beta(years = 1)
-        indicator.volatility(years = 1)
-        indicator.pl_divida_bruta()
-        indicator.ebit_divida_liquida()
+        # indicator.making_momentum(months = 1)
+        # indicator.making_momentum(months = 6)
+        # indicator.making_momentum(months = 12)
+        # indicator.ratio_moving_mean(mm_curta = 7, mm_longa = 40)
+        # indicator.median_volume(months = 1)
+        # indicator.beta(years = 1)
+        # indicator.volatility(years = 1)
+        # indicator.pl_divida_bruta()
+        # indicator.ebit_divida_liquida()
         
-        peg_ratio = indicator.peg_ratio()
+        # peg_ratio = indicator.peg_ratio()
         # print('last 15 peg_ratios: \n', peg_ratio.tail(15)) #[[peg_ratio['ticker'] == 'WEGE3']]
 
         p_vp = indicator.p_vp()
         # print(p_vp.tail(20))
 
-        p_ebit = indicator.p_ebit()
+        # p_ebit = indicator.p_ebit()
         # print(p_ebit.tail(20))
 
-        net_margin = indicator.net_margin()
+        # net_margin = indicator.net_margin()
         # print(net_margin.tail(20))
 
         print(".\n.\n=== UPDATE COMPLETE! ===")
@@ -1864,36 +1926,49 @@ if __name__ == "__main__":
 
 
     # enable indicators update
-    update_indicators               = False
+    update_indicators               = True
 
 
     # enable calculate risk premiuns database update
-    calculate_risk_premiuns         = False
+    calculate_risk_premiuns             = False
+    calculate_risk_premiuns_by_sectors  = False
+    sectors_list                        =  [
+                                            'Bens Industriais', 
+                                            # 'Comunicações',
+                                            'Consumo Cíclico', 
+                                            'Consumo não Cíclico', 
+                                            # 'Financeiro', 
+                                            'Materiais Básicos', 
+                                            'Outros',
+                                            'Petróleo. Gás e Biocombustíveis',
+                                            'Saúde',
+                                            'Tecnologia da Informação',
+                                            'Utilidade Pública'
+                                            ]
     # choose de indicators combinations to rate
-    single_combinations             = False
-    double_combinations             = False
-    triple_combinations             = False
+    single_combinations             = True
+    double_combinations             = True
+    triple_combinations             = True
     # true if you want to update a existing file
     update_existing_file            = False
-
 
     indicators_dict                 = {
                                     'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
                                     'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
-                                    'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
-                                    'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
+                                    # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
+                                    # 'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
                                     # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
                                     'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
-                                    'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
-                                    'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
+                                    # 'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
+                                    # 'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
                                     'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
-                                    'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
-                                    'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
+                                    # 'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
+                                    # 'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
                                     'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
-                                    'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
+                                    # 'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
                                     'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
-                                    'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
-                                    'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
+                                    # 'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
+                                    # 'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
                                     }
     indicators_dict_database        = {
                                     'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
@@ -1914,20 +1989,34 @@ if __name__ == "__main__":
                                     'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
                                     }
     
+
     # enable rating risks
     rate_risk_premiuns              = False
     rank_risk_premiuns              = False
+    rank_risk_premiuns_by_sector    = False
+    step_months_rank_list           = [60]
+    premiuns_to_dict                = [1]
+    premiuns_to_show                = 1
     number_of_top_comb_indicators   = 5
+    columns_rank_list               = ['profit_perc', 
+                                        'anual_mean_acum_returns', 
+                                        # 'mean_turn_over',
+                                        'anual_high_acum_returns', 
+                                        # 'anual_low_acum_returns',
+                                        # 'last_acum_return',
+                                        'anual_std_dev_acum_returns'
+                                        ]
     columns_rank_database_list      = ['profit_perc', 
                                         'anual_mean_acum_returns', 
                                         'mean_turn_over',
                                         'anual_high_acum_returns', 
                                         'anual_low_acum_returns',
-                                        # 'last_acum_return',
-                                        # 'anual_std_dev_acum_returns'
+                                        'last_acum_return',
+                                        'anual_std_dev_acum_returns'
                                         ]
     # final_analysis_date             = '2022-12-31'
-    final_analysis_date             = '2024-12-31'
+    final_analysis_date             = '2024-01-31'
+    initial_analysis_date           = '2013-12-31'
     rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
     create_rating_pdf               = False
     
@@ -1973,14 +2062,19 @@ if __name__ == "__main__":
 
     # enable requirements.txt update
     optimize_setup                  = False
+    optimization_initial_date       = '2014-12-31'
+    optimization_end_date           = '2023-12-31'
     # optimize_wallet_id              = '1099'
-    optimize_wallet_id              = '2145'
+    # optimize_wallet_id              = '2145'
+    optimize_wallet_id              = '2779'
+    # optimize_wallet_id              = '3657'
     rebalance_periods_list          = [5,10,21]
     # rebalance_periods_list          = [21]
-    asset_quantity_list             = [2,3,4]
+    # asset_quantity_list             = [2,3,4]
+    asset_quantity_list             = [3,4,5]
     # asset_quantity_list             = [1]
     # months_window_size_list         = [36,60]
-    months_window_size_list         = [60]
+    months_window_size_list         = [36,60]
     columns_rank_optimization       = ['profit_perc', 
                                         'anual_mean_acum_returns', 
                                         'anual_high_acum_returns', 
@@ -1990,7 +2084,7 @@ if __name__ == "__main__":
                                         ]
     
     # enable requirements.txt update
-    update_requirements_txt         = True
+    update_requirements_txt         = False
 
 
     ###
@@ -2057,26 +2151,69 @@ if __name__ == "__main__":
 
         finapp.run_calculate_risk_premiuns(indicators_dict, 
                                           single_combinations, double_combinations, triple_combinations, 
-                                          update_existing_file)
+                                          update_existing_file,
+                                          '')
+        
+    if(calculate_risk_premiuns_by_sectors):
+
+        for sector in sectors_list:
+            print(f'\n ==== sector: {sector}\n.')
+            finapp.run_calculate_risk_premiuns(indicators_dict, 
+                                            single_combinations, double_combinations, triple_combinations, 
+                                            update_existing_file,
+                                            sector)
 
     ###
     ##
     #rank_risk_premiuns   
     ##
     ###
+    if (rank_risk_premiuns_by_sector):
+
+        ranking_by_sectors = pd.DataFrame()
+
+        step_months_rank_list               = [60]
+        premiuns_to_dict                    = [1]
+        premiuns_to_show                    = 1
+
+        for sector in sectors_list:
+            premiuns_statistics_to_show, analyzed_windows_df, setup_dict, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, fail_to_execute = finapp.run_rank_risk_premiuns(indicators_dict, initial_analysis_date, final_analysis_date, rating_premiuns_file_name, 
+                                                                                                                    single_combinations, double_combinations, triple_combinations, create_rating_pdf,
+                                                                                                                    step_months_rank_list, 
+                                                                                                                    columns_rank_database_list, columns_rank_list,
+                                                                                                                    premiuns_to_dict, premiuns_to_show,
+                                                                                                                    sector)
+            print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
+            print('\nanalyzed_windows_df: \n', analyzed_windows_df)
+            print('\nsetup_dict: \n', setup_dict)
+            
+            ranking_by_sectors = pd.concat([ranking_by_sectors, premiuns_statistics_to_show])
+
+        ranking_by_sectors = ranking_by_sectors.sort_values(by=['anual_mean_acum_returns_60_months'], ascending=False)
+        print('\nranking_by_sectors: \n', ranking_by_sectors)
+
     if (rank_risk_premiuns):
 
-        step_months_rank_list = [12] 
-        columns_rank_list = ['anual_mean_acum_returns',
-                              'last_acum_return']
-        # columns_rank_list = ['anual_mean_acum_returns']
-        premiuns_to_dict = [1]
-        premiuns_to_show = 1
+        # step_months_rank_list = [60] 
+        # columns_rank_list = ['profit_perc', 
+        #                     'anual_mean_acum_returns', 
+        #                     # 'mean_turn_over',
+        #                     'anual_high_acum_returns', 
+        #                     'anual_low_acum_returns',
+        #                     # 'last_acum_return',
+        #                     # 'anual_std_dev_acum_returns'
+        #                     ]
+        # # columns_rank_list = ['anual_mean_acum_returns']
+        # premiuns_to_dict = [1]
+        # premiuns_to_show = 1
+        sector = ''
 
-        premiuns_statistics_to_show, analyzed_windows_df, setup_dict, fail_to_execute = finapp.run_rank_risk_premiuns(indicators_dict, final_analysis_date, rating_premiuns_file_name, 
-                                                                                                                 single_combinations, double_combinations, triple_combinations, create_rating_pdf,
-                                                                                                                 step_months_rank_list, columns_rank_list,
-                                                                                                                 premiuns_to_dict, premiuns_to_show)
+        premiuns_statistics_to_show, analyzed_windows_df, setup_dict, combined_min_data_inicial, data_inicial, combined_max_data_final, data_final, fail_to_execute = finapp.run_rank_risk_premiuns(indicators_dict, initial_analysis_date, final_analysis_date, rating_premiuns_file_name, 
+                                                                                                                single_combinations, double_combinations, triple_combinations, create_rating_pdf,
+                                                                                                                step_months_rank_list, 
+                                                                                                                columns_rank_database_list, columns_rank_list,
+                                                                                                                premiuns_to_dict, premiuns_to_show,
+                                                                                                                sector)
         
         print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
         print('\nanalyzed_windows_df: \n', analyzed_windows_df)
@@ -2254,9 +2391,10 @@ if __name__ == "__main__":
     if(optimize_setup):
         
         models_statistics, fail_to_execute = finapp.run_optimize_setup(optimize_wallet_id, indicators_dict_database, columns_rank_optimization, 
-                                                                       rebalance_periods_list, asset_quantity_list, months_window_size_list)
+                                                                       rebalance_periods_list, asset_quantity_list, months_window_size_list,
+                                                                       optimization_initial_date, optimization_end_date)
 
-        print(models_statistics[(models_statistics['mean_turn_over'] < 0.36) & (models_statistics['anual_low_acum_returns'] > 0.12) &
+        print(models_statistics[(models_statistics['mean_turn_over'] < 0.35) & (models_statistics['anual_low_acum_returns'] > 0.12) &
                 (models_statistics['anual_mean_acum_returns'] > 0.30)])
 
 

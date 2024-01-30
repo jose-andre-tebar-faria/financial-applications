@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import datetime
+# from datetime import datetime
 from dateutil.relativedelta  import relativedelta
 from resultados_factor import MakeReportResult
 import os
@@ -75,6 +76,8 @@ class MakeBacktest():
         cotacoes['ticker'] = cotacoes['ticker'].astype(str)
         self.cotacoes = cotacoes.sort_values('data', ascending=True)
 
+        max_quotation_date = cotacoes['data'].max()
+
         volume_mediano = pd.read_parquet('volume_mediano.parquet')
         volume_mediano['data'] = pd.to_datetime(volume_mediano['data']).dt.date
         volume_mediano['ticker'] = volume_mediano['ticker'].astype(str)
@@ -108,13 +111,16 @@ class MakeBacktest():
                     lendo_indicador.columns = ['data', 'ticker', indicador]
 
                     last_date = lendo_indicador['data'].tail(1).iloc[0]
-                    # print(f'\n\tIndicador {indicador} está atualizado até o dia {last_date}.')
+                    print(f'\nlendo_indicador {indicador} está atualizado até o dia {last_date}.')
                     # print('lendo_indicador: ', lendo_indicador)
 
                     last_records = lendo_indicador.groupby('ticker').last()
 
+                    days_diff = (max_quotation_date - last_date).days
+                    print('\tdays_diff: ', days_diff)
+
                     new_records = pd.DataFrame()
-                    for i in range(11):
+                    for i in range(days_diff):
                         next_date = last_records['data'].max() + pd.DateOffset(days=i+1)
                         next_date = next_date.strftime('%Y-%m-%d')
                         next_records = last_records.copy()
@@ -124,16 +130,16 @@ class MakeBacktest():
                     new_records['ticker'] = new_records.index
 
                     # Concatenar os DataFrames original e resultante
-                    lendo_indicador_2 = pd.concat([lendo_indicador, new_records], ignore_index=True)
+                    sync_lendo_indicador = pd.concat([lendo_indicador, new_records], ignore_index=True)
 
                     # Classificar o DataFrame por 'ticker' e 'data'
-                    lendo_indicador_2 = lendo_indicador_2.sort_values(['ticker', 'data']).reset_index(drop=True)
+                    sync_lendo_indicador = sync_lendo_indicador.sort_values(['ticker', 'data']).reset_index(drop=True)
 
-                    last_date_2 = lendo_indicador_2['data'].tail(1).iloc[0]
-                    # print(f'\n\tIndicador_2 {indicador} está atualizado até o dia {last_date_2}.')
-                    # print('lendo_indicador_2: \n', lendo_indicador_2)
+                    last_date_2 = sync_lendo_indicador['data'].tail(1).iloc[0]
+                    print(f'\nsync_lendo_indicador {indicador} está atualizado até o dia {last_date_2}.\n\n')
+                    # print('sync_lendo_indicador: \n', sync_lendo_indicador)
 
-                    lista_dfs.append(lendo_indicador_2)
+                    lista_dfs.append(sync_lendo_indicador)
 
         df_dados = lista_dfs[0]
         df_dados['data'] = pd.to_datetime(df_dados['data']).dt.date

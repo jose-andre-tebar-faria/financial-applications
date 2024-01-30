@@ -224,6 +224,7 @@ class MakeIndicator():
 
         #print(output_df[output_df['ticker'] == 'WEGE3'])
 
+        print(f'mm_{mm_curta}_{mm_longa}.parquet', output_df)
         output_df.to_parquet(f'mm_{mm_curta}_{mm_longa}.parquet', index = False)
 
         print("OK.")
@@ -323,7 +324,9 @@ class MakeIndicator():
         quotations['data'] = pd.to_datetime(quotations['data'])
         quotations['ticker'] = quotations['ticker'].astype(str)
         quotations['valor_quo'] = quotations['valor_quo'].astype(float)
-        # print('quotations: \n', quotations)
+        print('quotations: \n', quotations)
+
+        max_quotation_date = quotations['data'].max()
 
         patrimonial_value = pd.read_parquet('PatrimonioLiquido.parquet')
         patrimonial_value = patrimonial_value[['ticker', 'data', 'valor']]
@@ -332,7 +335,29 @@ class MakeIndicator():
         patrimonial_value['ticker'] = patrimonial_value['ticker'].astype(str)
         patrimonial_value['valor_pl'] = patrimonial_value['valor_pl'].astype(float)
         patrimonial_value = patrimonial_value.sort_values(['data', 'ticker'])
-        # print('patrimonial_value: \n', patrimonial_value)
+        print('patrimonial_value: \n', patrimonial_value)
+
+        new_patrimonial_value_records = pd.DataFrame()
+        new_records = pd.DataFrame()
+        for i in range(20):
+            next_date = patrimonial_value['data'].max() + pd.DateOffset(days=i+1)
+            next_date = next_date.strftime('%Y-%m-%d')
+            new_records = patrimonial_value[patrimonial_value['data'] == patrimonial_value['data'].max()].copy()
+            new_records['data'] = next_date
+            new_patrimonial_value_records = pd.concat([new_patrimonial_value_records, new_records])
+        
+        # new_records['ticker'] = new_records.index
+
+        print('new_patrimonial_value_records: \n', new_patrimonial_value_records)
+
+        # Concatenar os DataFrames original e resultante
+        sync_patrimonial_value = pd.concat([patrimonial_value, new_patrimonial_value_records], ignore_index=True)
+
+        # Classificar o DataFrame por 'ticker' e 'data'
+        sync_patrimonial_value['data'] = pd.to_datetime(sync_patrimonial_value['data']).dt.strftime('%Y-%m-%d')
+        sync_patrimonial_value = sync_patrimonial_value.sort_values(['data']).reset_index(drop=True)
+        print('sync_patrimonial_value: \n', sync_patrimonial_value)
+        # print('sync_patrimonial_value WEGE3: \n', sync_patrimonial_value[sync_patrimonial_value['ticker'] == 'WEGE3'].tail(25))
 
         total_number_of_stocks = pd.read_parquet('TotalAcoes.parquet')
         total_number_of_stocks = total_number_of_stocks[['ticker', 'data', 'valor']]
@@ -341,7 +366,30 @@ class MakeIndicator():
         total_number_of_stocks['ticker'] = total_number_of_stocks['ticker'].astype(str)
         total_number_of_stocks['valor_nos'] = total_number_of_stocks['valor_nos'].astype(float)
         total_number_of_stocks = total_number_of_stocks.sort_values(['data', 'ticker'])
-        # print('total_number_of_stocks: \n', total_number_of_stocks)
+        print('total_number_of_stocks: \n', total_number_of_stocks)
+
+        new_total_number_of_stocks_records = pd.DataFrame()
+        new_records = pd.DataFrame()
+        for i in range(20):
+            next_date = total_number_of_stocks['data'].max() + pd.DateOffset(days=i+1)
+            next_date = next_date.strftime('%Y-%m-%d')
+            new_records = total_number_of_stocks[total_number_of_stocks['data'] == total_number_of_stocks['data'].max()].copy()
+            new_records['data'] = next_date
+            new_total_number_of_stocks_records = pd.concat([new_total_number_of_stocks_records, new_records])
+        
+        # new_records['ticker'] = new_records.index
+
+        print('new_total_number_of_stocks_records: \n', new_total_number_of_stocks_records)
+
+        # Concatenar os DataFrames original e resultante
+        sync_total_number_of_stocks = pd.concat([total_number_of_stocks, new_total_number_of_stocks_records], ignore_index=True)
+
+        # Classificar o DataFrame por 'ticker' e 'data'
+        sync_total_number_of_stocks['data'] = pd.to_datetime(sync_total_number_of_stocks['data']).dt.strftime('%Y-%m-%d')
+        sync_total_number_of_stocks = sync_total_number_of_stocks.sort_values(['data']).reset_index(drop=True)
+        print('sync_total_number_of_stocks: \n', sync_total_number_of_stocks)
+
+
 
         # total_number_of_stocks['data'] = pd.to_datetime(total_number_of_stocks['data'])
         # patrimonial_value['data'] = pd.to_datetime(patrimonial_value['data'])
@@ -356,18 +404,20 @@ class MakeIndicator():
         # patrimonial_value['data'].fillna(pd.to_datetime('1900-01-01'), inplace=True)
         # quotations['data'].fillna(pd.to_datetime('1900-01-01'), inplace=True)
         quotations['data'] = quotations['data'].astype('datetime64[us]')
+        sync_patrimonial_value['data'] = sync_patrimonial_value['data'].astype('datetime64[us]')
+        sync_total_number_of_stocks['data'] = sync_total_number_of_stocks['data'].astype('datetime64[us]')
 
         # print('total_number_of_stocks: \n', total_number_of_stocks)
         # print('patrimonial_value: \n', patrimonial_value)
         # print('quotations: \n', quotations)
 
         # Mesclar os DataFrames após a padronização da resolução
-        merge_step1 = pd.merge(total_number_of_stocks, patrimonial_value, on=['ticker', 'data'], how='outer')
+        merge_step1 = pd.merge(sync_total_number_of_stocks, sync_patrimonial_value, on=['ticker', 'data'], how='outer')
         p_vp = pd.merge(merge_step1, quotations, on=['ticker', 'data'], how='outer')
 
         p_vp = p_vp.sort_values(['data', 'ticker'])
         p_vp = p_vp.dropna()
-        # print('merged_data: \n', p_vp)
+        print('merged_data: \n', p_vp)
         
         try:
             p_vp['p_vp'] = (p_vp['valor_quo']) / (p_vp['valor_pl'] / p_vp['valor_nos'])
@@ -381,13 +431,13 @@ class MakeIndicator():
         
         p_vp.replace([np.inf, -np.inf], np.nan, inplace=True)
         p_vp = p_vp.sort_values(['data', 'ticker'])
-        # print('p_vp: \n', p_vp)
+        print('p_vp: \n', p_vp)
 
         p_vp_to_parquet = p_vp[['ticker', 'data', 'p_vp_invert']]
         p_vp_to_parquet = p_vp_to_parquet.rename(columns={'p_vp_invert': 'valor'})
 
         p_vp_to_parquet.to_parquet('p_vp_invert.parquet', index = False)
-        # print('p_vp_to_parquet: \n', p_vp_to_parquet)
+        print('p_vp_to_parquet: \n', p_vp_to_parquet)
 
         print("OK.")
 

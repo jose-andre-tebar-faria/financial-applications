@@ -156,7 +156,7 @@ class BcgMatrix:
                         # print(acum_category_profile[acum_category_profile['asset'] == asset])
                         # print('')
 
-        bcg_matrix = acum_category_profile[['asset', 'sector', 'sector_marketshare', 'subsector', 'subsector_marketshare', 'last_growth_rate', 'sector_bcg_category', 'subsector_bcg_category']]
+        bcg_matrix = acum_category_profile[['asset', 'company_name', 'sector', 'sector_marketshare', 'subsector', 'subsector_marketshare', 'last_growth_rate', 'sector_bcg_category', 'subsector_bcg_category']]
         # print('Estrelas DUPLAS: \n', bcg_matrix[(bcg_matrix['sector_bcg_category'] == 'Estrela') & (bcg_matrix['subsector_bcg_category'] == 'Estrela')])
         # print('Estrelas do Setor: \n', bcg_matrix[(bcg_matrix['sector_bcg_category'] == 'Estrela')])
         # print('Estrelas do Subsetor: \n', bcg_matrix[bcg_matrix['subsector_bcg_category'] == 'Estrela'])
@@ -170,7 +170,8 @@ class BcgMatrix:
         bcg_matrix_read = pd.read_parquet(f'{self.full_desired_path}/bcg_matrix.parquet')
         bcg_matrix_read_df = pd.DataFrame(bcg_matrix_read)
         bcg_matrix_read_df.reset_index(inplace=True)
-        # print(bcg_matrix_read_df)
+        print(bcg_matrix_read_df)
+        print(bcg_matrix_read_df.columns)
 
         return bcg_matrix_read_df
 
@@ -180,4 +181,6 @@ if __name__ == "__main__":
 
     bcg_matrix = BcgMatrix(bcg_dimensions)
 
-    bcg_matrix.create_bcg_matrix()
+    # bcg_matrix.create_bcg_matrix()
+
+    bcg_matrix.read_bcg_matrix_database()

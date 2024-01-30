@@ -76,7 +76,9 @@ class DownloadByWebscrapping:
 
         print('\nSETORES:', list_sectors)
 
-        sectors_dropdown = list(range(0, 20))
+        sectors_dropdown = list(range(11, 20))
+        # sectors_dropdown = list(range(2, 20)) comunic
+        # sectors_dropdown = list(range(9, 20)) saude
         subsectors_dropdown = list(range(0, 20))
         segments_index_max = list(range(0, 20))
 
@@ -99,7 +101,7 @@ class DownloadByWebscrapping:
                     dropdown = Select(dropdown_element)
 
                     dropdown.select_by_value(list_sectors[sector_index])
-                    time.sleep(2)
+                    time.sleep(1)
                     
                     while True:
                         # print('Abrindo Subsetores!')
@@ -108,7 +110,7 @@ class DownloadByWebscrapping:
                                 subsectors_selector = '/html/body/app-root/app-companies-home/div/div/div/div/div[2]/div[2]/div/app-companies-home-filter-classification/form/table/tbody/tr[' + str(subsector_index+1) + ']/td[1]'
                                 # print('\t\t', subsectors_selector)
                                 
-                                subsector = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, subsectors_selector)))
+                                subsector = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, subsectors_selector)))
                                 subsector_to_dict = subsector.text
                                 print('\t\t', subsector_to_dict)
                                 
@@ -121,7 +123,7 @@ class DownloadByWebscrapping:
                                             # descobrindo o número de seguimentos
                                             segments_selector = '/html/body/app-root/app-companies-home/div/div/div/div/div[2]/div[2]/div/app-companies-home-filter-classification/form/table/tbody/tr[' + str(subsector_index+1) + ']/td[2]'
                                             # print('', segments_selector)
-                                            segments = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, segments_selector)))
+                                            segments = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, segments_selector)))
                                             # print('\t\t\t', segments.text)
                                             elementos_filhos = segments.find_elements(By.XPATH, '*')
                                             numero_de_elementos = len(elementos_filhos)
@@ -135,16 +137,16 @@ class DownloadByWebscrapping:
                                                 segment_selector = ''
                                             
                                             # print('segment_selector: ', segment_selector)
-                                            segment = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, segment_selector)))
+                                            segment = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, segment_selector)))
                                             segment_to_dict = segment.text
                                             print('\t\t\t', segment_to_dict)
 
                                             # ACESSO AOS TICKERS
-                                            button_current_segment = WebDriverWait(driver, 10).until(
+                                            button_current_segment = WebDriverWait(driver, 20).until(
                                                 EC.visibility_of_element_located((By.XPATH, segment_selector))
                                             )
                                             button_current_segment.click()
-                                            data = WebDriverWait(driver, 10).until(
+                                            data = WebDriverWait(driver, 20).until(
                                                 EC.visibility_of_element_located((By.XPATH, '//*[@id="nav-bloco"]/div'))
                                             )
 
@@ -155,7 +157,7 @@ class DownloadByWebscrapping:
                                                 # print('Verificando mais de uma página por asset!')
                                                 try:
 
-                                                    dropdown_assets_per_page_element = WebDriverWait(driver, 10).until(
+                                                    dropdown_assets_per_page_element = WebDriverWait(driver, 20).until(
                                                         EC.visibility_of_element_located((By.XPATH, '/html/body/app-root/app-companies-search/div/form/div[3]/div[1]/select'))
                                                     )
                                                     # print('dropdown_element: ', dropdown_element.text)
@@ -166,7 +168,7 @@ class DownloadByWebscrapping:
 
                                                     break
                                                 except Exception as e:
-                                                    time.sleep(0.05)
+                                                    time.sleep(0.5)
                                                 break
 
                                             index_asset_max = list(range(1, 101))
@@ -211,7 +213,7 @@ class DownloadByWebscrapping:
                                                         # descobrindo o número de seguimentos
                                                         assets_selector = '/html/body/app-root/app-companies-search/div/form/div[2]/div[1]/div'
                                                         # print('segments_selector: ', segments_selector)
-                                                        number_of_assets = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, assets_selector)))
+                                                        number_of_assets = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, assets_selector)))
                                                         elementos_filhos = number_of_assets.find_elements(By.XPATH, '*')
                                                         numero_de_elementos = len(elementos_filhos)
                                                         print('numero_de_elementos: ', numero_de_elementos)
@@ -227,12 +229,12 @@ class DownloadByWebscrapping:
                                                             # print('assets_selector: ', asset_details_selector)
 
                                                         # ACESSO DETALHADOS AOS TICKERS
-                                                        button_asset_details = WebDriverWait(driver, 10).until(
+                                                        button_asset_details = WebDriverWait(driver, 20).until(
                                                             EC.visibility_of_element_located((By.XPATH, asset_details_selector))
                                                         )
                                                         button_asset_details.click()
                                                         
-                                                        time.sleep(1)
+                                                        # time.sleep(1)
 
                                                         company_name_selector = '/html/body/app-root/app-companies-menu-select/div/div/div[1]/h2' 
                                                         # print('company_name_selector: ', company_name_selector)
@@ -248,7 +250,7 @@ class DownloadByWebscrapping:
                                                         try:
 
                                                             time.sleep(1)
-                                                            ticker = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, ticker_selector)))
+                                                            ticker = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, ticker_selector)))
                                                             ticker_to_dict = ticker.text
                                                             print('\t\t\t\t\t', ticker_to_dict)
 
@@ -274,7 +276,7 @@ class DownloadByWebscrapping:
                                                             # print(content_list)
 
                                                         time.sleep(1)
-                                                        cnpj = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, cnpj_selector)))
+                                                        cnpj = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, cnpj_selector)))
                                                         cnpj_to_dict = cnpj.text
                                                         print('\t\t\t\t\t', cnpj_to_dict)
 
@@ -285,7 +287,7 @@ class DownloadByWebscrapping:
 
                                                         try:
                                                             time.sleep(1)
-                                                            main_activity = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, main_activity_selector)))
+                                                            main_activity = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, main_activity_selector)))
                                                             main_activity_to_dict = main_activity.text
                                                             print('\t\t\t\t\t', main_activity_to_dict)
 
@@ -300,7 +302,7 @@ class DownloadByWebscrapping:
                                                             content_list.append('')
 
                                                         time.sleep(1)
-                                                        company_name = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, company_name_selector)))
+                                                        company_name = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, company_name_selector)))
                                                         company_name_to_dict = company_name.text
                                                         print('\t\t\t\t\t', company_name_to_dict)
 
@@ -308,7 +310,7 @@ class DownloadByWebscrapping:
                                                         # print(content_list)
 
                                                         time.sleep(0.5)
-                                                        trading_name = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, trading_name_selector)))
+                                                        trading_name = WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.XPATH, trading_name_selector)))
                                                         trading_name_to_dict = trading_name.text
                                                         print('\t\t\t\t\t', trading_name_to_dict)
 
@@ -332,21 +334,21 @@ class DownloadByWebscrapping:
                                                     # print(e)
                                                     break
 
-                                            back_button = WebDriverWait(driver, 10).until(
+                                            back_button = WebDriverWait(driver, 20).until(
                                                 EC.visibility_of_element_located((By.CSS_SELECTOR, '#divContainerIframeB3 > form > button'))
                                             )
                                             back_button.click()
 
                                             time.sleep(1)
 
-                                            button_expand = WebDriverWait(driver, 10).until(
+                                            button_expand = WebDriverWait(driver, 20).until(
                                                 EC.visibility_of_element_located((By.XPATH, '/html/body/app-root/app-companies-home/div/div/div/div/div[2]/div[1]/div/div/a/h6'))
                                             )
                                             button_expand.click()
 
                                             # selecionando o termo do dropdown de subsetores
                                             # print('\nfinding dropdown sectors element\n')
-                                            dropdown_element = WebDriverWait(driver, 10).until(
+                                            dropdown_element = WebDriverWait(driver, 20).until(
                                                 EC.visibility_of_element_located((By.XPATH, '//*[@id="accordionClassification"]/div/app-companies-home-filter-classification/form/div[1]/div/div/select'))
                                             )
                                             # print('dropdown_element: ', dropdown_element.text)

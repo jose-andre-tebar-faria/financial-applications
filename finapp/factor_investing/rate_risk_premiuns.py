@@ -9,6 +9,7 @@ import matplotlib
 matplotlib.rcParams.update({'font.size': 9})
 import datetime
 from dotenv import load_dotenv
+from unidecode import unidecode
 
 plt.style.use("cyberpunk")
 
@@ -34,7 +35,7 @@ class MakeResultsPremium:
 
         print("OK.")
 
-    def getting_premiuns(self):
+    def getting_premiuns(self, sector=''):
 
         lista_dfs = []
         data_inicial = []
@@ -56,13 +57,24 @@ class MakeResultsPremium:
         for i, nome_premio in enumerate(self.lista_nome_fatores):
             
             try:
-                df = pd.read_parquet(f'{self.full_desired_path}/{nome_premio}_{self.liquidez[i]}.parquet')
+                if sector == '':
+                    print(f'nome_premio: {nome_premio}')
+                    df = pd.read_parquet(f'{self.full_desired_path}/{nome_premio}_{self.liquidez[i]}.parquet')
+                else:
+                    print(f'sector: {sector}')
+                    sector_name_file = unidecode(sector.lower().replace(" ", "_"))
+                    sector_name_file = str(sector_name_file)
+                    print(f'sector_name_file: {sector_name_file}')
+                    nome_premio += '_' + sector_name_file
+                    print(f'nome_premio: {nome_premio}')
+                    df = pd.read_parquet(f'{self.full_desired_path}/{nome_premio}_{self.liquidez[i]}.parquet')
             except FileNotFoundError:
                 file_not_found = True
                 print(f'\t--- risk_premium file not found: {nome_premio}')
                 return file_not_found
             
             df['data'] = pd.to_datetime(df['data']).dt.date
+            print(f'df: {df}')
 
             lista_dfs.append(df)
             data_inicial.append(min(df['data']))

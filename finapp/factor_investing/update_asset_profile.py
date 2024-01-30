@@ -163,7 +163,8 @@ class UpdateAssetProfile:
         assets_database_parquet = pd.read_parquet(f'{self.full_desired_path}/asset_database.parquet')
         assets_database_df = pd.DataFrame(assets_database_parquet)
         assets_database_df.reset_index(inplace=True)
-        # print(assets_database_df)
+        print(assets_database_df)
+        print(assets_database_df.columns)
 
         return assets_database_df
 

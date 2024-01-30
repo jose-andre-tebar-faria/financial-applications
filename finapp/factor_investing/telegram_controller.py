@@ -106,16 +106,16 @@ class TelegramManager:
 
 
         fintz_demonstration_list = [
-                                    'AcoesEmCirculacao', 'TotalAcoes',
+                                    #'AcoesEmCirculacao', 'TotalAcoes',
                                     'PatrimonioLiquido',
-                                    'LucroLiquido12m', 'LucroLiquido',
-                                    'ReceitaLiquida', 'ReceitaLiquida12m', 
-                                    'DividaBruta', 'DividaLiquida',
-                                    'Disponibilidades', 
-                                    'Ebit', 'Ebit12m',
-                                    'Impostos', 'Impostos12m',
-                                    'LucroLiquidoSociosControladora',
-                                    'LucroLiquidoSociosControladora12m'
+                                    #'LucroLiquido12m', 'LucroLiquido',
+                                    #'ReceitaLiquida', 'ReceitaLiquida12m', 
+                                    #'DividaBruta', 'DividaLiquida',
+                                    #'Disponibilidades', 
+                                    #'Ebit', 'Ebit12m',
+                                    #'Impostos', 'Impostos12m',
+                                    #'LucroLiquidoSociosControladora',
+                                    #'LucroLiquidoSociosControladora12m'
                                     ]
 
         fintz_indicators_list = [
@@ -970,6 +970,7 @@ class TelegramManager:
         for _, row in final_analysis.iterrows():
 
             ticker = row['ticker']
+            company_name = row['company_name']
             wallet_proportion = row['peso']
             sector = row['sector']
             subsector = row['subsector']
@@ -986,6 +987,7 @@ class TelegramManager:
                 markdown_text += f"    🟢 {ticker}, rend: {last_period_variation}%\n"
             else:
                 markdown_text += f"    🔴 {ticker}, rend: {last_period_variation}%\n"
+            markdown_text += f"        ▪ Empresa: {company_name}\n"
             markdown_text += f"        ▪ Ramo: {sector} - {subsector}\n"
             markdown_text += f"        ▪ Peso do ativo na carteira: {wallet_proportion}%\n"
             markdown_text += f"        ▪ Crescimento da companhia no último ano: {last_growth_rate}%\n"
@@ -1117,8 +1119,8 @@ class TelegramManager:
 
                 markdown_text += f'--------------------\n'
                 
-                wallet_proportion_actual = round(perc_variation,1)
-                wallet_proportion_actual = round(wallet_proportion_previous,1)
+                perc_variation = round(perc_variation,1)
+                wallet_proportion_previous = round(wallet_proportion_previous,1)
                 wallet_proportion_actual = round(wallet_proportion_actual,1)
 
                 if ticker in list(buy_orders['ticker']):
@@ -2102,6 +2104,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     answer_text = TelegramManager.create_nightvision_answer(wallet_id, final_analysis, next_rebalance_date, weighted_average_returns)
 
                     print('\nfinal_analysis: \n',final_analysis)
+                    print('\nfinal_analysis.columns: \n',final_analysis.columns)
                     print('\nnext_rebalance_date: ',next_rebalance_date)
                     print('\nweighted_average_returns: ',weighted_average_returns)
 
