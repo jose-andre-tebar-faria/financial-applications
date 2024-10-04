@@ -30,6 +30,17 @@ class FinappController:
         print("Inicializing FinappController!")
         
         load_dotenv()
+        
+        self.current_folder = os.getcwd()
+
+        self.project_folder = os.getenv("PROJECT_FOLDER")
+        self.database_folder = os.getenv("DATABASE_FOLDER")
+        self.full_desired_path = os.path.join(self.project_folder,self.database_folder)
+
+        if(self.current_folder != self.full_desired_path):
+            os.chdir(self.full_desired_path)
+        
+        print("OK.")
 
     def calculate_combinations(self, premium_name, len_premium_name, single_combinations = False, double_combinations = False, triple_combinations = False):
 
@@ -156,7 +167,7 @@ class FinappController:
 
         indicators_comb_list = list(premiuns_statistics_to_show['premium_name'])
         # Aplicar a função a cada elemento da lista
-        indicators_comb_list = [self.remove_sector_from_premium_name(premium_name) for premium_name in indicators_comb_list]
+        # indicators_comb_list = [self.remove_sector_from_premium_name(premium_name) for premium_name in indicators_comb_list]
         print(f'\nindicators_comb_list: \n', indicators_comb_list)
 
         marker = '-with-'
@@ -184,7 +195,7 @@ class FinappController:
 
         for indicators_comb in indicators_comb_list:
             split_indicator = indicators_comb.split(marker)
-            # print(split_indicator)
+            print(split_indicator)
 
             indicators_list = []
 
@@ -606,14 +617,16 @@ class FinappController:
 
             for demonstration in fintz_demonstration_list:
                 data_from_fintz.download_accounting_files(demonstration=True, data_name = demonstration)
-
-            for indicator in fintz_indicators_list:
-                # data_from_fintz.download_accounting_files(indicator=True, data_name = indicator)
                 print('')
 
-            #data_from_fintz.download_dividendyield()
-            #data_from_fintz.download_cdi(initial_date=initial_date)
-            #data_from_fintz.download_ibov(initial_date=initial_date)
+            for indicator in fintz_indicators_list:
+                data_from_fintz.download_accounting_files(indicator=True, data_name = indicator)
+                print('')
+
+            # data_from_fintz.download_dividendyield()
+            # data_from_fintz.download_p_vp('P_VP')
+            data_from_fintz.download_cdi(initial_date=initial_date)
+            data_from_fintz.download_ibov(initial_date=initial_date)
             data_from_fintz.download_quotations()
         
         if(update_api_database):
@@ -1173,8 +1186,8 @@ class FinappController:
         print('\n +++ calculando_retorno_diario')
         wallets, returns = backtest.calculando_retorno_diario()
 
-        # print('\nlast 30 wallet days: \n',returns.tail(30))
-        # print('wallets: \n',wallets)
+        print('\nlast 30 wallet days: \n',returns.tail(33))
+        print('wallets: \n',wallets)
         # print(returns)
 
         #
@@ -1185,13 +1198,15 @@ class FinappController:
         if(create_wallets_pfd):
             
             turn_over_medio = backtest.make_report()
-        #
-        ##
-        # CALCULATE TURN OVER
-        ##
-        #
-        turn_over_medio = backtest.export_turn_over(execute=True)
-        # print('\nturn_over_medio: ', turn_over_medio)
+            turn_over_medio = 0
+        else:
+            #
+            ##
+            # CALCULATE TURN OVER
+            ##
+            #
+            turn_over_medio = backtest.export_turn_over(execute=True)
+            # print('\nturn_over_medio: ', turn_over_medio)
 
         return wallets, returns, turn_over_medio
 
@@ -1579,12 +1594,13 @@ class FinappController:
         indicator = mi.MakeIndicator()
 
         # indicator.making_momentum(months = 1)
-        # indicator.making_momentum(months = 6)
-        # indicator.making_momentum(months = 12)
-        # indicator.ratio_moving_mean(mm_curta = 7, mm_longa = 40)
-        # indicator.median_volume(months = 1)
-        # indicator.beta(years = 1)
-        # indicator.volatility(years = 1)
+        indicator.making_momentum(months = 6)
+        indicator.making_momentum(months = 12)
+        indicator.ratio_moving_mean(mm_curta = 7, mm_longa = 40)
+        indicator.ratio_moving_mean(mm_curta = 21, mm_longa = 200)
+        indicator.median_volume(months = 1)
+        indicator.beta(years = 1)
+        indicator.volatility(years = 1)
         # indicator.pl_divida_bruta()
         # indicator.ebit_divida_liquida()
         
@@ -1599,6 +1615,12 @@ class FinappController:
 
         # net_margin = indicator.net_margin()
         # print(net_margin.tail(20))
+        
+        # minimum_distance = indicator.minimum_distance(252)
+
+        minimum_distance_invert = indicator.minimum_distance_invert(252)
+        
+        # profit_cagr = indicator.profit_cagr(5)
 
         print(".\n.\n=== UPDATE COMPLETE! ===")
 
@@ -1885,26 +1907,28 @@ if __name__ == "__main__":
 
     # enable database update
     update_database                 = False
-
     update_api_database             = False
-
     update_fintz_database           = False    
     fintz_demonstration_list        = [
-                                # 'AcoesEmCirculacao', 'TotalAcoes',
-                                'PatrimonioLiquido',
-                                # 'LucroLiquido12m', 'LucroLiquido',
-                                # 'ReceitaLiquida', 'ReceitaLiquida12m', 
-                                # 'DividaBruta', 'DividaLiquida',
-                                # 'Disponibilidades', 
-                                # 'Ebit', 'Ebit12m',
-                                # 'Impostos', 'Impostos12m',
-                                # 'LucroLiquidoSociosControladora',
-                                # 'LucroLiquidoSociosControladora12m'
-                                ]
+                                        'AcoesEmCirculacao', 'TotalAcoes',
+                                        'PatrimonioLiquido',
+                                        # 'LucroLiquido12m', 'LucroLiquido',
+                                        # 'ReceitaLiquida', 'ReceitaLiquida12m', 
+                                        # 'DividaBruta', 'DividaLiquida',
+                                        # 'Disponibilidades', 
+                                        # 'Ebit', 'Ebit12m',
+                                        # 'Impostos', 'Impostos12m',
+                                        # 'LucroLiquidoSociosControladora',
+                                        # 'LucroLiquidoSociosControladora12m' 
+                                        # 'MargemEBIT', 'EBITDA_EV'
+                                        ]
     fintz_indicators_list           = [
-                            # 'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 
-                            'DividendYield'
-                            ]
+                                        'L_P', 
+                                        # 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 
+                                        # 'DividendYield',
+                                        # 'ROA', 'ValorDeMercado',
+                                        # 'MargemBruta'
+                                        ]
     
     update_webscrapping_database    = False
     bc_dict                         = {
@@ -1926,7 +1950,7 @@ if __name__ == "__main__":
 
 
     # enable indicators update
-    update_indicators               = True
+    update_indicators               = False
 
 
     # enable calculate risk premiuns database update
@@ -1950,25 +1974,30 @@ if __name__ == "__main__":
     double_combinations             = True
     triple_combinations             = True
     # true if you want to update a existing file
-    update_existing_file            = False
+    update_existing_file            = True
 
     indicators_dict                 = {
                                     'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
                                     'ROIC':               {'file_name': 'QUALITY_ROIC',               'order': 'decrescente'},
-                                    # 'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
-                                    # 'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
-                                    # 'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
+                                    'ROE':                {'file_name': 'QUALITY_ROE',                'order': 'decrescente'},
+                                    'EBIT_EV':            {'file_name': 'VALOR_EBIT_EV',              'order': 'decrescente'},
+                                    'L_P':                {'file_name': 'VALOR_L_P',                  'order': 'decrescente'},
                                     'vol_252':            {'file_name': 'RISCO_VOL',                  'order': 'crescente'},
                                     # 'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
                                     # 'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
                                     'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
-                                    # 'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
-                                    # 'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
+                                    'mm_21_200':          {'file_name': 'MOMENTO_MM_21_200',          'order': 'decrescente'},
+                                    'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
+                                    'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
                                     'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
                                     # 'peg_ratio':          {'file_name': 'PEG_RATIO_INVERT',           'order': 'decrescente'},
                                     'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
-                                    # 'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
-                                    # 'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
+                                    'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
+                                    'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
+                                    # 'min_distance_252':   {'file_name': 'MIN_DISTANCE_252',           'order': 'crescente'},
+                                    'min_distance_invert_252':   {'file_name': 'MIN_DISTANCE_INVERT_252',           'order': 'decrescente'},
+                                    # 'min_max_half_dist_252':   {'file_name': 'MIN_MAX_HALF_DIST_252',           'order': 'decrescente'},
+                                    # 'profit_carg_5years':   {'file_name': 'PROFIT_CARG_5_YEARS',           'order': 'decrescente'},
                                     }
     indicators_dict_database        = {
                                     'ValorDeMercado':     {'file_name': 'TAMANHO_VALOR_DE_MERCADO',   'order': 'crescente'},
@@ -1980,6 +2009,7 @@ if __name__ == "__main__":
                                     'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
                                     'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
                                     'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
+                                    'mm_20_200':          {'file_name': 'MOMENTO_MM_20_200',          'order': 'decrescente'},
                                     'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
                                     'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
                                     'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
@@ -1987,24 +2017,30 @@ if __name__ == "__main__":
                                     'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
                                     'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
                                     'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
+                                    'min_distance_252':   {'file_name': 'MIN_DISTANCE_252',           'order': 'crescente'},
+                                    'min_distance_invert_252':   {'file_name': 'MIN_DISTANCE_INVERT_252',           'order': 'decrescente'},
+                                    'min_max_half_dist_252':   {'file_name': 'MIN_MAX_HALF_DIST_252',           'order': 'decrescente'},
+                                    'profit_carg_5years':   {'file_name': 'PROFIT_CARG_5_YEARS',           'order': 'decrescente'},
                                     }
     
 
     # enable rating risks
     rate_risk_premiuns              = False
     rank_risk_premiuns              = False
+    save_ranking                    = False
     rank_risk_premiuns_by_sector    = False
-    step_months_rank_list           = [60]
-    premiuns_to_dict                = [1]
+    step_months_rank_list           = [6,12,36]
+    premiuns_to_dict                = [1,2,3,4,5]
     premiuns_to_show                = 1
     number_of_top_comb_indicators   = 5
-    columns_rank_list               = ['profit_perc', 
+    columns_rank_list               = [
+                                        'profit_perc', 
                                         'anual_mean_acum_returns', 
                                         # 'mean_turn_over',
                                         'anual_high_acum_returns', 
-                                        # 'anual_low_acum_returns',
-                                        # 'last_acum_return',
-                                        'anual_std_dev_acum_returns'
+                                        'anual_low_acum_returns',
+                                        'last_acum_return',
+                                        # 'anual_std_dev_acum_returns'
                                         ]
     columns_rank_database_list      = ['profit_perc', 
                                         'anual_mean_acum_returns', 
@@ -2015,11 +2051,12 @@ if __name__ == "__main__":
                                         'anual_std_dev_acum_returns'
                                         ]
     # final_analysis_date             = '2022-12-31'
-    final_analysis_date             = '2024-01-31'
-    initial_analysis_date           = '2013-12-31'
+    final_analysis_date             = '2023-12-31'
+    initial_analysis_date           = '2012-12-31'
     rating_premiuns_file_name       = r'..\\PDFs\rating-BEST_INDICATORS.pdf'
     create_rating_pdf               = False
-    
+
+    process_rankings                = True    
     
     # enable run a regression model
     execute_regression_model        = False
@@ -2062,18 +2099,18 @@ if __name__ == "__main__":
 
     # enable requirements.txt update
     optimize_setup                  = False
-    optimization_initial_date       = '2014-12-31'
+    optimization_initial_date       = '2017-12-31'
     optimization_end_date           = '2023-12-31'
     # optimize_wallet_id              = '1099'
     # optimize_wallet_id              = '2145'
-    optimize_wallet_id              = '2779'
+    optimize_wallet_id              = '3202'
     # optimize_wallet_id              = '3657'
-    rebalance_periods_list          = [5,10,21]
+    rebalance_periods_list          = [10,21,42]
     # rebalance_periods_list          = [21]
     # asset_quantity_list             = [2,3,4]
-    asset_quantity_list             = [3,4,5]
+    asset_quantity_list             = [2,3]
     # asset_quantity_list             = [1]
-    # months_window_size_list         = [36,60]
+    # months_window_size_list         = [18]
     months_window_size_list         = [36,60]
     columns_rank_optimization       = ['profit_perc', 
                                         'anual_mean_acum_returns', 
@@ -2216,10 +2253,48 @@ if __name__ == "__main__":
                                                                                                                 sector)
         
         print('\npremiuns_statistics_to_show: \n', premiuns_statistics_to_show)
+
+        if(save_ranking):
+            print('\nsaving ranking. \n')
+
+            current_folder = os.getcwd()
+            project_folder = os.getenv("PROJECT_FOLDER")
+            rankings_folder = os.getenv("RANKINGS_FOLDER")
+            full_desired_path = os.path.join(project_folder,rankings_folder)
+
+            if(current_folder != full_desired_path):
+                os.chdir(full_desired_path)
+
+            premiuns_statistics_to_show.to_parquet('ranking_geral.parquet', index = False)
+
+
         print('\nanalyzed_windows_df: \n', analyzed_windows_df)
         print('\nsetup_dict: \n', setup_dict)
     
     
+
+    ###
+    ##
+    #process_rankings   
+    ##
+    ###
+    if(process_rankings):
+        
+        print('\nprocessing ranking. \n')
+
+        current_folder = os.getcwd()
+        project_folder = os.getenv("PROJECT_FOLDER")
+        rankings_folder = os.getenv("RANKINGS_FOLDER")
+        full_desired_path = os.path.join(project_folder,rankings_folder)
+
+        if(current_folder != full_desired_path):
+            os.chdir(full_desired_path)
+
+        ranking = pd.read_parquet('ranking_geral.parquet')
+        print(ranking)
+
+
+
     ###
     ##
     #rate_risk_premiuns   

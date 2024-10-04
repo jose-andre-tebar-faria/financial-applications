@@ -589,9 +589,9 @@ class WalletManager:
     # GERANDO UMA TRANSAÇÃO
     ##
     #
-    def create_transaction(self, ticker, operation_type, transaction_date, wallet_id):
+    def generate_transaction(self, asset, operation_type, transaction_date, wallet_id):
 
-        self.ticker = ticker
+        self.asset = asset
         self.wallet_id = wallet_id
         self.operation_type = operation_type
         self.transaction_date = transaction_date
@@ -730,26 +730,35 @@ if __name__ == "__main__":
     print('distinct_setups: \n', distinct_setups)
 
     # wallet_manager.update_portifolio_composition(wallet_manager = wallet_manager, wallet_id = wallet_id, wallet_defined = last_wallet_defined)
-    # wallet_manager.delete_portifolio_composition(wallet_id = 2145, rebalance_date = '2024-01-10')
+    # wallet_manager.delete_portifolio_composition(wallet_id = 1099, rebalance_date = '2024-09-11')
+
+
+    ##############
+    # TRANSACTIONS STATUS
+    ##############
+
+    # status = 'generated'
+    # status = 'pending'
+    # status = 'processed'
 
     ##############
     # OPERATION TYPES CONFIGURATION
     ##############
 
     # operation_type = 'credit'
-    # operation_code = 'C-01'
+    # operation_code = 'C001'
     # operation_name = 'contribuiton'
 
     # operation_type = 'debit'
-    # operation_code = 'R-01'
+    # operation_code = 'R001'
     # operation_name = 'redemption'
 
     # operation_type = 'credit'
-    # operation_code = 'S-01'
+    # operation_code = 'S001'
     # operation_name = 'sell'
 
     # operation_type = 'debit'
-    # operation_code = 'P-01'
+    # operation_code = 'P001'
     # operation_name = 'purchase'
 
     # wallet_manager.read_type_transaction()
@@ -763,4 +772,4 @@ if __name__ == "__main__":
     ##############
 
 
-    # wallet_manager.verify_compositions_to_execute(wallet_manager=wallet_manager)
+    wallet_manager.verify_compositions_to_execute(wallet_manager=wallet_manager)

@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 
 
 class PDF(FPDF):
+    
     def header(self):
         
         diretorio_atual = os.getcwd()

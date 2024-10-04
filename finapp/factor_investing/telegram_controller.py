@@ -106,20 +106,22 @@ class TelegramManager:
 
 
         fintz_demonstration_list = [
-                                    #'AcoesEmCirculacao', 'TotalAcoes',
+                                    'AcoesEmCirculacao', 'TotalAcoes',
                                     'PatrimonioLiquido',
-                                    #'LucroLiquido12m', 'LucroLiquido',
-                                    #'ReceitaLiquida', 'ReceitaLiquida12m', 
-                                    #'DividaBruta', 'DividaLiquida',
-                                    #'Disponibilidades', 
-                                    #'Ebit', 'Ebit12m',
-                                    #'Impostos', 'Impostos12m',
-                                    #'LucroLiquidoSociosControladora',
-                                    #'LucroLiquidoSociosControladora12m'
+                                    'LucroLiquido12m', 'LucroLiquido',
+                                    # 'ReceitaLiquida', 'ReceitaLiquida12m', 
+                                    # 'DividaBruta', 
+                                    # 'DividaLiquida',
+                                    # 'Disponibilidades', 
+                                    # 'Ebit', 'Ebit12m',
+                                    # 'Impostos', 'Impostos12m',
+                                    # 'LucroLiquidoSociosControladora',
+                                    # 'LucroLiquidoSociosControladora12m'
                                     ]
 
         fintz_indicators_list = [
-                                'L_P', 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado'
+                                'L_P',
+                                # 'ROE', 'ROIC', 'EV', 'LPA', 'P_L', 'EBIT_EV', 'ValorDeMercado'
                                 ]
         
         bc_dict = {
@@ -401,8 +403,8 @@ class TelegramManager:
         rebalance_periods_setup = int(rebalance_periods_setup)
         print('rebalance_periods_setup: ', rebalance_periods_setup)
 
-        factor_calc_end_date = '2024-01-31'
-        factor_calc_initial_date = '2019-12-31'
+        factor_calc_end_date = '2024-12-31'
+        factor_calc_initial_date = '2020-12-31'
         # asset_quantity_setup = 5
         liquidity_filter_setup = 1
         create_wallets_pfd = True
@@ -687,34 +689,40 @@ class TelegramManager:
         print('\nnumber_pair_indicator_count: ', number_pair_indicator_count)
 
         first_ten_percent = int(np.ceil(number_pair_indicator_count/10))
-        print('\nfirst_five_percent: ', first_ten_percent)
+        print('\nfirst_ten_percent: ', first_ten_percent)
 
         pair_indicator_count = pair_indicator_count.head(first_ten_percent)
+        
+        markdown_text = f''
+        
+        if pair_indicators_total_count >= 1:
 
-        mean_count_first_ten_percent = int(sum(pair_indicator_count['contagem_no_primeiro_quartil']) / first_ten_percent)
+            mean_count_first_ten_percent = int(sum(pair_indicator_count['contagem_no_primeiro_quartil']) / first_ten_percent)
 
-        markdown_text = f'-- O ranking mostrado abaixo exibe os 10% melhores ({first_ten_percent}/{number_pair_indicator_count}) pares de indicadores com respeito a mais ocorrências no primeiro quartil do ranking. Cada par apareceu {pair_indicators_total_count} vezes no ranking.\n\n'
+            markdown_text += f'-- O ranking mostrado abaixo exibe os 10% melhores ({first_ten_percent}/{number_pair_indicator_count}) pares de indicadores com respeito a mais ocorrências no primeiro quartil do ranking. Cada par apareceu {pair_indicators_total_count} vezes no ranking.\n\n'
 
-        # Adiciona os cabeçalhos
-        # markdown_text += "| pair_indicators | count_first_quartile |\n"
-        # markdown_text += "|-----------|-----------------------|\n"
+            # Adiciona os cabeçalhos
+            # markdown_text += "| pair_indicators | count_first_quartile |\n"
+            # markdown_text += "|-----------|-----------------------|\n"
 
-        # Adiciona as linhas
-        # for _, row in pair_indicator_count.iterrows():
-        #     markdown_text += f"| {row['pair_indicators']} | {row['contagem_no_primeiro_quartil']}/{pair_indicators_total_count} |\n"
+            # Adiciona as linhas
+            # for _, row in pair_indicator_count.iterrows():
+            #     markdown_text += f"| {row['pair_indicators']} | {row['contagem_no_primeiro_quartil']}/{pair_indicators_total_count} |\n"
 
-        # Adiciona as linhas
-        for _, row in pair_indicator_count.iterrows():
+            # Adiciona as linhas
+            for _, row in pair_indicator_count.iterrows():
 
-            perc_total = (row['contagem_no_primeiro_quartil']/pair_indicators_total_count)*100
-            perc_total = round(float(perc_total),1)
+                perc_total = (row['contagem_no_primeiro_quartil']/pair_indicators_total_count)*100
+                perc_total = round(float(perc_total),1)
 
-            markdown_text += f"  🔍 {row['pair_indicators']} \n              - ocorrências no total: {row['contagem_no_primeiro_quartil']}/{pair_indicators_total_count} | {perc_total}%\n\n"
+                markdown_text += f"  🔍 {row['pair_indicators']} \n              - ocorrências no total: {row['contagem_no_primeiro_quartil']}/{pair_indicators_total_count} | {perc_total}%\n\n"
 
-        # Finaliza a string Markdown
-        # markdown_text += "```"
-            
-        markdown_text += f'\nA média foi de {mean_count_first_ten_percent} aparições de pares no primeiro quartil do ranking.'
+            # Finaliza a string Markdown
+            # markdown_text += "```"
+                
+            markdown_text += f'\nA média foi de {mean_count_first_ten_percent} aparições de pares no primeiro quartil do ranking.'
+        else:
+            markdown_text += f'\nSem pares nesta análise.'
 
         return markdown_text
 
@@ -905,7 +913,7 @@ class TelegramManager:
                 markdown_text += f"💼 wallet_id: {wallet_id}\n"
                 markdown_text += f"----------------------------------------\n"
 
-                markdown_text += f"          ⚙ rebalance_periods: {rebalance_periods}\n          ⚙ number_of_assets: {number_of_assets}\n          ⚙ create_date: {create_date}\n"
+                markdown_text += f"       ⚙ rebalance_periods: {rebalance_periods}\n       ⚙ number_of_assets: {number_of_assets}\n       ⚙ create_date: {create_date}\n"
 
                 print(f"wallet_id: {wallet_id}")
                 print(f"          rebalance_periods: {rebalance_periods}")
@@ -917,12 +925,12 @@ class TelegramManager:
                     wallet_name = row['wallet_name']
                     indicators = [indicator for indicator in row[['indicator_1', 'indicator_2', 'indicator_3']] if pd.notna(indicator)]
                     
-                    markdown_text += f"          🔶 {wallet_name}:\n"
+                    markdown_text += f"        🔶 {wallet_name}:\n"
 
                     print(f"          {wallet_name}:")
                     for indicator in indicators:
                         print(f"                             {indicator}")
-                        markdown_text += f"                             🔹 {indicator}\n"
+                        markdown_text += f"                       🔹 {indicator}\n"
                     
                 markdown_text += f"\n"
 
@@ -984,21 +992,21 @@ class TelegramManager:
             
             markdown_text += f"----------------------------------------\n"
             if last_period_variation > 0:
-                markdown_text += f"    🟢 {ticker}, rend: {last_period_variation}%\n"
+                markdown_text += f"   🟢 {ticker}, rend: {last_period_variation}%\n"
             else:
-                markdown_text += f"    🔴 {ticker}, rend: {last_period_variation}%\n"
-            markdown_text += f"        ▪ Empresa: {company_name}\n"
-            markdown_text += f"        ▪ Ramo: {sector} - {subsector}\n"
-            markdown_text += f"        ▪ Peso do ativo na carteira: {wallet_proportion}%\n"
-            markdown_text += f"        ▪ Crescimento da companhia no último ano: {last_growth_rate}%\n"
-            markdown_text += f"        ▪ Preço dia {rebalance_date}: R$ {initial_price}\n"
-            markdown_text += f"        ▪ Preço dia {last_analysis_date}: R$ {max_update_price}\n"
+                markdown_text += f"   🔴 {ticker}, rend: {last_period_variation}%\n"
+            markdown_text += f"      ▪ Empresa: {company_name}\n"
+            markdown_text += f"      ▪ Ramo: {sector} - {subsector}\n"
+            markdown_text += f"      ▪ Peso do ativo na carteira: {wallet_proportion}%\n"
+            markdown_text += f"      ▪ Crescimento da companhia no último ano: {last_growth_rate}%\n"
+            markdown_text += f"      ▪ Preço dia {rebalance_date}: R$ {initial_price}\n"
+            markdown_text += f"      ▪ Preço dia {last_analysis_date}: R$ {max_update_price}\n"
 
         if weighted_average_returns > 0:
-            markdown_text += f"\n✅✅✅✅ GREEEEEN ✅✅✅✅\n\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}."
+            markdown_text += f"\n✅✅ GREEEEEN ✅✅\n\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}."
         else:
         
-            markdown_text += f"\n❗❗❗❗ MANTÉM A ESTRATÉGIA ❗❗❗❗\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}.\n"
+            markdown_text += f"\n❗❗ MANTÉM A ESTRATÉGIA ❗❗\nA carteira está com um rendimento de {weighted_average_returns}% desde o último rebalanceamento ({rebalance_date}) até o dia {last_analysis_date}.\n"
         
         answer_text = markdown_text
 
@@ -1473,6 +1481,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     'ebit_dl':            {'file_name': 'ALAVANCAGEM_EBIT_DL',        'order': 'decrescente'},
                     'pl_db':              {'file_name': 'ALAVANCAGEM_PL_DB',          'order': 'decrescente'},
                     'mm_7_40':            {'file_name': 'MOMENTO_MM_7_40',            'order': 'decrescente'},
+                    'mm_21_200':          {'file_name': 'MOMENTO_MM_21_200',          'order': 'decrescente'},
                     'momento_1_meses':    {'file_name': 'MOMENTO_R1M',                'order': 'decrescente'},
                     'momento_6_meses':    {'file_name': 'MOMENTO_R6M',                'order': 'decrescente'},
                     'momento_12_meses':   {'file_name': 'MOMENTO_R12M',               'order': 'decrescente'},
@@ -1480,8 +1489,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     'p_vp_invert':        {'file_name': 'P_VP_INVERT',                'order': 'decrescente'},
                     'p_ebit_invert':      {'file_name': 'P_EBIT_INVERT',              'order': 'decrescente'},
                     'net_margin':         {'file_name': 'NET_MARGIN',                 'order': 'decrescente'},
+                    'min_distance_252':   {'file_name': 'MIN_DISTANCE_252',           'order': 'crescente'},
+                    'min_distance_invert_252':   {'file_name': 'MIN_DISTANCE_INVERT_252',           'order': 'decrescente'},
+                    'profit_carg_5years':   {'file_name': 'PROFIT_CARG_5_YEARS',           'order': 'decrescente'},
                     }   
-    columns_rank_database_list = ['profit_perc', 
+    columns_rank_database_list  = ['profit_perc', 
                                   'anual_mean_acum_returns', 
                                   'anual_high_acum_returns', 
                                   'anual_low_acum_returns',
@@ -1582,9 +1594,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if(all_indicators_existents == False):
             fail_to_execute = True
     
-    single_combinations     = True
-    double_combinations     = True
-    triple_combinations     = True
     list_combinations = []
     premium_dataframe = pd.DataFrame()
     
@@ -1630,6 +1639,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if(decoded_command == 'calculate_risk_premiuns' and adm_interaction and all_indicators_existents):
 
+            single_combinations = True
+            double_combinations = True
+            triple_combinations = True
+
             if message_type == 'supergroup':
                 if answer_in_group:
                     await update.message.reply_text("Ok.")
@@ -1661,6 +1674,10 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 fail_to_execute = True
 
         if(decoded_command == 'rate_risk_premiuns' and all_indicators_existents):
+            
+            single_combinations = True
+            double_combinations = True
+            triple_combinations = True
             
             if message_type == 'supergroup':
                 if answer_in_group:
@@ -1783,9 +1800,14 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             rating_premiuns_file_name   = r'..\\PDFs\rating-INDICATORS.pdf'
 
             save_setup                  = False
+            single_combinations         = True
+            double_combinations         = False
+            triple_combinations         = False
             premiuns_to_dict            = [1]
             step_months_rank_list       = [12, 60]
             premiuns_to_show            = 3
+            rebalance_periods           = 10
+            number_of_assets            = 2
             columns_rank_list           = ['anual_mean_acum_returns' , 'profit_perc']
             create_pdf                  = False
             initial_analysis_date       = '2012-01-31'
@@ -1835,13 +1857,34 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         print(validation_txt)
                         await update.message.reply_text(validation_txt)
                         fail_to_execute = True
-                # elif variable == 'create_pdf':
-                #     if value.lower() == 'true':
-                #         create_pdf = True
-                #     elif value.lower() == 'false':
-                #         create_pdf = False
-                #     else:
-                #         fail_to_execute = True
+                elif variable == 'single_combinations':
+                    if value.lower() == 'true':
+                        single_combinations = True
+                    elif value.lower() == 'false':
+                        single_combinations = False
+                    else:
+                        fail_to_execute = True
+                elif variable == 'double_combinations':
+                    if value.lower() == 'true':
+                        double_combinations = True
+                    elif value.lower() == 'false':
+                        double_combinations = False
+                    else:
+                        fail_to_execute = True
+                elif variable == 'triple_combinations':
+                    if value.lower() == 'true':
+                        triple_combinations = True
+                    elif value.lower() == 'false':
+                        triple_combinations = False
+                    else:
+                        fail_to_execute = True
+                elif variable == 'create_pdf':
+                    if value.lower() == 'true':
+                        create_pdf = True
+                    elif value.lower() == 'false':
+                        create_pdf = False
+                    else:
+                        fail_to_execute = True
                 elif variable == 'premiuns_to_show':
                     possib_int = value
                     if TelegramManager.is_valid_integer(possib_int):
@@ -1871,7 +1914,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     found_list, is_integer_list, is_string_list = TelegramManager.is_valid_list(possib_list)
 
                     all_variables_present = all(elem in columns_rank_database_list for elem in found_list)
-
+                    
                     if all_variables_present:
                         if is_string_list:
                             columns_rank_list = found_list
@@ -1884,7 +1927,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 elif variable == 'premiuns_to_dict':
                     possib_list = value
                     found_list, is_integer_list, is_string_list = TelegramManager.is_valid_list(possib_list)
-
+                    
                     if is_integer_list:
                         all_selected_positions_range = all(premiuns_to_show >= elemento for elemento in found_list)
                         if all_selected_positions_range:
@@ -1894,6 +1937,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             fail_to_execute = True
                     else:
                         print(f"a lista não contém somente integer.")
+                        fail_to_execute = True
+                elif variable == 'rebalance_periods':
+                    possib_int = value
+                    if TelegramManager.is_valid_integer(possib_int):
+                        rebalance_periods = int(possib_int)
+                        print(f"{possib_int} integer.")
+                    else:
+                        print(f"{possib_int} não é integer.")
+                        fail_to_execute = True
+                elif variable == 'assets_per_wallet':
+                    possib_int = value
+                    if TelegramManager.is_valid_integer(possib_int):
+                        number_of_assets = int(possib_int)
+                        print(f"{possib_int} integer.")
+                    else:
+                        print(f"{possib_int} não é integer.")
                         fail_to_execute = True
                 else:
                     fail_to_execute = True
@@ -1945,7 +2004,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                             create_date_auto = create_date_auto.strftime('%Y-%m-%d')
 
                             # receber os parametros number_of_assets & rebalance_periods do comando!!!
-                            new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, number_of_assets = 5, rebalance_periods = 21, user_name = username_existent, create_date = create_date_auto)
+                            new_setup_to_insert = wallet_manager.preparing_setup_data(setups_dict = setup_dict, number_of_assets = number_of_assets, rebalance_periods = rebalance_periods, user_name = username_existent, create_date = create_date_auto)
 
                             wallet_id, wallet_existent, validation_df, setup_duplicated = wallet_manager.insert_setup(wallet_manager = wallet_manager, new_setup = new_setup_to_insert)
                             

@@ -74,7 +74,7 @@ class MakeResultsPremium:
                 return file_not_found
             
             df['data'] = pd.to_datetime(df['data']).dt.date
-            print(f'df: {df}')
+            # print(f'df: {df}')
 
             lista_dfs.append(df)
             data_inicial.append(min(df['data']))

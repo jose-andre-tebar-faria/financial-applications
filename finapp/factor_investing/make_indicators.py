@@ -54,16 +54,47 @@ class MakeIndicator():
         output_df = pd.DataFrame()
         quotations = pd.read_parquet('cotacoes.parquet')
         quotations['data'] = pd.to_datetime(quotations['data']).dt.date
+        
+        max_quotations_date = quotations['data'].max()
 
         quotations = quotations[['data', 'ticker', 'volume_negociado']]
         quotations['volume_negociado'] = quotations.groupby('ticker')['volume_negociado'].fillna(0)
         quotations['valor'] = quotations.groupby('ticker')['volume_negociado'].rolling(months * 21).median().reset_index(0,drop=True)
         quotations = quotations.dropna()
         output_df = quotations[['data', 'ticker', 'valor']]
+        median_volume = output_df
 
-        #print(output_df[output_df['ticker'] == 'WEGE3'])
+        print('median_volume', median_volume)
 
-        output_df.to_parquet(f'volume_mediano.parquet', index = False)
+
+        max_median_volume_date = output_df['data'].max()
+
+        days_diff = (max_quotations_date - max_median_volume_date).days
+        print('\tdays_diff: ', days_diff)
+
+        new_median_volume_records = pd.DataFrame()
+        new_records = pd.DataFrame()
+
+        for i in range(days_diff):
+            next_date = median_volume['data'].max() + pd.DateOffset(days=i+1)
+            next_date = next_date.strftime('%Y-%m-%d')
+            new_records = median_volume[median_volume['data'] == median_volume['data'].max()].copy()
+            new_records['data'] = next_date
+            new_median_volume_records = pd.concat([new_median_volume_records, new_records])
+        
+        # new_records['ticker'] = new_records.index
+
+        # print('new_median_volume_records: \n', new_median_volume_records)
+
+        # Concatenar os DataFrames original e resultante
+        new_median_volume_records = pd.concat([median_volume, new_median_volume_records], ignore_index=True)
+
+        # Classificar o DataFrame por 'ticker' e 'data'
+        new_median_volume_records['data'] = pd.to_datetime(new_median_volume_records['data']).dt.strftime('%Y-%m-%d')
+        new_median_volume_records = new_median_volume_records.sort_values(['data']).reset_index(drop=True)
+        print('new_median_volume_records: \n', new_median_volume_records)
+
+        new_median_volume_records.to_parquet(f'volume_mediano.parquet', index = False)
         
         print("OK.")
 
@@ -324,9 +355,9 @@ class MakeIndicator():
         quotations['data'] = pd.to_datetime(quotations['data'])
         quotations['ticker'] = quotations['ticker'].astype(str)
         quotations['valor_quo'] = quotations['valor_quo'].astype(float)
-        print('quotations: \n', quotations)
+        # print('quotations: \n', quotations)
 
-        max_quotation_date = quotations['data'].max()
+        max_quotations_date = quotations['data'].max()
 
         patrimonial_value = pd.read_parquet('PatrimonioLiquido.parquet')
         patrimonial_value = patrimonial_value[['ticker', 'data', 'valor']]
@@ -337,9 +368,15 @@ class MakeIndicator():
         patrimonial_value = patrimonial_value.sort_values(['data', 'ticker'])
         print('patrimonial_value: \n', patrimonial_value)
 
+        max_patrimonial_value_date = patrimonial_value['data'].max()
+
+        days_diff = (max_quotations_date - max_patrimonial_value_date).days
+        print('\tdays_diff: ', days_diff)
+
         new_patrimonial_value_records = pd.DataFrame()
         new_records = pd.DataFrame()
-        for i in range(20):
+
+        for i in range(days_diff):
             next_date = patrimonial_value['data'].max() + pd.DateOffset(days=i+1)
             next_date = next_date.strftime('%Y-%m-%d')
             new_records = patrimonial_value[patrimonial_value['data'] == patrimonial_value['data'].max()].copy()
@@ -348,7 +385,7 @@ class MakeIndicator():
         
         # new_records['ticker'] = new_records.index
 
-        print('new_patrimonial_value_records: \n', new_patrimonial_value_records)
+        # print('new_patrimonial_value_records: \n', new_patrimonial_value_records)
 
         # Concatenar os DataFrames original e resultante
         sync_patrimonial_value = pd.concat([patrimonial_value, new_patrimonial_value_records], ignore_index=True)
@@ -368,9 +405,14 @@ class MakeIndicator():
         total_number_of_stocks = total_number_of_stocks.sort_values(['data', 'ticker'])
         print('total_number_of_stocks: \n', total_number_of_stocks)
 
+        max_total_number_of_stocks_date = total_number_of_stocks['data'].max()
+
+        days_diff = (max_quotations_date - max_total_number_of_stocks_date).days
+        print('\tdays_diff: ', days_diff)
+
         new_total_number_of_stocks_records = pd.DataFrame()
         new_records = pd.DataFrame()
-        for i in range(20):
+        for i in range(days_diff):
             next_date = total_number_of_stocks['data'].max() + pd.DateOffset(days=i+1)
             next_date = next_date.strftime('%Y-%m-%d')
             new_records = total_number_of_stocks[total_number_of_stocks['data'] == total_number_of_stocks['data'].max()].copy()
@@ -379,7 +421,7 @@ class MakeIndicator():
         
         # new_records['ticker'] = new_records.index
 
-        print('new_total_number_of_stocks_records: \n', new_total_number_of_stocks_records)
+        # print('new_total_number_of_stocks_records: \n', new_total_number_of_stocks_records)
 
         # Concatenar os DataFrames original e resultante
         sync_total_number_of_stocks = pd.concat([total_number_of_stocks, new_total_number_of_stocks_records], ignore_index=True)
@@ -417,7 +459,7 @@ class MakeIndicator():
 
         p_vp = p_vp.sort_values(['data', 'ticker'])
         p_vp = p_vp.dropna()
-        print('merged_data: \n', p_vp)
+        # print('p_vp: \n', p_vp)
         
         try:
             p_vp['p_vp'] = (p_vp['valor_quo']) / (p_vp['valor_pl'] / p_vp['valor_nos'])
@@ -431,7 +473,7 @@ class MakeIndicator():
         
         p_vp.replace([np.inf, -np.inf], np.nan, inplace=True)
         p_vp = p_vp.sort_values(['data', 'ticker'])
-        print('p_vp: \n', p_vp)
+        # print('p_vp: \n', p_vp)
 
         p_vp_to_parquet = p_vp[['ticker', 'data', 'p_vp_invert']]
         p_vp_to_parquet = p_vp_to_parquet.rename(columns={'p_vp_invert': 'valor'})
@@ -544,22 +586,175 @@ class MakeIndicator():
         
         return net_margin[['ticker', 'data', 'net_margin']]
 
+    # Função para calcular o CAGR
+    def execute_cagr(self, data):
+        num_years = len(data) / 252  # Assumindo que há 252 dias de negociação em um ano
+        total_return = (data.iloc[-1] / data.iloc[0]) - 1
+        cagr = (1 + total_return) ** (1 / num_years) - 1
+        return cagr
+
+    def profit_cagr(self, years):
+
+
+        net_profit = pd.read_parquet('LucroLiquido.parquet')
+        net_profit = net_profit[['ticker', 'data', 'valor']]
+        net_profit = net_profit.rename(columns={'valor': 'valor_np'})
+        net_profit['data'] = pd.to_datetime(net_profit['data'])
+        net_profit['ticker'] = net_profit['ticker'].astype(str)
+        net_profit['valor_np'] = net_profit['valor_np'].astype(float)
+        # net_profit = net_profit.sort_values(by=['ticker', 'data'])
+        net_profit = net_profit.sort_values(['data', 'ticker'])
+        print('net_profit: \n', net_profit)
+
+        # Calcule o CAGR para cada empresa
+        cagrs = net_profit.groupby('ticker')['valor_np'].rolling(window=252*years).apply(self.execute_cagr, raw=False).reset_index(level=0, drop=True)
+
+        # Adicione os resultados ao DataFrame original
+        net_profit[f'CAGR_{years}years'] = cagrs
+
+        net_profit = net_profit[['data', 'ticker', f'CAGR_{years}years']]
+        net_profit = net_profit.rename(columns={f'CAGR_{years}years': 'valor'})   
+        net_profit.loc[net_profit['valor'] == 0, 'valor'] = pd.NA
+        net_profit.loc[net_profit['valor'] == np.inf, 'valor'] = pd.NA
+        net_profit = net_profit.dropna()
+        
+        net_profit['data'] = pd.to_datetime(net_profit['data'])
+        net_profit['ticker'] = net_profit['ticker'].astype(str)
+        net_profit['valor'] = net_profit['valor'].astype(float)
+
+        # max_net_profit_date = net_profit['data'].max()
+
+        # days_diff = (max_quotations_date - max_net_profit_date).days
+        # print('\tdays_diff: ', days_diff)
+
+        # new_net_profit_records = pd.DataFrame()
+        # new_records = pd.DataFrame()
+
+        # for i in range(days_diff):
+        #     next_date = net_profit['data'].max() + pd.DateOffset(days=i+1)
+        #     next_date = next_date.strftime('%Y-%m-%d')
+        #     new_records = net_profit[net_profit['data'] == net_profit['data'].max()].copy()
+        #     new_records['data'] = next_date
+        #     new_net_profit_records = pd.concat([new_net_profit_records, new_records])
+        
+        # new_records['ticker'] = new_records.index
+
+        # print('new_net_profit_records: \n', new_net_profit_records)
+
+        # Concatenar os DataFrames original e resultante
+        # sync_net_profit = pd.concat([net_profit, new_net_profit_records], ignore_index=True)
+
+        # Classificar o DataFrame por 'ticker' e 'data'
+        # sync_net_profit['data'] = pd.to_datetime(sync_net_profit['data']).dt.strftime('%Y-%m-%d')
+        # sync_net_profit = sync_net_profit.sort_values(['data']).reset_index(drop=True)
+        # print('sync_net_profit: \n', sync_net_profit)
+        # print('sync_net_profit WEGE3: \n', sync_net_profit[sync_net_profit['ticker'] == 'WEGE3'].tail(25))
+        
+        net_profit.to_parquet(f'profit_carg_{years}years.parquet', index = False)
+
+        return net_profit
+
+    def minimum_distance(self, days):
+
+        print("Making Minimum Distance " + str(days) + " day(s).")
+
+        output_df = pd.DataFrame()
+        quotations = pd.read_parquet('cotacoes.parquet')
+        quotations['data'] = pd.to_datetime(quotations['data']).dt.date
+        quotations = quotations[['data', 'ticker', 'preco_fechamento_ajustado']]
+
+        # Calcular o mínimo dos últimos X períodos
+        quotations[f'min_{days}'] = quotations['preco_fechamento_ajustado'].rolling(window=days).min()
+        quotations['minimum_distance'] = (quotations['preco_fechamento_ajustado'] - quotations[f'min_{days}']) / quotations[f'min_{days}']
+
+        output_df = quotations[['data', 'ticker', 'minimum_distance']]
+        output_df = output_df.rename(columns={'minimum_distance': 'valor'})        
+        output_df.loc[output_df['valor'] == 0, 'valor'] = pd.NA
+        output_df.loc[output_df['valor'] == np.inf, 'valor'] = pd.NA
+        output_df = output_df.dropna()
+        output_df.to_parquet(f'min_distance_{days}.parquet', index = False)
+
+        print("OK.")
+
+        return output_df
+    
+    def minimum_distance_invert(self, days):
+
+        print("Making Minimum Distance Inverted" + str(days) + " day(s).")
+
+        output_df = pd.DataFrame()
+        quotations = pd.read_parquet('cotacoes.parquet')
+        quotations['data'] = pd.to_datetime(quotations['data']).dt.date
+        quotations = quotations[['data', 'ticker', 'preco_fechamento_ajustado']]
+
+        # Calcular o mínimo dos últimos X períodos
+        quotations[f'min_{days}'] = quotations['preco_fechamento_ajustado'].rolling(window=days).min()
+        quotations['minimum_distance'] = 1 /((quotations['preco_fechamento_ajustado'] - quotations[f'min_{days}']) / quotations[f'min_{days}'])
+
+        output_df = quotations[['data', 'ticker', 'minimum_distance']]
+        output_df = output_df.rename(columns={'minimum_distance': 'valor'})        
+        output_df.loc[output_df['valor'] == 0, 'valor'] = pd.NA
+        output_df.loc[output_df['valor'] == np.inf, 'valor'] = pd.NA
+        output_df = output_df.dropna()
+        output_df.to_parquet(f'min_distance_invert_{days}.parquet', index = False)
+
+        print("OK.")
+
+        return output_df
+    
+    def min_max_half_dist(self, days):
+
+        print("Making Min-Max Half Distance" + str(days) + " day(s).")
+
+        output_df = pd.DataFrame()
+        quotations = pd.read_parquet('cotacoes.parquet')
+        quotations['data'] = pd.to_datetime(quotations['data']).dt.date
+        quotations = quotations[['data', 'ticker', 'preco_fechamento_ajustado']]
+
+        # Calcular o mínimo dos últimos X períodos
+        quotations[f'min_{days}'] = quotations['preco_fechamento_ajustado'].rolling(window=days).min()
+        quotations[f'max_{days}'] = quotations['preco_fechamento_ajustado'].rolling(window=days).max()
+        quotations['min_max_half_dist'] = ((quotations[f'max_{days}'] + quotations[f'min_{days}']) / 2 ) - quotations['preco_fechamento_ajustado']
+        quotations['min_max_half_dist'] = (1) / (abs(quotations['min_max_half_dist']))
+
+        output_df = quotations[['data', 'ticker', 'min_max_half_dist']]
+        output_df = output_df.rename(columns={'min_max_half_dist': 'valor'})        
+        output_df.loc[output_df['valor'] == 0, 'valor'] = pd.NA
+        output_df.loc[output_df['valor'] == np.inf, 'valor'] = pd.NA
+        output_df = output_df.dropna()
+        output_df.to_parquet(f'min_max_half_dist_{days}.parquet', index = False)
+
+        print("OK.")
+
+        return output_df
+
 if __name__ == "__main__":
 
     indicator = MakeIndicator()
 
     # SEEMS WORKING but different not always from statusinvest.com
-    peg_ratio = indicator.peg_ratio()
-    print('last 15 peg_ratios: \n', peg_ratio.tail(15)) #[[peg_ratio['ticker'] == 'WEGE3']]
+    # peg_ratio = indicator.peg_ratio()
+    # print('last 15 peg_ratios: \n', peg_ratio.tail(15)) #[[peg_ratio['ticker'] == 'WEGE3']]
 
     # APPROVED
-    p_vp = indicator.p_vp()
-    print(p_vp.tail(15))
+    # p_vp = indicator.p_vp()
+    # print(p_vp.tail(15))
 
     # IN TESTS (follow tendences OK)
-    p_ebit = indicator.p_ebit()
-    print(p_ebit.tail(15))
+    # p_ebit = indicator.p_ebit()
+    # print(p_ebit.tail(15))
 
     # APPROVED but different not always from statusinvest.com
-    net_margin = indicator.net_margin()
-    print(net_margin.tail(15))
+    # net_margin = indicator.net_margin()
+    # print(net_margin.tail(15))
+
+    # minimum_distance = indicator.minimum_distance(252)
+    # print(minimum_distance)
+    # minimum_distance_invert = indicator.minimum_distance_invert(252)
+    # print(minimum_distance_invert)
+
+    # min_max_half_dist = indicator.min_max_half_dist(252)
+    # print(min_max_half_dist)
+
+    profit_cagr = indicator.profit_cagr(5)
+    print(profit_cagr[profit_cagr['ticker']=='BBAS3'])

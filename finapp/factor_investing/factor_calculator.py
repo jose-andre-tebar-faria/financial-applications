@@ -141,16 +141,20 @@ class MakeBacktest():
 
                     lista_dfs.append(sync_lendo_indicador)
 
+        # print('lista_dfs: \n', lista_dfs)
+        # print('lista_dfs[0]: \n', lista_dfs[0])
+        # print('lista_dfs[1]: \n', lista_dfs[1])
+        # print('lista_dfs[2]: \n', lista_dfs[2])
+
         df_dados = lista_dfs[0]
         df_dados['data'] = pd.to_datetime(df_dados['data']).dt.date
 
         for df in lista_dfs[1:]:
 
-            # print('df_dados: \n', df_dados)
-
+            # print('df antes: \n', df)
             df['data'] = pd.to_datetime(df['data']).dt.date
             df['ticker'] = df['ticker'].astype(str)
-            # print('df: \n', df)
+            # print('df depois: \n', df)
 
             df_dados = pd.merge(df_dados, df,  how='inner', left_on=['data', 'ticker'], right_on=['data', 'ticker'])
 
@@ -187,6 +191,7 @@ class MakeBacktest():
     def pegando_dias_das_carteiras(self, df):
 
         datas_disponiveis = np.sort(df['data'].unique())
+        # print('datas_disponiveis: \n', datas_disponiveis)
         self.periodos_de_dias = [datas_disponiveis[i] for i in range(0, len(datas_disponiveis), self.balanceamento)]
 
     def criando_carteiras(self):
@@ -270,22 +275,22 @@ class MakeBacktest():
             if data in datas_rebalanceamento:
                 carteira_na_data = carteiras.loc[data].copy()
                 trocar_carteira = True
-                delay = 0
+                # delay = 0
             
             if trocar_carteira:
 
-                if delay == 0:
+                # if delay == 0:
 
-                    delay = delay + 1 #eu vou simular que eu só compro as açoes no preço de fechamento do dia seguinte.
+                #     delay = delay + 1 #eu vou simular que eu só compro as açoes no preço de fechamento do dia seguinte.
 
-                else:
+                # else:
 
-                    carteira_na_data["dinheiro_por_acao"] = (carteira_na_data["peso"] * df_retornos.iloc[i, 1]) * (1 - self.corretagem) * (1 - self.impacto_mercado)
-                    cotacoes_na_data = cotacoes_rebalanceamento.loc[data]
-                    carteira_vigente = pd.merge(carteira_na_data, cotacoes_na_data, left_index=True, right_index=True)
-                    carteira_vigente["quantidade_acoes"] = carteira_vigente["dinheiro_por_acao"] / carteira_vigente["preco_fechamento_ajustado"]
-                    carteira += 1
-                    trocar_carteira = False
+                carteira_na_data["dinheiro_por_acao"] = (carteira_na_data["peso"] * df_retornos.iloc[i, 1]) * (1 - self.corretagem) * (1 - self.impacto_mercado)
+                cotacoes_na_data = cotacoes_rebalanceamento.loc[data]
+                carteira_vigente = pd.merge(carteira_na_data, cotacoes_na_data, left_index=True, right_index=True)
+                carteira_vigente["quantidade_acoes"] = carteira_vigente["dinheiro_por_acao"] / carteira_vigente["preco_fechamento_ajustado"]
+                carteira += 1
+                trocar_carteira = False
 
         df_retornos = df_retornos.assign(retorno = df_retornos['dinheiro'].pct_change())
         df_retornos = df_retornos.drop(0, axis = 0)

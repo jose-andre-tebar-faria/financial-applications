@@ -39,22 +39,25 @@ class RiskPremium:
     def filtering_tickers_by_sectors(self, sector=''):
 
         self.sector = sector
-        self.tickers_database = pd.read_parquet("sectors_assets_b3_webscraping.parquet")
-        # print(f'tickers_database: \n {self.tickers_database}')
 
-        self.sectors = self.tickers_database.groupby('sector').count()
-        # print(f'sectors: \n {self.sectors.index}')
-        # self.subsectors = self.tickers_database.groupby('subsector').count()
-        # print(self.subsectors)
+        if sector != '':
+            # self.sector = sector
+            self.tickers_database = pd.read_parquet("sectors_assets_b3_webscraping.parquet")
+            # print(f'tickers_database: \n {self.tickers_database}')
 
-        self.sectors_list = list(self.sectors.index)
-        print(f'sectors_list: \n {self.sectors_list}')
+            self.sectors = self.tickers_database.groupby('sector').count()
+            # print(f'sectors: \n {self.sectors.index}')
+            # self.subsectors = self.tickers_database.groupby('subsector').count()
+            # print(self.subsectors)
 
-        self.ticker_sector_df = pd.DataFrame({'ticker': self.tickers_database['ticker'], 'sector': self.tickers_database['sector']})
-        # print(f'ticker_sector_df: \n {self.ticker_sector_df}')
-        self.ticker_sector_df['ticker'].replace('', pd.NA, inplace=True)
-        self.ticker_sector_df = self.ticker_sector_df.dropna(subset=['ticker'])
-        # print(f'ticker_sector_df: \n {self.ticker_sector_df}')
+            self.sectors_list = list(self.sectors.index)
+            print(f'sectors_list: \n {self.sectors_list}')
+
+            self.ticker_sector_df = pd.DataFrame({'ticker': self.tickers_database['ticker'], 'sector': self.tickers_database['sector']})
+            # print(f'ticker_sector_df: \n {self.ticker_sector_df}')
+            self.ticker_sector_df['ticker'].replace('', pd.NA, inplace=True)
+            self.ticker_sector_df = self.ticker_sector_df.dropna(subset=['ticker'])
+            # print(f'ticker_sector_df: \n {self.ticker_sector_df}')
 
     def getting_quotations(self):
 

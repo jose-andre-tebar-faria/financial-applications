@@ -46,6 +46,7 @@ class DownloadByWebscrapping:
         driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
 
         driver.get('''https://sistemaswebb3-listados.b3.com.br/listedCompaniesPage/''')
+        
         driver.maximize_window()
 
         print('\nfinding button_expand')
@@ -387,7 +388,7 @@ class DownloadByWebscrapping:
         if(current_folder != full_desired_path):
             os.chdir(full_desired_path)
 
-        assets_database.to_parquet(f'{full_desired_path}/sectors_assets_b3_webscraping.parquet', index = True)
+        assets_database.to_parquet(f'{full_desired_path}/sectors_assets_b3_webscraping_new.parquet', index = True)
 
 
     def getting_asset_logos_google_by_site(self):
